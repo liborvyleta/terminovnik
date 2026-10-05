@@ -13,11 +13,17 @@ struct SettingsView: View {
 
     @State private var viewModel = SettingsViewModel()
 
+    // Nastavení výuky – klíče sdílí ClassReminderScheduler a LiveActivityManager
+    @AppStorage(ClassReminderScheduler.enabledKey) private var classRemindersEnabled = true
+    @AppStorage(ClassReminderScheduler.leadMinutesKey) private var classReminderLeadMinutes = ClassReminderScheduler.defaultLeadMinutes
+    @AppStorage("lessonLiveActivityEnabled") private var lessonLiveActivityEnabled = true
+
     var body: some View {
         NavigationStack {
             Form {
                 StagAccountSection()
                 notificationsSection
+                lessonsSection
                 widgetSection
                 dataSection
                 aboutSection
@@ -77,6 +83,60 @@ struct SettingsView: View {
         } footer: {
             Text("Připomínka přijde den před termínem. Přímo z oznámení můžeš deadline označit jako splněný.")
         }
+    }
+
+    // MARK: - Výuka
+
+    private var lessonsSection: some View {
+        Section {
+            Toggle(isOn: $classRemindersEnabled) {
+                Label("Upozornit před hodinou", systemImage: "bell.badge")
+            }
+
+            if classRemindersEnabled {
+                Picker(selection: $classReminderLeadMinutes) {
+                    ForEach(ClassReminderScheduler.leadMinuteOptions, id: \.self) { minutes in
+                        Text("\(minutes) min").tag(minutes)
+                    }
+                } label: {
+                    Label("Předstih", systemImage: "timer")
+                }
+            }
+
+            Toggle(isOn: $lessonLiveActivityEnabled) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Hodina na zamčené obrazovce")
+                        Text("Live Activity s odpočtem na zamčené obrazovce a v Dynamic Islandu")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "lock.iphone")
+                }
+            }
+        } header: {
+            Text("Výuka")
+        } footer: {
+            Text(lessonsFooter)
+        }
+        .onChange(of: classRemindersEnabled) { _, enabled in
+            Task { await viewModel.classRemindersChanged(enabled: enabled) }
+        }
+        .onChange(of: classReminderLeadMinutes) {
+            viewModel.classReminderLeadChanged()
+        }
+        .onChange(of: lessonLiveActivityEnabled) {
+            viewModel.lessonLiveActivityChanged()
+        }
+    }
+
+    private var lessonsFooter: String {
+        var text = "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu."
+        if classRemindersEnabled, viewModel.notificationPermission == .denied {
+            text += " Oznámení jsou ale v nastavení iOS vypnutá."
+        }
+        return text
     }
 
     // MARK: - Widget

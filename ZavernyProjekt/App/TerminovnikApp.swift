@@ -28,6 +28,8 @@ struct TerminovnikApp: App {
         NotificationManager.shared.rescheduleAll(in: modelContainer.mainContext)
         // Widget dostane aktuální přehled hned po spuštění.
         WidgetSync.refresh(from: modelContainer.mainContext)
+        // Připomínky hodin z uloženého rozvrhu (plánují se jen na pár dní dopředu).
+        ClassReminderScheduler.shared.reschedule()
     }
 
     var body: some Scene {
@@ -44,6 +46,9 @@ struct TerminovnikApp: App {
                 WidgetSync.refresh(from: modelContainer.mainContext)
                 // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
                 Task { await TimetableStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
+                // Připomínky hodin posuneme o další dny a Live Activity sladíme s aktuální hodinou
+                ClassReminderScheduler.shared.reschedule()
+                LiveActivityManager.shared.updateLessonActivity()
             }
         }
     }

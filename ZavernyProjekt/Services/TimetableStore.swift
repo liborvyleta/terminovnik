@@ -58,6 +58,9 @@ final class TimetableStore {
             snapshot = fresh
             errorMessage = nil
             WidgetCenter.shared.reloadAllTimelines()
+            // Nový rozvrh → přeplánovat připomínky hodin a obnovit Live Activity
+            ClassReminderScheduler.shared.reschedule()
+            LiveActivityManager.shared.updateLessonActivity()
         } catch StagError.unauthorized {
             StagAccountStore.shared.signOut()
             errorMessage = "Přihlášení do STAGu vypršelo, přihlas se znovu."
@@ -79,6 +82,8 @@ final class TimetableStore {
         snapshot = nil
         errorMessage = nil
         WidgetCenter.shared.reloadAllTimelines()
+        // Bez rozvrhu nemají připomínky hodin smysl
+        ClassReminderScheduler.shared.cancelAll()
     }
 
     /// Barvy předmětů podle kódu, aby rozvrh ladil se zbytkem aplikace

@@ -5,7 +5,7 @@ import SwiftUI
 import UIKit
 import UserNotifications
 
-/// ViewModel obrazovky Nastavení – stav povolení oznámení, mazání dat a informace o verzi.
+/// ViewModel obrazovky Nastavení – stav povolení oznámení, připomínky výuky, mazání dat a informace o verzi.
 @Observable
 final class SettingsViewModel {
     /// Zjednodušený stav povolení notifikací pro zobrazení v UI.
@@ -78,6 +78,27 @@ final class SettingsViewModel {
     func requestNotifications() async {
         await NotificationManager.shared.requestAuthorization()
         await refreshNotificationStatus()
+    }
+
+    // MARK: - Výuka
+
+    /// Zapnutí / vypnutí připomínek hodin. Při zapnutí si případně vyžádá povolení oznámení,
+    /// pak připomínky hned přeplánuje.
+    func classRemindersChanged(enabled: Bool) async {
+        if enabled, notificationPermission == .notDetermined {
+            await requestNotifications()
+        }
+        ClassReminderScheduler.shared.reschedule()
+    }
+
+    /// Změna předstihu připomínky – stará oznámení se nahradí novými.
+    func classReminderLeadChanged() {
+        ClassReminderScheduler.shared.reschedule()
+    }
+
+    /// Zapnutí / vypnutí Live Activity – hned ji spustí, nebo ukončí.
+    func lessonLiveActivityChanged() {
+        LiveActivityManager.shared.updateLessonActivity()
     }
 
     // MARK: - Data

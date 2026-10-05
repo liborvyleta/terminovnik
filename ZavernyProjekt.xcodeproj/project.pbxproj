@@ -358,13 +358,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ZavernyProjekt/ZavernyProjekt.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = RH4J54WWP8;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -400,13 +401,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ZavernyProjekt/ZavernyProjekt.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = RH4J54WWP8;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -440,8 +442,8 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ZkouskovnikWidget/ZkouskovnikWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = RH4J54WWP8;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ZkouskovnikWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
@@ -469,8 +471,8 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ZkouskovnikWidget/ZkouskovnikWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = RH4J54WWP8;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ZkouskovnikWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";

@@ -135,6 +135,14 @@ struct DashboardView: View {
                 } label: {
                     Label("Přidat do Kalendáře", systemImage: "calendar.badge.plus")
                 }
+                // Live Activity jen pro termín v nejbližších 8 hodinách
+                if LiveActivityManager.shared.canStartExam(task) {
+                    Button {
+                        LiveActivityManager.shared.startExam(task)
+                    } label: {
+                        Label("Odpočet na zamčené obrazovce", systemImage: "timer")
+                    }
+                }
                 Divider()
                 Button(role: .destructive) {
                     withAnimation { viewModel.delete(task, in: modelContext) }

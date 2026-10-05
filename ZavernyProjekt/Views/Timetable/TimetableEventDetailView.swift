@@ -7,6 +7,10 @@ struct TimetableEventDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var isAddingToCalendar = false
+    /// Hodina se sleduje jako Live Activity na zamčené obrazovce
+    @State private var isTracking = false
+    /// Spuštění selhalo (typicky vypnuté Živé aktivity v Nastavení iOS)
+    @State private var trackingFailed = false
 
     private var event: TimetableEvent { selection.event }
 
@@ -53,6 +57,10 @@ struct TimetableEventDetailView: View {
                         .listRowBackground(Color.clear)
                     } footer: {
                         Text("Předvyplníme \(occurrence.start.deadlineLongFormatted). Událost uložíš v systémovém Kalendáři – aplikace k němu nepotřebuje přístup.")
+                    }
+
+                    if LiveActivityManager.shared.canStartLesson(occurrence) {
+                        liveActivitySection(occurrence)
                     }
                 }
             }
@@ -113,6 +121,42 @@ struct TimetableEventDetailView: View {
     }
 
     // MARK: - Sekce
+
+    /// Tlačítko pro sledování hodiny jako Live Activity (zamčená obrazovka, Dynamic Island)
+    private func liveActivitySection(_ occurrence: TimetableOccurrence) -> some View {
+        Section {
+            Button {
+                if LiveActivityManager.shared.startLesson(occurrence) {
+                    withAnimation(.snappy) { isTracking = true }
+                    trackingFailed = false
+                } else {
+                    trackingFailed = true
+                }
+            } label: {
+                Label(
+                    isTracking ? "Sleduje se na zamčené obrazovce" : "Sledovat na zamčené obrazovce",
+                    systemImage: isTracking ? "checkmark.circle.fill" : "livephoto"
+                )
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .tint(tint)
+            .disabled(isTracking)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .sensoryFeedback(.success, trigger: isTracking) { _, new in new }
+        } footer: {
+            if trackingFailed {
+                Text("Živé aktivity se nepodařilo spustit. Zkontroluj, že je máš povolené v Nastavení iOS → Termínovník.")
+            } else {
+                Text("Odpočet do začátku a místnost uvidíš na zamčené obrazovce i v Dynamic Islandu.")
+            }
+        }
+        .onAppear { isTracking = LiveActivityManager.shared.isTracking(occurrence) }
+    }
 
     private var whenSection: some View {
         Section("Kdy") {
