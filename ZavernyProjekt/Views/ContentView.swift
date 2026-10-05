@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Kořenový pohled se třemi záložkami: Přehled deadlinů, Předměty a Nastavení.
+/// Kořenový pohled se čtyřmi záložkami: Přehled deadlinů, Rozvrh, Předměty a Nastavení.
 /// Při prvním spuštění (a dokud uživatel nemá žádný předmět) ukáže úvodní obrazovku.
 struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -12,6 +12,9 @@ struct ContentView: View {
         TabView {
             DashboardView()
                 .tabItem { Label("Přehled", systemImage: "calendar.badge.clock") }
+
+            TimetableView()
+                .tabItem { Label("Rozvrh", systemImage: "calendar.day.timeline.left") }
 
             SubjectsListView()
                 .tabItem { Label("Předměty", systemImage: "books.vertical.fill") }

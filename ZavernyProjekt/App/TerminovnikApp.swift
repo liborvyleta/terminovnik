@@ -42,6 +42,8 @@ struct TerminovnikApp: App {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 WidgetSync.refresh(from: modelContainer.mainContext)
+                // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
+                Task { await TimetableStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
             }
         }
     }

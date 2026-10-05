@@ -12,15 +12,28 @@ struct CalendarEventEditor: UIViewControllerRepresentable {
     let title: String
     let start: Date
     let notes: String?
+    /// Konec události (nil = začátek + výchozí délka)
+    var end: Date? = nil
+    /// Místo konání, např. učebna
+    var location: String? = nil
     /// Zavolá se po zavření editoru; parametr říká, jestli uživatel událost uložil
     var onFinish: (_ saved: Bool) -> Void = { _ in }
 
     /// Délka předvyplněné události
     static let defaultDuration: TimeInterval = 60 * 60
 
-    init(title: String, start: Date, notes: String? = nil, onFinish: @escaping (_ saved: Bool) -> Void = { _ in }) {
+    init(
+        title: String,
+        start: Date,
+        end: Date? = nil,
+        location: String? = nil,
+        notes: String? = nil,
+        onFinish: @escaping (_ saved: Bool) -> Void = { _ in }
+    ) {
         self.title = title
         self.start = start
+        self.end = end
+        self.location = location
         self.notes = notes
         self.onFinish = onFinish
     }
@@ -83,7 +96,8 @@ struct CalendarEventEditor: UIViewControllerRepresentable {
         let event = EKEvent(eventStore: store)
         event.title = title
         event.startDate = start
-        event.endDate = start.addingTimeInterval(Self.defaultDuration)
+        event.endDate = end ?? start.addingTimeInterval(Self.defaultDuration)
+        event.location = location
         event.notes = notes
 
         let editor = EKEventEditViewController()

@@ -48,6 +48,107 @@ nonisolated struct StagSubject: Decodable, Identifiable, Hashable {
     }
 }
 
+/// Rozvrhová akce tak, jak ji vrací STAG (rozvrhy/getRozvrhByStudent, getRozvrhByPredmet).
+/// Dekóduje se tolerantně – chybějící nebo jinak typovaná pole akci nezahodí.
+nonisolated struct StagTimetableAction: Decodable {
+    let roakIdno: String?
+    let nazev: String?
+    let katedra: String?
+    let predmet: String?
+    let typAkce: String?
+    let typAkceZkr: String?
+    let den: String?
+    let denZkr: String?
+    let hodinaSkutOd: String?
+    let hodinaSkutDo: String?
+    let budova: String?
+    let mistnost: String?
+    let ucitele: String?
+    let tyden: String?
+    let datum: String?
+    let datumOd: String?
+    let datumDo: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case roakIdno, nazev, katedra, predmet, typAkce, typAkceZkr, den, denZkr
+        case hodinaSkutOd, hodinaSkutDo, budova, mistnost, tyden, datum, datumOd, datumDo
+        case vsichniUciteleJmenaTituly
+    }
+
+    /// STAG posílá časy a data jako objekt {"value": "11:00"}
+    private struct ValueBox: Decodable { let value: String? }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func text(_ key: CodingKeys) -> String? {
+            if let value = try? c.decodeIfPresent(String.self, forKey: key) { return value }
+            if let number = try? c.decodeIfPresent(Int.self, forKey: key) { return String(number) }
+            return nil
+        }
+        func boxed(_ key: CodingKeys) -> String? {
+            (try? c.decodeIfPresent(ValueBox.self, forKey: key))??.value ?? text(key)
+        }
+        roakIdno = text(.roakIdno)
+        nazev = text(.nazev)
+        katedra = text(.katedra)
+        predmet = text(.predmet)
+        typAkce = text(.typAkce)
+        typAkceZkr = text(.typAkceZkr)
+        den = text(.den)
+        denZkr = text(.denZkr)
+        hodinaSkutOd = boxed(.hodinaSkutOd)
+        hodinaSkutDo = boxed(.hodinaSkutDo)
+        budova = text(.budova)
+        mistnost = text(.mistnost)
+        ucitele = text(.vsichniUciteleJmenaTituly)
+        tyden = text(.tyden)
+        datum = boxed(.datum)
+        datumOd = boxed(.datumOd)
+        datumDo = boxed(.datumDo)
+    }
+
+    /// Převod na sdílený model rozvrhu (nil, pokud chybí kód předmětu)
+    func timetableEvent(hexColor: String?) -> TimetableEvent? {
+        guard let code = predmet, !code.isEmpty else { return nil }
+        let start = hodinaSkutOd
+        return TimetableEvent(
+            id: roakIdno ?? "\(code)-\(denZkr ?? den ?? "?")-\(start ?? "?")-\(typAkceZkr ?? "")",
+            subjectCode: code,
+            department: katedra ?? "",
+            subjectName: nazev ?? code,
+            typeName: typAkce ?? typAkceZkr ?? "Výuka",
+            typeShort: typAkceZkr ?? String((typAkce ?? "V").prefix(2)),
+            weekday: Self.weekday(from: denZkr ?? den),
+            startTime: start,
+            endTime: hodinaSkutDo,
+            building: budova,
+            room: mistnost,
+            teacher: ucitele,
+            weekParity: tyden,
+            dateFrom: Self.date(from: datumOd),
+            dateTo: Self.date(from: datumDo),
+            singleDate: Self.date(from: datum),
+            hexColor: hexColor
+        )
+    }
+
+    private static func weekday(from text: String?) -> Int? {
+        guard let text = text?.lowercased() else { return nil }
+        let days = ["po", "út", "st", "čt", "pá", "so", "ne"]
+        return days.firstIndex { text.hasPrefix($0) }.map { $0 + 1 }
+    }
+
+    /// Datum ve formátu STAGu „16.9.2025“
+    private static func date(from text: String?) -> Date? {
+        guard let text, !text.isEmpty else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "cs_CZ")
+        formatter.timeZone = TimeZone(identifier: "Europe/Prague")
+        formatter.dateFormat = "d.M.yyyy"
+        return formatter.date(from: text)
+    }
+}
+
 /// Aktuální období podle STAGu (služba kalendar/getAktualniObdobiInfo)
 nonisolated struct StagPeriod: Decodable {
     /// „ZS“ (zimní) nebo „LS“ (letní)
@@ -185,6 +286,16 @@ nonisolated struct StagService {
     /// Předměty, které má student zapsané v daném semestru (vyžaduje přihlášení)
     func studentSubjects(osCislo: String, semester: String, year: String) async throws -> [StagSubject] {
         try await list("predmety/getPredmetyByStudent", ["osCislo": osCislo, "semestr": semester, "rok": year])
+    }
+
+    /// Rozvrh studenta v daném semestru (vyžaduje přihlášení)
+    func studentTimetable(osCislo: String, semester: String, year: String) async throws -> [StagTimetableAction] {
+        try await list("rozvrhy/getRozvrhByStudent", ["osCislo": osCislo, "semestr": semester, "rok": year])
+    }
+
+    /// Rozvrh předmětu (veřejné) – stejná struktura dat, hodí se pro testy
+    func subjectTimetable(department: String, code: String, semester: String, year: String) async throws -> [StagTimetableAction] {
+        try await list("rozvrhy/getRozvrhByPredmet", ["katedra": department, "zkratka": code, "semestr": semester, "rok": year])
     }
 
     /// Role uživatele podle ticketu – záloha, kdyby STAG nepřiložil stagUserInfo do návratové adresy

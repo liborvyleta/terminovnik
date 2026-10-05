@@ -66,6 +66,7 @@ final class StagAccountStore {
         KeychainStore.remove(ticketKey)
         account = nil
         UserDefaults.standard.removeObject(forKey: defaultsKey)
+        TimetableStore.shared.clear()
     }
 
     /// Klient STAGu s přihlášením uloženého účtu (nil = nepřipojeno)

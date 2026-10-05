@@ -52,6 +52,8 @@ final class StagAccountViewModel {
         state = .syncing
         do {
             let result = try await StagSubjectSync.sync(in: context, store: store)
+            // Spolu s předměty obnovíme i rozvrh
+            await TimetableStore.shared.refresh(context: context)
             state = .finished(result)
         } catch {
             state = .failed(error.localizedDescription)
