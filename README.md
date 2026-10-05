@@ -12,7 +12,10 @@ Předměty si načteš přímo z IS/STAG UTB a aplikace ti den před každým te
 - **Import ze STAGu.** Po přihlášení školním účtem načte jen předměty, které máš zapsané (název, kód, kredity).
 - **Formulář deadlinu:** předmět, název, typ (zkouška, zápočet, projekt, úkol), datum a čas, poznámka. Při úpravě i stav a body nebo známka.
 - **Lokální notifikace 1 den před termínem** s tlačítkem **„Splněno“** přímo v oznámení. Přeplánuje se při každé změně a zruší se po splnění nebo smazání.
-- **Widget** na plochu (malý, střední, velký) a na zamčenou obrazovku s odpočtem do nejbližších deadlinů.
+- **Rozvrh ze STAGu** v samostatné záložce: denní časová osa a týdenní mřížka, právě probíhající a další hodina, místnost, vyučující. Načítá se přes uložený účet a funguje i offline.
+- **Upozornění před hodinou** s nastavitelným předstihem a **Live Activity** s odpočtem probíhající hodiny nebo zkoušky na zamčené obrazovce a v Dynamic Islandu.
+- **Siri, Zkratky a Spotlight:** další hodina, rozvrh na den, nejbližší zkouška a přidání deadlinu.
+- **Widgety** na plochu a zamčenou obrazovku: *Nejbližší deadliny* s odpočtem a *Další hodina* z rozvrhu.
 - **Přidat do Kalendáře** ve formuláři i v nabídce po dlouhém stisku řádku. Systémový editor nepotřebuje přístup ke kalendáři.
 - **Nastavení:** připojený účet STAG s aktualizací předmětů jedním klepnutím, stav oznámení, návod k widgetu, smazání dat a informace o aplikaci.
 - **Prázdné stavy**, úvodní obrazovka při prvním spuštění, plná podpora světlého i tmavého režimu a ikona ve třech variantách.
@@ -21,7 +24,8 @@ Předměty si načteš přímo z IS/STAG UTB a aplikace ti den před každým te
 
 ```
 ZavernyProjekt/
-├── App/TerminovnikApp.swift          vstupní bod, konfigurace ModelContaineru
+├── App/TerminovnikApp.swift          vstupní bod aplikace
+├── Intents/                          akce pro Siri, Zkratky a Spotlight (App Intents)
 ├── Models/                           SwiftData modely
 │   ├── Subject.swift                 předmět + vazba 1:N na úkoly (cascade)
 │   ├── ExamTask.swift                deadline
@@ -39,6 +43,10 @@ ZavernyProjekt/
 │   ├── StagService.swift             klient webových služeb IS/STAG
 │   ├── StagAccountStore.swift        uložený účet STAG (ticket v Klíčence)
 │   ├── StagSubjectSync.swift         aktualizace předmětů ze STAGu
+│   ├── TimetableStore.swift          rozvrh studenta ze STAGu (ukládá se do App Group)
+│   ├── PersistenceController.swift   sdílený ModelContainer (aplikace i App Intents)
+│   ├── ClassReminderScheduler.swift  upozornění před hodinou
+│   ├── LiveActivityManager.swift     Live Activity hodiny / zkoušky
 │   ├── WidgetSync.swift              zápis dat pro widget do App Group
 │   ├── TaskService.swift             sdílené operace (splnění, mazání)
 │   └── SampleData.swift              ukázková data a data pro #Preview
@@ -62,12 +70,11 @@ Projekt používá složku synchronizovanou se souborovým systémem. Nové soub
 
 ### Konfigurace ModelContaineru
 
-Kontejner se vytváří jednou v `App/TerminovnikApp.swift` a vkládá se do prostředí celé aplikace:
+Kontejner se vytváří jednou ve `Services/PersistenceController.swift`. Sdílí ho aplikace i akce pro Siri a Zkratky, které běží bez otevřeného UI:
 
 ```swift
-@main
-struct TerminovnikApp: App {
-    let modelContainer: ModelContainer = {
+enum PersistenceController {
+    static let shared: ModelContainer = {
         let schema = Schema([Subject.self, ExamTask.self])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
@@ -76,6 +83,11 @@ struct TerminovnikApp: App {
             fatalError("Nepodařilo se vytvořit ModelContainer: \(error)")
         }
     }()
+}
+
+@main
+struct TerminovnikApp: App {
+    let modelContainer: ModelContainer = PersistenceController.shared
 
     var body: some Scene {
         WindowGroup { ContentView() }
@@ -85,7 +97,7 @@ struct TerminovnikApp: App {
 ```
 
 - `Schema` vyjmenuje modely. Vazbu `Subject.tasks` ↔ `ExamTask.subject` SwiftData odvodí z `@Relationship(deleteRule: .cascade, inverse:)`.
-- `isStoredInMemoryOnly: false` ukládá data trvale do SQLite v kontejneru aplikace.
+- `isStoredInMemoryOnly: false` ukládá data trvale do SQLite. Protože má aplikace App Group, SwiftData databázi automaticky ukládá do sdíleného kontejneru App Group (`Library/Application Support/default.store`), ne do kontejneru aplikace.
 - Previews používají vlastní kontejner v paměti s ukázkovými daty (`SampleData.previewContainer`) nebo prázdný `.modelContainer(for: [...], inMemory: true)`.
 - Ve View se k datům přistupuje přes `@Query(sort: \ExamTask.dueDate)` a `@Environment(\.modelContext)`.
 
@@ -96,7 +108,7 @@ Aplikace používá veřejné REST rozhraní IS/STAG UTB (`https://stag-ws.utb.c
 1. Na úvodní obrazovce nebo v záložce **Předměty** (ikona stažení) zvol **Přihlásit se do IS/STAG**.
 2. Systém otevře zabezpečený prohlížeč (`ASWebAuthenticationSession`) s přihlášením UTB.
 3. STAG po přihlášení přesměruje na `zkousky://stag-login?stagUserTicket=…&stagUserInfo=…`. Aplikace z toho získá dočasný ticket a osobní číslo studenta.
-4. Služba `predmety/getPredmetyByStudent` vrátí předměty zapsané ve zvoleném semestru. Ty, které už v aplikaci máš, jsou označené a nevybírají se.
+4. Služba `predmety/getPredmetyByStudent` vrátí předměty zapsané ve zvoleném semestru. Rozvrh načítá služba `rozvrhy/getRozvrhByStudent`. Ty, které už v aplikaci máš, jsou označené a nevybírají se.
 5. Chybějící kredity se doplní z veřejné služby `predmety/getPredmetInfo`.
 
 **Soukromí:** aplikace heslo nikdy nevidí. Dlouhodobý ticket (`longTicket=1`, platí až 90 dní) se ukládá do Klíčenky, takže import i aktualizace v Nastavení fungují bez nového přihlášení. Odhlášením se ticket smaže. Pro jinou školu stačí změnit `StagService.baseURL`.
@@ -116,6 +128,10 @@ Widget nemá přístup k databázi aplikace. Aplikace proto po každé změně z
 - Aplikace startuje s **prázdnou databází**. Úvodní obrazovka nabídne přihlášení do STAGu a import tvých zapsaných předmětů. Jde ji přeskočit a předměty přidat ručně.
 - Ukázková data (`SampleData`) slouží jen pro SwiftUI Previews. Pro ruční testování je lze vložit argumentem `-seedSampleData` v **Product → Scheme → Edit Scheme → Run → Arguments**. Ve schématu není nastavený, funguje jen v Debug buildu a jen nad prázdnou databází.
 - Pro opakování „prvního spuštění“ aplikaci ze simulátoru smaž. Tím se smaže i databáze a stav úvodní obrazovky.
+
+## Siri a Zkratky
+
+Akce se po instalaci samy objeví v aplikaci Zkratky a ve Spotlightu. Siri česky neumí, proto mají zkratky i anglické fráze pro hlasové ovládání, například „Next class in Termínovník“.
 
 ## Ikona
 
