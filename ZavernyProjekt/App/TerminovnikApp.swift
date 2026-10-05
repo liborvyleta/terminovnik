@@ -7,17 +7,7 @@ struct TerminovnikApp: App {
 
     /// Sdílený ModelContainer = jediné úložiště SwiftData pro celou aplikaci.
     /// Schéma obsahuje oba modely; vazbu Subject ↔ ExamTask SwiftData odvodí z @Relationship.
-    let modelContainer: ModelContainer = {
-        let schema = Schema([Subject.self, ExamTask.self])
-        // isStoredInMemoryOnly: false → data se ukládají trvale do SQLite v kontejneru aplikace.
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        do {
-            return try ModelContainer(for: schema, configurations: [configuration])
-        } catch {
-            // Bez úložiště aplikace nemůže fungovat – chybu chceme vidět hned při vývoji.
-            fatalError("Nepodařilo se vytvořit ModelContainer: \(error)")
-        }
-    }()
+    let modelContainer: ModelContainer = PersistenceController.shared
 
     /// Fáze scény – při návratu do popředí obnovíme data widgetu.
     @Environment(\.scenePhase) private var scenePhase
