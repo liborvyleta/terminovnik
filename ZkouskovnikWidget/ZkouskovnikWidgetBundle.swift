@@ -6,5 +6,6 @@ import WidgetKit
 struct ZkouskovnikWidgetBundle: WidgetBundle {
     var body: some Widget {
         DeadlineWidget()
+        NextClassWidget()
     }
 }
