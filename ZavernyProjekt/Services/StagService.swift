@@ -149,6 +149,153 @@ nonisolated struct StagTimetableAction: Decodable {
     }
 }
 
+/// Termín zkoušky pro studenta (služba terminy/getTerminyProStudenta).
+/// Názvy polí odpovídají dokumentaci IS/STAG; dekódování je tolerantní k typům i obalům {"value": …}.
+nonisolated struct StagExamTerm: Decodable {
+    let termIdno: String?
+    let predmet: String?
+    let katedra: String?
+    let datum: String?
+    let casOd: String?
+    let casDo: String?
+    let obsazeni: Int?
+    let limit: Int?
+    let budova: String?
+    let mistnost: String?
+    let poznamka: String?
+    let opravny: Bool?
+    let deadlineDatumPrihlaseni: String?
+    let deadlineDatumOdhlaseni: String?
+    let zacatekPrihlasovani: String?
+    let platnost: String?
+    let typTerminu: String?
+    let zapsan: Bool?
+    let lzeZapsatOdepsat: Bool?
+    let duvodNelze: String?
+    let ucitel: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case termIdno, predmet, katedra, datum, casOd, casDo, obsazeni, limit, budova, mistnost
+        case poznamka, opravny, deadlineDatumPrihlaseni, deadlineDatumOdhlaseni, zacatekPrihlasovani
+        case platnost, typTerminu, zapsan, lzeZapsatOdepsat, ucitel
+        case textDuvoduProcNelzeZapsatOdepsat, popisDuvoduProcNelzeZapsatOdepsat
+    }
+
+    private struct ValueBox: Decodable { let value: String? }
+    private struct Teacher: Decodable {
+        let jmeno: String?
+        let prijmeni: String?
+        let titulPred: String?
+        let titulZa: String?
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func text(_ key: CodingKeys) -> String? {
+            if let value = try? c.decodeIfPresent(String.self, forKey: key) { return value.isEmpty ? nil : value }
+            if let number = try? c.decodeIfPresent(Int.self, forKey: key) { return String(number) }
+            if let box = (try? c.decodeIfPresent(ValueBox.self, forKey: key)) ?? nil { return box.value }
+            return nil
+        }
+        func number(_ key: CodingKeys) -> Int? {
+            if let value = try? c.decodeIfPresent(Int.self, forKey: key) { return value }
+            return text(key).flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        }
+        func flag(_ key: CodingKeys) -> Bool? {
+            if let value = try? c.decodeIfPresent(Bool.self, forKey: key) { return value }
+            guard let raw = text(key)?.lowercased() else { return nil }
+            return ["a", "ano", "true", "1", "y"].contains(raw)
+        }
+        termIdno = text(.termIdno)
+        predmet = text(.predmet)
+        katedra = text(.katedra)
+        datum = text(.datum)
+        casOd = text(.casOd)
+        casDo = text(.casDo)
+        obsazeni = number(.obsazeni)
+        limit = number(.limit)
+        budova = text(.budova)
+        mistnost = text(.mistnost)
+        poznamka = text(.poznamka)
+        opravny = flag(.opravny)
+        deadlineDatumPrihlaseni = text(.deadlineDatumPrihlaseni)
+        deadlineDatumOdhlaseni = text(.deadlineDatumOdhlaseni)
+        zacatekPrihlasovani = text(.zacatekPrihlasovani)
+        platnost = text(.platnost)
+        typTerminu = text(.typTerminu)
+        zapsan = flag(.zapsan)
+        lzeZapsatOdepsat = flag(.lzeZapsatOdepsat)
+        duvodNelze = text(.textDuvoduProcNelzeZapsatOdepsat) ?? text(.popisDuvoduProcNelzeZapsatOdepsat)
+        if let teacher = (try? c.decodeIfPresent(Teacher.self, forKey: .ucitel)) ?? nil {
+            let name = [teacher.titulPred, teacher.jmeno, teacher.prijmeni].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+            let full = [name, teacher.titulZa].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
+            ucitel = full.isEmpty ? nil : full
+        } else {
+            ucitel = text(.ucitel)
+        }
+    }
+
+    /// Převod na model aplikace (nil, pokud chybí ID, předmět nebo datum)
+    func examTerm() -> ExamTerm? {
+        guard let id = termIdno, let code = predmet, let day = StagDateParser.date(datum) else { return nil }
+        let start = StagDateParser.combine(day, time: casOd) ?? day
+        let end = StagDateParser.combine(day, time: casDo)
+        let room: String? = switch (budova, mistnost) {
+        case let (b?, m?): "\(b)/\(m)"
+        case let (nil, m?): m
+        case let (b?, nil): b
+        default: nil
+        }
+        return ExamTerm(
+            id: id,
+            subjectCode: code,
+            department: katedra ?? "",
+            typeName: typTerminu.map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? "Termín",
+            start: start,
+            end: end.flatMap { $0 > start ? $0 : nil },
+            room: room,
+            teacher: ucitel,
+            occupied: obsazeni,
+            capacity: limit,
+            isRegistered: zapsan ?? false,
+            canChangeRegistration: lzeZapsatOdepsat ?? false,
+            blockReason: duvodNelze,
+            registrationOpens: StagDateParser.date(zacatekPrihlasovani),
+            registrationDeadline: StagDateParser.date(deadlineDatumPrihlaseni),
+            unregisterDeadline: StagDateParser.date(deadlineDatumOdhlaseni),
+            isRetake: opravny ?? false,
+            note: poznamka,
+            isCancelled: (platnost ?? "A").uppercased() != "A"
+        )
+    }
+}
+
+/// Parsování dat a časů ve formátech, které STAG používá („16.1.2026“, „16.1.2026 23:59“, „09:00“)
+nonisolated enum StagDateParser {
+    private static let formats = ["d.M.yyyy HH:mm", "d.M.yyyy H:mm", "d.M.yyyy HH:mm:ss", "d.M.yyyy", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd"]
+
+    static func date(_ text: String?) -> Date? {
+        guard let text = text?.trimmingCharacters(in: .whitespaces), !text.isEmpty else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "cs_CZ")
+        formatter.timeZone = TimeZone(identifier: "Europe/Prague")
+        for format in formats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: text) { return date }
+        }
+        return nil
+    }
+
+    /// Den + čas „HH:mm“ → konkrétní okamžik
+    static func combine(_ day: Date, time: String?) -> Date? {
+        guard let parts = time?.split(separator: ":"), parts.count >= 2,
+              let hours = Int(parts[0]), let minutes = Int(parts[1]) else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Prague")!
+        return calendar.date(bySettingHour: hours, minute: minutes, second: 0, of: day)
+    }
+}
+
 /// Aktuální období podle STAGu (služba kalendar/getAktualniObdobiInfo)
 nonisolated struct StagPeriod: Decodable {
     /// „ZS“ (zimní) nebo „LS“ (letní)
@@ -291,6 +438,11 @@ nonisolated struct StagService {
     /// Rozvrh studenta v daném semestru (vyžaduje přihlášení)
     func studentTimetable(osCislo: String, semester: String, year: String) async throws -> [StagTimetableAction] {
         try await list("rozvrhy/getRozvrhByStudent", ["osCislo": osCislo, "semestr": semester, "rok": year])
+    }
+
+    /// Termíny zkoušek studenta – zapsané i ty, na které se může zapsat (vyžaduje přihlášení)
+    func studentExamTerms(osCislo: String) async throws -> [StagExamTerm] {
+        try await list("terminy/getTerminyProStudenta", ["osCislo": osCislo, "lang": "cs"])
     }
 
     /// Rozvrh předmětu (veřejné) – stejná struktura dat, hodí se pro testy

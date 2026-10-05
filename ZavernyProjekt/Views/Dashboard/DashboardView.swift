@@ -17,6 +17,17 @@ struct DashboardView: View {
     /// Úkol, pro který je otevřený editor události v Kalendáři
     @State private var taskForCalendar: ExamTask?
     @State private var isImportingFromStag = false
+    /// Vybraná záložka – karta nových termínů přepíná na Zkoušky
+    @AppStorage("selectedTab") private var selectedTab = "dashboard"
+
+    /// Termíny ze STAGu (@Observable singleton – čtení v body se automaticky sleduje)
+    private var termStore: ExamTermStore { .shared }
+
+    /// Nově vypsané termíny, které si uživatel ještě neprohlédl
+    private var newTerms: [ExamTerm] {
+        guard termStore.hasNewTerms else { return [] }
+        return termStore.availableTerms.filter { termStore.newTermIDs.contains($0.id) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -52,6 +63,12 @@ struct DashboardView: View {
         return List {
             // Souhrnné kartičky + segmentový přepínač
             Section {
+                if !newTerms.isEmpty {
+                    NewTermsCard(terms: newTerms) { selectedTab = "terms" }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 12, trailing: 0))
+                        .listRowBackground(Color.clear)
+                }
+
                 StatsHeaderView(stats: viewModel.stats(from: tasks))
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
@@ -160,6 +177,17 @@ struct DashboardView: View {
 
     /// Uživatel zatím nezadal žádný deadline. Bez předmětů nabídneme nejdřív import ze STAGu.
     private var emptyState: some View {
+        VStack(spacing: 0) {
+            if !newTerms.isEmpty {
+                NewTermsCard(terms: newTerms) { selectedTab = "terms" }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+            }
+            emptyStateContent
+        }
+    }
+
+    private var emptyStateContent: some View {
         EmptyStateView(
             symbol: "calendar.badge.plus",
             title: "Zatím žádné deadliny",
@@ -194,6 +222,65 @@ struct DashboardView: View {
                 tint: .green
             )
         }
+    }
+}
+
+// MARK: - Nové termíny
+
+/// Výrazná karta „Vypsány nové termíny“ – klepnutí otevře záložku Zkoušky.
+private struct NewTermsCard: View {
+    let terms: [ExamTerm]
+    let action: () -> Void
+
+    private var subjectCodes: String {
+        var seen = Set<String>()
+        return terms.map(\.subjectCode)
+            .filter { seen.insert($0.uppercased()).inserted }
+            .joined(separator: ", ")
+    }
+
+    private var countText: String {
+        "\(terms.count) \(CzechPlural.form(terms.count, one: "nový termín", few: "nové termíny", many: "nových termínů"))"
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "graduationcap.fill")
+                    .font(.title2)
+                    .foregroundStyle(.indigo)
+                    .frame(width: 46, height: 46)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Vypsány nové termíny")
+                        .font(.headline)
+                    Text("\(countText) · \(subjectCodes)")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.85))
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+            .foregroundStyle(.white)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                LinearGradient(colors: [.indigo, .indigo.opacity(0.78)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Vypsány nové termíny: \(countText), předměty \(subjectCodes)")
+        .accessibilityHint("Otevře záložku Zkoušky")
+        .accessibilityAddTraits(.isButton)
     }
 }
 

@@ -92,6 +92,13 @@ final class SettingsViewModel {
     }
 
     /// Změna předstihu připomínky – stará oznámení se nahradí novými.
+    /// Zapnutí upozornění na nové termíny – bez povolených oznámení by nepřišla, tak o ně rovnou požádáme
+    func examTermAlertsChanged(enabled: Bool) async {
+        if enabled, notificationPermission == .notDetermined {
+            await requestNotifications()
+        }
+    }
+
     func classReminderLeadChanged() {
         ClassReminderScheduler.shared.reschedule()
     }

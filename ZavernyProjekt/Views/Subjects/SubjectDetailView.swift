@@ -13,10 +13,14 @@ struct SubjectDetailView: View {
     @State private var taskToEdit: ExamTask?
     /// Úkol, pro který je otevřený editor události v Kalendáři
     @State private var taskForCalendar: ExamTask?
+    /// Vybraná záložka – odkaz „Všechny termíny“ přepne na Zkoušky
+    @AppStorage("selectedTab") private var selectedTab = "dashboard"
 
     var body: some View {
         let active = viewModel.activeTasks(of: subject)
         let completed = viewModel.completedTasks(of: subject)
+        // Termíny ze STAGu (@Observable singleton – změny se v body sledují)
+        let examTerms = subject.code.isEmpty ? [] : ExamTermStore.shared.terms(forSubject: subject.code)
 
         List {
             Section {
@@ -40,6 +44,21 @@ struct SubjectDetailView: View {
             if !active.isEmpty {
                 Section("Aktivní (\(active.count))") {
                     ForEach(active) { task in row(for: task) }
+                }
+            }
+
+            if !examTerms.isEmpty {
+                Section {
+                    ForEach(examTerms) { term in
+                        ExamTermRow(term: term)
+                    }
+                    Button {
+                        selectedTab = "terms"
+                    } label: {
+                        Label("Všechny termíny", systemImage: "graduationcap")
+                    }
+                } header: {
+                    Text("Termíny zkoušek")
                 }
             }
 
@@ -109,6 +128,61 @@ struct SubjectDetailView: View {
 
     private func toggle(_ task: ExamTask) {
         withAnimation(.snappy) { viewModel.toggleCompletion(task) }
+    }
+}
+
+/// Řádek termínu zkoušky ze STAGu: datum a čas, typ, místnost, obsazenost a stav zápisu.
+private struct ExamTermRow: View {
+    let term: ExamTerm
+
+    private var timeText: String {
+        guard let end = term.end else { return term.start.deadlineFormatted }
+        return "\(term.start.deadlineFormatted)–\(end.formatted(.dateTime.hour().minute().locale(.czech)))"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(timeText)
+                    .font(.subheadline.weight(.semibold))
+                    .strikethrough(term.isCancelled)
+                Spacer(minLength: 8)
+                if term.isCancelled {
+                    Label("Zrušeno", systemImage: "xmark.circle.fill")
+                        .labelStyle(.compact)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.red)
+                } else if term.isRegistered {
+                    Label("Zapsáno", systemImage: "checkmark.circle.fill")
+                        .labelStyle(.compact)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+            }
+
+            HStack(spacing: 12) {
+                Label(term.typeName, systemImage: term.taskType.symbol)
+                    .labelStyle(.compact)
+                if term.isRetake {
+                    Text("opravný")
+                        .foregroundStyle(.orange)
+                }
+                if let room = term.room, !room.isEmpty {
+                    Label(room, systemImage: "mappin.and.ellipse")
+                        .labelStyle(.compact)
+                }
+                if let occupied = term.occupied, let capacity = term.capacity {
+                    Label("\(occupied)/\(capacity)", systemImage: "person.2.fill")
+                        .labelStyle(.compact)
+                        .foregroundStyle(term.isFull ? .red : .secondary)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
     }
 }
 

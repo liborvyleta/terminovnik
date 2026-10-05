@@ -17,6 +17,8 @@ struct SettingsView: View {
     @AppStorage(ClassReminderScheduler.enabledKey) private var classRemindersEnabled = true
     @AppStorage(ClassReminderScheduler.leadMinutesKey) private var classReminderLeadMinutes = ClassReminderScheduler.defaultLeadMinutes
     @AppStorage("lessonLiveActivityEnabled") private var lessonLiveActivityEnabled = true
+    /// Upozornění na nově vypsané termíny zkoušek – klíč čte ExamTermStore
+    @AppStorage(ExamTermStore.alertsEnabledKey) private var examTermAlertsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -115,6 +117,19 @@ struct SettingsView: View {
                     Image(systemName: "lock.iphone")
                 }
             }
+
+            Toggle(isOn: $examTermAlertsEnabled) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Upozornit na nové termíny")
+                        Text("Kontroluje se při otevření aplikace a průběžně na pozadí (iOS spouští kontrolu podle svého uvážení).")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "graduationcap")
+                }
+            }
         } header: {
             Text("Výuka")
         } footer: {
@@ -129,11 +144,14 @@ struct SettingsView: View {
         .onChange(of: lessonLiveActivityEnabled) {
             viewModel.lessonLiveActivityChanged()
         }
+        .onChange(of: examTermAlertsEnabled) { _, enabled in
+            Task { await viewModel.examTermAlertsChanged(enabled: enabled) }
+        }
     }
 
     private var lessonsFooter: String {
-        var text = "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu."
-        if classRemindersEnabled, viewModel.notificationPermission == .denied {
+        var text = "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny hlídáme, když jsi přihlášený do STAGu."
+        if classRemindersEnabled || examTermAlertsEnabled, viewModel.notificationPermission == .denied {
             text += " Oznámení jsou ale v nastavení iOS vypnutá."
         }
         return text

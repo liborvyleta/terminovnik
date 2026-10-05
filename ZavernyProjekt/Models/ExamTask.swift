@@ -20,6 +20,9 @@ final class ExamTask {
     var note: String
     /// Předmět, ke kterému povinnost patří. Inverzní strana vazby je `Subject.tasks`.
     var subject: Subject?
+    /// ID termínu ve STAGu (termIdno), pokud úkol vznikl ze zapsaného termínu zkoušky.
+    /// Volitelná vlastnost – SwiftData databázi zmigruje automaticky.
+    var stagTermID: String?
 
     init(
         id: UUID = UUID(),
@@ -28,7 +31,8 @@ final class ExamTask {
         dueDate: Date,
         isCompleted: Bool = false,
         pointsOrGrade: String? = nil,
-        note: String = ""
+        note: String = "",
+        stagTermID: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -37,6 +41,7 @@ final class ExamTask {
         self.isCompleted = isCompleted
         self.pointsOrGrade = pointsOrGrade
         self.note = note
+        self.stagTermID = stagTermID
     }
 }
 
