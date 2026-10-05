@@ -13,6 +13,7 @@ Předměty si načteš přímo z IS/STAG UTB a aplikace ti den před každým te
 - **Formulář deadlinu:** předmět, název, typ (zkouška, zápočet, projekt, úkol), datum a čas, poznámka. Při úpravě i stav a body nebo známka.
 - **Lokální notifikace 1 den před termínem** s tlačítkem **„Splněno“** přímo v oznámení. Přeplánuje se při každé změně a zruší se po splnění nebo smazání.
 - **Rozvrh ze STAGu** v samostatné záložce: denní časová osa a týdenní mřížka, právě probíhající a další hodina, místnost, vyučující. Načítá se přes uložený účet a funguje i offline.
+- **Termíny zkoušek ze STAGu** v samostatné záložce: zapsané i vypsané termíny s obsazeností a oknem přihlašování. Zapsané termíny se samy přidají jako zkoušky s připomínkou a na nově vypsané termíny upozorní oznámení.
 - **Upozornění před hodinou** s nastavitelným předstihem a **Live Activity** s odpočtem probíhající hodiny nebo zkoušky na zamčené obrazovce a v Dynamic Islandu.
 - **Siri, Zkratky a Spotlight:** další hodina, rozvrh na den, nejbližší zkouška a přidání deadlinu.
 - **Widgety** na plochu a zamčenou obrazovku: *Nejbližší deadliny* s odpočtem a *Další hodina* z rozvrhu.
@@ -44,6 +45,8 @@ ZavernyProjekt/
 │   ├── StagAccountStore.swift        uložený účet STAG (ticket v Klíčence)
 │   ├── StagSubjectSync.swift         aktualizace předmětů ze STAGu
 │   ├── TimetableStore.swift          rozvrh studenta ze STAGu (ukládá se do App Group)
+│   ├── ExamTermStore.swift           termíny zkoušek ze STAGu, převod zapsaných na zkoušky, nové termíny
+│   ├── BackgroundRefresh.swift       kontrola termínů na pozadí (Background App Refresh)
 │   ├── PersistenceController.swift   sdílený ModelContainer (aplikace i App Intents)
 │   ├── ClassReminderScheduler.swift  upozornění před hodinou
 │   ├── LiveActivityManager.swift     Live Activity hodiny / zkoušky
@@ -112,6 +115,12 @@ Aplikace používá veřejné REST rozhraní IS/STAG UTB (`https://stag-ws.utb.c
 5. Chybějící kredity se doplní z veřejné služby `predmety/getPredmetInfo`.
 
 **Soukromí:** aplikace heslo nikdy nevidí. Dlouhodobý ticket (`longTicket=1`, platí až 90 dní) se ukládá do Klíčenky, takže import i aktualizace v Nastavení fungují bez nového přihlášení. Odhlášením se ticket smaže. Pro jinou školu stačí změnit `StagService.baseURL`.
+
+## Termíny zkoušek
+
+Termíny se načítají službou `terminy/getTerminyProStudenta` přes uložený účet. Kontrolují se při každém otevření aplikace a průběžně na pozadí (Background App Refresh). Kontrolu na pozadí spouští iOS podle svého uvážení, takže upozornění na nový termín může přijít se zpožděním. Okamžitá upozornění při zavřené aplikaci by vyžadovala vlastní server s push notifikacemi.
+
+Zapsané termíny se převádí na zkoušky (`ExamTask.stagTermID`) s připomínkou den předem. Po odhlášení z termínu ve STAGu se taková zkouška z aplikace odstraní.
 
 ## Widget a App Group
 
