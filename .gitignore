@@ -1,0 +1,14 @@
+# Xcode – osobní nastavení a výstupy buildu
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# macOS
+.DS_Store

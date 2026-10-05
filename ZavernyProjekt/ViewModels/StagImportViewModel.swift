@@ -1,0 +1,308 @@
+import Foundation
+import Observation
+import SwiftData
+import AuthenticationServices
+import SwiftUI // WebAuthenticationSession je ve spojení SwiftUI + AuthenticationServices
+
+/// ViewModel importu předmětů z IS/STAG.
+///
+/// Uživatel se přihlásí školním účtem ve vestavěném prohlížeči a aplikace načte
+/// jen předměty, které má zapsané ve zvoleném semestru. Připojený účet si pamatuje
+/// `StagAccountStore` (ticket v Klíčence, platí až 90 dní), takže při dalším importu
+/// se obrazovka rovnou načte bez přihlašování.
+@Observable
+final class StagImportViewModel {
+    enum Status: Equatable {
+        case idle
+        case loading(String)
+        case failed(String)
+    }
+
+    var status: Status = .idle
+    /// Semestr, pro který se načítají zapsané předměty („ZS“ / „LS“)
+    var semester = "ZS"
+    var selectedIDs: Set<String> = []
+
+    private(set) var results: [StagSubject] = []
+    private(set) var resultsTitle = ""
+    private(set) var period: StagPeriod?
+
+    /// Úložiště připojeného účtu (nil = jen v paměti, např. v náhledech – nesahá do Klíčenky)
+    private let accountStore: StagAccountStore?
+    /// Účet bez trvalého úložiště (použije se, jen když `accountStore` je nil)
+    private var localAccount: StagAccount?
+    /// Klient STAGu – po přihlášení / obnovení účtu nese ticket a stagUser
+    private var service = StagService()
+    /// Kódy předmětů, které už v aplikaci jsou (nebudeme je importovat dvakrát)
+    private var existingCodes: Set<String> = []
+
+    init(accountStore: StagAccountStore? = .shared) {
+        self.accountStore = accountStore
+    }
+
+    // MARK: - Odvozený stav
+
+    /// Připojený účet STAG (z úložiště, v náhledech z paměti)
+    var account: StagAccount? {
+        if let accountStore { return accountStore.account }
+        return localAccount
+    }
+
+    var studentName: String? { account?.fullName }
+    var osCislo: String? { account?.osCislo }
+    var faculty: String? { account?.faculty }
+
+    var isLoggedIn: Bool { account != nil }
+
+    var isLoading: Bool {
+        if case .loading = status { return true }
+        return false
+    }
+
+    /// Předměty, které lze vybrat (ještě nejsou v aplikaci)
+    var importableResults: [StagSubject] { results.filter { !isAlreadyImported($0) } }
+
+    var selectedCount: Int { importableResults.filter { selectedIDs.contains($0.id) }.count }
+
+    var allSelected: Bool {
+        !importableResults.isEmpty && importableResults.allSatisfy { selectedIDs.contains($0.id) }
+    }
+
+    var periodTitle: String? {
+        guard let period else { return nil }
+        let name = period.obdobi == "ZS" ? "zimní" : "letní"
+        return "Aktuálně \(name) semestr \(period.academicYearTitle)"
+    }
+
+    // MARK: - Výběr
+
+    func configure(existingSubjects: [Subject]) {
+        existingCodes = Set(existingSubjects.map { $0.code.uppercased() })
+    }
+
+    func isAlreadyImported(_ subject: StagSubject) -> Bool {
+        existingCodes.contains(subject.zkratka.uppercased())
+    }
+
+    func toggleSelection(_ subject: StagSubject) {
+        guard !isAlreadyImported(subject) else { return }
+        if selectedIDs.contains(subject.id) {
+            selectedIDs.remove(subject.id)
+        } else {
+            selectedIDs.insert(subject.id)
+        }
+    }
+
+    func toggleSelectAll() {
+        selectedIDs = allSelected ? [] : Set(importableResults.map(\.id))
+    }
+
+    // MARK: - Načítání ze STAGu
+
+    /// Volá se při otevření obrazovky. Je-li účet STAG připojený, rovnou načte
+    /// aktuální období a zapsané předměty – bez přihlašovací obrazovky.
+    func start() async {
+        if let saved = accountStore?.makeService() {
+            service = saved
+        }
+        guard isLoggedIn, results.isEmpty, !isLoading else {
+            await loadPeriod()
+            return
+        }
+        status = .loading("Načítám tvoje předměty…")
+        await loadPeriod()
+        await loadMySubjects()
+    }
+
+    /// Aktuální semestr – podle něj se předvybere ZS/LS.
+    /// Služba je veřejná, volá se proto bez ticketu (neovlivní ji ani vypršené přihlášení).
+    func loadPeriod() async {
+        guard period == nil else { return }
+        if let current = try? await StagService().currentPeriod() {
+            period = current
+            semester = current.obdobi
+        }
+    }
+
+    /// Přihlášení přes webovou stránku STAGu. Systém otevře zabezpečený prohlížeč,
+    /// po přihlášení STAG přesměruje na `zkousky://stag-login?stagUserTicket=…`.
+    func login(using session: WebAuthenticationSession) async {
+        status = .loading("Přihlašování do IS/STAG…")
+        do {
+            let callbackURL = try await session.authenticate(
+                using: StagService.loginURL(),
+                callbackURLScheme: StagService.callbackScheme
+            )
+            let (ticket, attachedInfo) = try StagService.parseLoginCallback(callbackURL)
+            service = StagService(ticket: ticket)
+
+            // Role uživatele STAG obvykle přiloží rovnou, jinak si je vyžádáme službou.
+            let info: StagUserInfo
+            if let attachedInfo {
+                info = attachedInfo
+            } else {
+                info = try await service.userInfo(forTicket: ticket)
+            }
+            guard let student = info.studentRoles.first, let number = student.osCislo else {
+                throw StagError.noStudentRole
+            }
+
+            service.stagUser = student.userName
+            // Účet si zapamatujeme – příště se už přihlašovat nemusí (ticket platí až 90 dní)
+            let account = StagAccount(
+                fullName: info.fullName.isEmpty ? student.userName : info.fullName,
+                osCislo: number,
+                stagUser: student.userName,
+                faculty: student.fakulta,
+                connectedAt: .now
+            )
+            if let accountStore {
+                accountStore.connect(account, ticket: ticket)
+            } else {
+                localAccount = account
+            }
+
+            await loadPeriod()
+            await loadMySubjects()
+        } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+            status = .idle  // uživatel přihlášení zavřel – nejde o chybu
+        } catch {
+            fail(error)
+        }
+    }
+
+    /// Předměty zapsané ve zvoleném semestru
+    func loadMySubjects() async {
+        guard let osCislo else { return }
+        guard let year = period?.akademRok else {
+            status = .failed("Nepodařilo se zjistit aktuální akademický rok.")
+            return
+        }
+        status = .loading("Načítám tvoje předměty…")
+        do {
+            let subjects = try await service.studentSubjects(osCislo: osCislo, semester: semester, year: year)
+            let semesterName = semester == "ZS" ? "zimní" : "letní"
+            show(
+                subjects,
+                title: "Zapsané předměty – \(semesterName) semestr",
+                emptyMessage: "V tomto semestru nemáš ve STAGu zapsané žádné předměty."
+            )
+        } catch {
+            fail(error)
+        }
+    }
+
+    // MARK: - Import do SwiftData
+
+    /// Vytvoří vybrané předměty. Chybějící kredity a názvy doplní z veřejné služby getPredmetInfo.
+    /// Vrací počet importovaných předmětů.
+    func importSelected(into context: ModelContext) async -> Int {
+        let chosen = importableResults.filter { selectedIDs.contains($0.id) }
+        guard !chosen.isEmpty else { return 0 }
+
+        status = .loading("Importuji \(chosen.count) \(CzechPlural.form(chosen.count, one: "předmět", few: "předměty", many: "předmětů"))…")
+        var colorIndex = existingCodes.count
+
+        for stagSubject in chosen {
+            var name = stagSubject.nazev
+            var credits = stagSubject.kreditu
+
+            if name == nil || credits == nil, let year = stagSubject.rok ?? period?.akademRok {
+                let detail = try? await service.subjectInfo(
+                    department: stagSubject.katedra,
+                    code: stagSubject.zkratka,
+                    year: year
+                )
+                name = name ?? detail?.nazev
+                credits = credits ?? detail?.kreditu
+            }
+
+            // Každý importovaný předmět dostane jinou barvu z palety
+            let subject = Subject(
+                name: name ?? stagSubject.zkratka,
+                code: stagSubject.zkratka.uppercased(),
+                hexColor: SubjectPalette.hex(colorIndex),
+                credits: credits ?? 0
+            )
+            context.insert(subject)
+            existingCodes.insert(subject.code)
+            colorIndex += 1
+        }
+
+        TaskService.save(context)
+        accountStore?.markSynced()
+        selectedIDs.removeAll()
+        status = .idle
+        return chosen.count
+    }
+
+    // MARK: - Pomocné
+
+    /// Odhlášení – smaže ticket z Klíčenky, uložený účet i načtená data
+    func logout() {
+        forgetAccount()
+        status = .idle
+    }
+
+    private func forgetAccount() {
+        accountStore?.signOut()
+        localAccount = nil
+        service = StagService()
+        results = []
+        resultsTitle = ""
+        selectedIDs = []
+    }
+
+    private func show(_ subjects: [StagSubject], title: String, emptyMessage: String) {
+        // Odstraníme duplicity (stejný předmět může přijít víckrát) a seřadíme podle kódu
+        var seen = Set<String>()
+        results = subjects
+            .filter { seen.insert($0.id).inserted }
+            .sorted { $0.zkratka < $1.zkratka }
+        resultsTitle = title
+        // Předvybereme vše, co v aplikaci ještě není
+        selectedIDs = Set(importableResults.map(\.id))
+        status = results.isEmpty ? .failed(emptyMessage) : .idle
+    }
+
+    private func fail(_ error: Error) {
+        if let stagError = error as? StagError, case .unauthorized = stagError {
+            // Ticket vypršel – účet odpojíme a vrátíme se k tlačítku přihlášení
+            forgetAccount()
+            status = .failed("Přihlášení do STAGu vypršelo, přihlas se znovu.")
+            return
+        }
+        status = .failed(error.localizedDescription)
+    }
+}
+
+#if DEBUG
+// MARK: - Náhled
+
+extension StagImportViewModel {
+    /// Stav po přihlášení s reálnými předměty UTB – pro #Preview, bez sítě, Klíčenky a přihlášení
+    static var previewLoggedIn: StagImportViewModel {
+        let viewModel = StagImportViewModel(accountStore: nil)
+        viewModel.localAccount = StagAccount(
+            fullName: "Jan Novák",
+            osCislo: "A23456",
+            stagUser: "st23456",
+            faculty: "FAI",
+            connectedAt: .now
+        )
+        viewModel.period = StagPeriod(obdobi: "ZS", akademRok: "2026")
+        viewModel.show(
+            [
+                StagSubject(katedra: "AUIUI", zkratka: "AP9PT", nazev: "Pokročilé mobilní technologie", kreditu: 4, rok: "2026"),
+                StagSubject(katedra: "AUIUI", zkratka: "AP9DM", nazev: "Datamining", kreditu: 5, rok: "2026"),
+                StagSubject(katedra: "AUIUI", zkratka: "AP9BI", nazev: "Bezpečnost informačních systémů", kreditu: 5, rok: "2026"),
+                StagSubject(katedra: "AUIUI", zkratka: "AP9SS", nazev: "Simulace systémů", kreditu: 5, rok: "2026"),
+                StagSubject(katedra: "AUIUI", zkratka: "AP9VH", nazev: "Vývoj počítačových her", kreditu: 4, rok: "2026")
+            ],
+            title: "Zapsané předměty – zimní semestr",
+            emptyMessage: ""
+        )
+        return viewModel
+    }
+}
+#endif

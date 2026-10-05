@@ -1,0 +1,107 @@
+import Foundation
+import Observation
+import SwiftData
+import SwiftUI
+import UIKit
+import UserNotifications
+
+/// ViewModel obrazovky Nastavení – stav povolení oznámení, mazání dat a informace o verzi.
+@Observable
+final class SettingsViewModel {
+    /// Zjednodušený stav povolení notifikací pro zobrazení v UI.
+    enum NotificationPermission {
+        case unknown        // stav se ještě načítá
+        case notDetermined  // uživatel se zatím nerozhodl
+        case authorized
+        case denied
+
+        init(_ status: UNAuthorizationStatus) {
+            switch status {
+            case .notDetermined: self = .notDetermined
+            case .denied: self = .denied
+            case .authorized, .provisional, .ephemeral: self = .authorized
+            @unknown default: self = .unknown
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .unknown: "Zjišťuji…"
+            case .notDetermined: "Zatím nerozhodnuto"
+            case .authorized: "Povoleno"
+            case .denied: "Zakázáno"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .unknown: "ellipsis.circle"
+            case .notDetermined: "questionmark.circle.fill"
+            case .authorized: "checkmark.circle.fill"
+            case .denied: "xmark.circle.fill"
+            }
+        }
+
+        var tint: Color {
+            switch self {
+            case .unknown: .secondary
+            case .notDetermined: .orange
+            case .authorized: .green
+            case .denied: .red
+            }
+        }
+    }
+
+    var notificationPermission: NotificationPermission = .unknown
+    var isConfirmingDeleteAll = false
+
+    /// Odkaz do systémového Nastavení přímo na oznámení této aplikace
+    let notificationSettingsURL = URL(string: UIApplication.openNotificationSettingsURLString)
+
+    /// Verze aplikace z Info.plist, např. „1.0 (1)“
+    var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "–"
+        let build = info?["CFBundleVersion"] as? String ?? "–"
+        return "\(version) (\(build))"
+    }
+
+    // MARK: - Oznámení
+
+    /// Načte aktuální stav povolení ze systému (volá se při zobrazení a návratu do popředí).
+    func refreshNotificationStatus() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        notificationPermission = NotificationPermission(settings.authorizationStatus)
+    }
+
+    /// Zobrazí systémový dialog s žádostí o povolení a poté obnoví stav.
+    func requestNotifications() async {
+        await NotificationManager.shared.requestAuthorization()
+        await refreshNotificationStatus()
+    }
+
+    // MARK: - Data
+
+    /// Smaže všechny předměty i deadliny a zruší jejich připomínky.
+    /// Úkoly předmětů smaže SwiftData kaskádou, úkoly bez předmětu mažeme ručně.
+    /// Přihlášení ke STAGu se tím nemění.
+    func deleteAllData(in context: ModelContext) {
+        do {
+            let tasks = try context.fetch(FetchDescriptor<ExamTask>())
+            let subjects = try context.fetch(FetchDescriptor<Subject>())
+
+            for task in tasks {
+                NotificationManager.shared.cancelReminder(for: task)
+            }
+            for task in tasks where task.subject == nil {
+                context.delete(task)
+            }
+            for subject in subjects {
+                context.delete(subject)
+            }
+        } catch {
+            print("⚠️ Načtení dat ke smazání selhalo: \(error.localizedDescription)")
+        }
+        TaskService.save(context)
+    }
+}
