@@ -41,11 +41,19 @@ struct TerminovnikApp: App {
         // Vloží kontejner do prostředí → všechna View mají přístup k @Query a modelContext.
         .modelContainer(modelContainer)
         // Po návratu do popředí (např. po odškrtnutí z oznámení nebo změně dne) obnovíme widget.
+        // Kontrola termínů na pozadí – iOS ji spouští podle svého uvážení
+        .backgroundTask(.appRefresh(BackgroundRefresh.taskIdentifier)) {
+            await BackgroundRefresh.run()
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 WidgetSync.refresh(from: modelContainer.mainContext)
                 // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
                 Task { await TimetableStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
+                // Termíny zkoušek – nové termíny ohlásí oznámením hned po otevření
+                Task { await ExamTermStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
+                // Naplánujeme další kontrolu na pozadí
+                BackgroundRefresh.schedule()
                 // Připomínky hodin posuneme o další dny a Live Activity sladíme s aktuální hodinou
                 ClassReminderScheduler.shared.reschedule()
                 LiveActivityManager.shared.updateLessonActivity()

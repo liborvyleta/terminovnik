@@ -45,11 +45,21 @@
 			);
 			target = 000000000000000200000000 /* ZkouskovnikWidgetExtension */;
 		};
+		0000000000000001A0000000 /* Exceptions for "ZavernyProjekt" folder in "ZavernyProjekt" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 000000000000000100000000 /* ZavernyProjekt */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* ZavernyProjekt */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0000000000000001A0000000 /* Exceptions for "ZavernyProjekt" folder in "ZavernyProjekt" target */,
+			);
 			path = ZavernyProjekt;
 			sourceTree = "<group>";
 		};
@@ -364,6 +374,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZavernyProjekt/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -407,6 +418,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZavernyProjekt/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
