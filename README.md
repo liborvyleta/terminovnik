@@ -1,7 +1,8 @@
 # Termínovník
 
 **Chytrý plánovač zkoušek a deadlinů** pro iOS 17+ ve Swiftu, SwiftUI a SwiftData s architekturou MVVM.
-Předměty si načteš přímo z IS/STAG UTB a aplikace ti den před každým termínem pošle připomínku.
+Předměty, rozvrh i termíny zkoušek si načteš přímo z IS/STAG své školy a aplikace ti den před každým termínem pošle připomínku.
+Aplikace je v češtině a angličtině.
 
 ## Funkce
 
@@ -10,6 +11,8 @@ Předměty si načteš přímo z IS/STAG UTB a aplikace ti den před každým te
 - **Vyhledávání** (`.searchable`) v názvu, předmětu, kódu, typu i poznámce a segmentový přepínač *Vše / Blížící se / Splněné*.
 - **Předměty** v kartách s postupem, kredity a nejbližším deadlinem. Detail předmětu ukazuje kroužek postupu a všechny jeho úkoly.
 - **Import ze STAGu.** Po přihlášení školním účtem načte jen předměty, které máš zapsané (název, kód, kredity).
+- **Více škol se STAGem:** UTB, ZČU, JČU, TUL, Univerzita Pardubice, UHK a UJEP, případně jiná škola zadáním adresy serveru (ověří se před přihlášením).
+- **Čeština a angličtina:** jazyk se přepíná v Nastavení iOS → Termínovník → Jazyk (odkaz je i v Nastavení aplikace).
 - **Formulář deadlinu:** předmět, název, typ (zkouška, zápočet, projekt, úkol), datum a čas, poznámka. Při úpravě i stav a body nebo známka.
 - **Lokální notifikace 1 den před termínem** s tlačítkem **„Splněno“** přímo v oznámení. Přeplánuje se při každé změně a zruší se po splnění nebo smazání.
 - **Rozvrh ze STAGu** v samostatné záložce: denní časová osa a týdenní mřížka, právě probíhající a další hodina, místnost, vyučující. Načítá se přes uložený účet a funguje i offline.
@@ -56,6 +59,8 @@ ZavernyProjekt/
 └── Helpers/                          pomocné rozšíření pro modely
 Shared/                               kód sdílený aplikací a widgetem (barvy, odpočet, data pro widget)
 ZkouskovnikWidget/                    rozšíření s widgety (WidgetKit)
+ZavernyProjektTests/                  unit testy (Swift Testing)
+docs/                                 bezpečnostní audit a zásady ochrany osobních údajů
 Tools/RenderAppIcon.swift             generátor ikony z AppLogoView
 ```
 
@@ -106,7 +111,7 @@ struct TerminovnikApp: App {
 
 ## Import předmětů ze STAGu
 
-Aplikace používá veřejné REST rozhraní IS/STAG UTB (`https://stag-ws.utb.cz/ws`).
+Aplikace používá REST rozhraní IS/STAG zvolené školy (seznam škol je v `Models/StagSchool.swift`, např. UTB `https://stag-ws.utb.cz/ws`).
 
 1. Na úvodní obrazovce nebo v záložce **Předměty** (ikona stažení) zvol **Přihlásit se do IS/STAG**.
 2. Systém otevře zabezpečený prohlížeč (`ASWebAuthenticationSession`) s přihlášením UTB.
@@ -114,7 +119,7 @@ Aplikace používá veřejné REST rozhraní IS/STAG UTB (`https://stag-ws.utb.c
 4. Služba `predmety/getPredmetyByStudent` vrátí předměty zapsané ve zvoleném semestru. Rozvrh načítá služba `rozvrhy/getRozvrhByStudent`. Ty, které už v aplikaci máš, jsou označené a nevybírají se.
 5. Chybějící kredity se doplní z veřejné služby `predmety/getPredmetInfo`.
 
-**Soukromí:** aplikace heslo nikdy nevidí. Dlouhodobý ticket (`longTicket=1`, platí až 90 dní) se ukládá do Klíčenky, takže import i aktualizace v Nastavení fungují bez nového přihlášení. Odhlášením se ticket smaže. Pro jinou školu stačí změnit `StagService.baseURL`.
+**Soukromí:** aplikace heslo nikdy nevidí. Dlouhodobý ticket (`longTicket=1`, platí až 90 dní) se ukládá do Klíčenky, takže import i aktualizace v Nastavení fungují bez nového přihlášení. Odhlášením se ticket smaže. Další školu přidáš do `StagSchool.all`; uživatel může zadat i vlastní adresu serveru (jen HTTPS).
 
 ## Termíny zkoušek
 
@@ -141,6 +146,25 @@ Widget nemá přístup k databázi aplikace. Aplikace proto po každé změně z
 ## Siri a Zkratky
 
 Akce se po instalaci samy objeví v aplikaci Zkratky a ve Spotlightu. Siri česky neumí, proto mají zkratky i anglické fráze pro hlasové ovládání, například „Next class in Termínovník“.
+
+## Lokalizace
+
+Zdrojový jazyk je čeština, překlady jsou v `Shared/Localizable.xcstrings` (sdílí ho aplikace i widget). Tvary podle počtu (1 kredit / 2 kredity / 5 kreditů) řeší plural variations v katalogu. Nové texty se do katalogu přidají při buildu v Xcode.
+
+## Testy
+
+Unit testy jsou ve složce `ZavernyProjektTests` (Swift Testing) a pracují jen s databází v paměti. Spuštění: ⌘U v Xcode, nebo
+
+```bash
+xcodebuild test -project ZavernyProjekt.xcodeproj -scheme ZavernyProjekt \
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -testLanguage cs -testRegion CZ
+```
+
+## Soukromí a App Store
+
+- Bezpečnostní a compliance audit podle App Store Review Guidelines: `docs/BEZPECNOSTNI_AUDIT.md`.
+- Zásady ochrany osobních údajů: v aplikaci (Nastavení → Zásady ochrany osobních údajů) a ke zveřejnění na webu v `docs/ZASADY_OCHRANY_UDAJU.md`. Před odesláním do App Store je zveřejni a doplň adresy v `Models/AppInfo.swift`.
+- Privacy Manifest (`PrivacyInfo.xcprivacy`) má aplikace i widget. Aplikace nesbírá žádná data (App Privacy: „Data Not Collected“).
 
 ## Ikona
 
