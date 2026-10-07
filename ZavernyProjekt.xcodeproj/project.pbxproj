@@ -18,6 +18,13 @@
 			remoteGlobalIDString = 000000000000000200000000;
 			remoteInfo = ZkouskovnikWidgetExtension;
 		};
+		000000000000000350000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000100000000;
+			remoteInfo = ZavernyProjekt;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,6 +42,7 @@
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* ZavernyProjekt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZavernyProjekt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZkouskovnikWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000320 /* ZavernyProjektTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZavernyProjektTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -76,6 +84,11 @@
 			path = ZkouskovnikWidget;
 			sourceTree = "<group>";
 		};
+		000000000000000000000050 /* ZavernyProjektTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ZavernyProjektTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +102,11 @@
 			files = (
 			);
 		};
+		000000000000000330000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -98,6 +116,7 @@
 				000000000000000000000010 /* ZavernyProjekt */,
 				000000000000000000000030 /* Shared */,
 				000000000000000000000040 /* ZkouskovnikWidget */,
+				000000000000000000000050 /* ZavernyProjektTests */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -107,6 +126,7 @@
 			children = (
 				000000000000000000000120 /* ZavernyProjekt.app */,
 				000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */,
+				000000000000000000000320 /* ZavernyProjektTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -156,6 +176,27 @@
 			productReference = 000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		000000000000000300000000 /* ZavernyProjektTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000310000000 /* Build configuration list for PBXNativeTarget "ZavernyProjektTests" */;
+			buildPhases = (
+				000000000000000320000000 /* Sources */,
+				000000000000000330000000 /* Frameworks */,
+				000000000000000340000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000360000000 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000050 /* ZavernyProjektTests */,
+			);
+			name = ZavernyProjektTests;
+			productName = ZavernyProjektTests;
+			productReference = 000000000000000000000320 /* ZavernyProjektTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -172,12 +213,17 @@
 					000000000000000200000000 = {
 						CreatedOnToolsVersion = 26.3;
 					};
+					000000000000000300000000 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 000000000000000100000000;
+					};
 				};
 			};
 			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "ZavernyProjekt" */;
-			developmentRegion = en;
+			developmentRegion = cs;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				cs,
 				en,
 				Base,
 			);
@@ -190,6 +236,7 @@
 			targets = (
 				000000000000000100000000 /* ZavernyProjekt */,
 				000000000000000200000000 /* ZkouskovnikWidgetExtension */,
+				000000000000000300000000 /* ZavernyProjektTests */,
 			);
 		};
 /* End PBXProject section */
@@ -201,6 +248,11 @@
 			);
 		};
 		000000000000000240000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		000000000000000340000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -218,6 +270,11 @@
 			files = (
 			);
 		};
+		000000000000000320000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -225,6 +282,11 @@
 			isa = PBXTargetDependency;
 			target = 000000000000000200000000 /* ZkouskovnikWidgetExtension */;
 			targetProxy = 000000000000000170000000 /* PBXContainerItemProxy */;
+		};
+		000000000000000360000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000100000000 /* ZavernyProjekt */;
+			targetProxy = 000000000000000350000000 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -507,6 +569,52 @@
 			};
 			name = Release;
 		};
+		000000000000000311000000 /* Debug configuration for PBXNativeTarget "ZavernyProjektTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjektTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ZavernyProjekt.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ZavernyProjekt";
+			};
+			name = Debug;
+		};
+		000000000000000312000000 /* Release configuration for PBXNativeTarget "ZavernyProjektTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjektTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ZavernyProjekt.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ZavernyProjekt";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -531,6 +639,14 @@
 			buildConfigurations = (
 				000000000000000211000000 /* Debug configuration for PBXNativeTarget "ZkouskovnikWidgetExtension" */,
 				000000000000000212000000 /* Release configuration for PBXNativeTarget "ZkouskovnikWidgetExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		000000000000000310000000 /* Build configuration list for PBXNativeTarget "ZavernyProjektTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000311000000 /* Debug configuration for PBXNativeTarget "ZavernyProjektTests" */,
+				000000000000000312000000 /* Release configuration for PBXNativeTarget "ZavernyProjektTests" */,
 			);
 			defaultConfigurationName = Release;
 		};

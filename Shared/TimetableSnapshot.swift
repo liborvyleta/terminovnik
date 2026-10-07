@@ -66,8 +66,8 @@ nonisolated extension TimetableEvent {
     /// „Sudý týden“ / „Lichý týden“, jinak nil (výuka každý týden)
     var parityText: String? {
         switch weekParity {
-        case "Sudý": return "Sudý týden"
-        case "Lichý": return "Lichý týden"
+        case "Sudý": return String(localized: "Sudý týden")
+        case "Lichý": return String(localized: "Lichý týden")
         default: return nil
         }
     }
@@ -94,8 +94,10 @@ nonisolated extension TimetableEvent {
         guard occurs(on: date, calendar: calendar),
               let startMinutes, let endMinutes else { return nil }
         let day = calendar.startOfDay(for: date)
-        guard let start = calendar.date(byAdding: .minute, value: startMinutes, to: day),
-              let end = calendar.date(byAdding: .minute, value: endMinutes, to: day) else { return nil }
+        // Nastavujeme čas „na hodinách“ – přičítání minut od půlnoci by v den změny času posunulo hodinu o 60 min
+        guard let start = calendar.date(bySettingHour: startMinutes / 60, minute: startMinutes % 60, second: 0, of: day),
+              let end = calendar.date(bySettingHour: endMinutes / 60, minute: endMinutes % 60, second: 0, of: day)
+        else { return nil }
         return TimetableOccurrence(event: self, start: start, end: end)
     }
 
@@ -165,7 +167,8 @@ nonisolated struct TimetableSnapshot: Codable {
 // MARK: - Ukázková data (náhledy, galerie widgetů)
 
 nonisolated extension TimetableSnapshot {
-    /// Realistický rozvrh studenta FAI UTB pro náhledy – platí vždy (bez omezení dat)
+    /// Realistický rozvrh studenta FAI UTB pro náhledy – platí vždy (bez omezení dat).
+    /// Jména vyučujících jsou smyšlená – ukázky se zobrazují i v Release (galerie widgetů, snímky obrazovky).
     static var sample: TimetableSnapshot {
         func event(_ id: String, _ code: String, _ name: String, _ type: String, _ short: String,
                    _ day: Int, _ from: String, _ to: String, _ building: String, _ room: String,
@@ -177,11 +180,11 @@ nonisolated extension TimetableSnapshot {
         }
         return TimetableSnapshot(
             events: [
-                event("s1", "AP9PT", "Pokročilé mobilní technologie", "Přednáška", "Př", 2, "12:00", "13:00", "54", "110", "Ing. Filip Vabroušek", "#3E63DD"),
-                event("s2", "AP9PT", "Pokročilé mobilní technologie", "Cvičení", "Cv", 2, "10:00", "12:00", "52", "202", "Ing. Filip Vabroušek", "#3E63DD"),
-                event("s3", "AP9EV", "Evoluční výpočetní techniky", "Cvičení", "Cv", 1, "08:00", "10:00", "54", "304", "Ing. Adam Viktorin", "#B8860B"),
-                event("s4", "AP9EV", "Evoluční výpočetní techniky", "Přednáška", "Př", 2, "18:00", "20:00", "51", "219", "doc. Ing. Roman Šenkeřík, Ph.D.", "#B8860B"),
-                event("s5", "AP9DM", "Datamining", "Přednáška", "Př", 3, "09:00", "11:00", "54", "211", "doc. Ing. Petr Šilhavý, Ph.D.", "#12A594"),
+                event("s1", "AP9PT", "Pokročilé mobilní technologie", "Přednáška", "Př", 2, "12:00", "13:00", "54", "110", "Mgr. Petr Svoboda", "#3E63DD"),
+                event("s2", "AP9PT", "Pokročilé mobilní technologie", "Cvičení", "Cv", 2, "10:00", "12:00", "52", "202", "Mgr. Petr Svoboda", "#3E63DD"),
+                event("s3", "AP9EV", "Evoluční výpočetní techniky", "Cvičení", "Cv", 1, "08:00", "10:00", "54", "304", "Ing. Martin Horák", "#B8860B"),
+                event("s4", "AP9EV", "Evoluční výpočetní techniky", "Přednáška", "Př", 2, "18:00", "20:00", "51", "219", "doc. Ing. Eva Dvořáková, Ph.D.", "#B8860B"),
+                event("s5", "AP9DM", "Datamining", "Přednáška", "Př", 3, "09:00", "11:00", "54", "211", "doc. Ing. Karel Procházka, Ph.D.", "#12A594"),
                 event("s6", "AP9DM", "Datamining", "Cvičení", "Cv", 4, "13:00", "15:00", "52", "104", "Ing. Jan Novák", "#12A594"),
                 event("s7", "AP9BI", "Bezpečnost informačních systémů", "Seminář", "Se", 5, "10:00", "12:00", "53", "309", "Ing. Petra Svobodová", "#E5484D")
             ],

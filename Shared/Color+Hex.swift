@@ -27,28 +27,32 @@ extension Color {
 enum SubjectPalette {
     struct Entry: Identifiable {
         let hex: String
+        /// Název barvy pro VoiceOver (lokalizovaný)
         let name: String
         var id: String { hex }
     }
 
     static let entries: [Entry] = [
-        Entry(hex: "#E5484D", name: "Červená"),
-        Entry(hex: "#F76B15", name: "Oranžová"),
-        Entry(hex: "#B8860B", name: "Zlatá"),
-        Entry(hex: "#30A46C", name: "Zelená"),
-        Entry(hex: "#12A594", name: "Tyrkysová"),
-        Entry(hex: "#00A2C7", name: "Azurová"),
-        Entry(hex: "#0090FF", name: "Modrá"),
-        Entry(hex: "#3E63DD", name: "Indigová"),
-        Entry(hex: "#8E4EC6", name: "Fialová"),
-        Entry(hex: "#D6409F", name: "Růžová"),
-        Entry(hex: "#A0632E", name: "Hnědá"),
-        Entry(hex: "#687076", name: "Šedá")
+        Entry(hex: "#E5484D", name: String(localized: "Červená")),
+        Entry(hex: "#F76B15", name: String(localized: "Oranžová")),
+        Entry(hex: "#B8860B", name: String(localized: "Zlatá")),
+        Entry(hex: "#30A46C", name: String(localized: "Zelená")),
+        Entry(hex: "#12A594", name: String(localized: "Tyrkysová")),
+        Entry(hex: "#00A2C7", name: String(localized: "Azurová")),
+        Entry(hex: "#0090FF", name: String(localized: "Modrá")),
+        Entry(hex: "#3E63DD", name: String(localized: "Indigová")),
+        Entry(hex: "#8E4EC6", name: String(localized: "Fialová")),
+        Entry(hex: "#D6409F", name: String(localized: "Růžová")),
+        Entry(hex: "#A0632E", name: String(localized: "Hnědá")),
+        Entry(hex: "#687076", name: String(localized: "Šedá"))
     ]
 
     /// Náhodná barva pro nový předmět
     static var randomHex: String { entries.randomElement()?.hex ?? "#3E63DD" }
 
     /// Hex barvy podle indexu v paletě (pro ukázková data)
-    static func hex(_ index: Int) -> String { entries[index % entries.count].hex }
+    static func hex(_ index: Int) -> String {
+        let count = entries.count
+        return entries[((index % count) + count) % count].hex
+    }
 }
