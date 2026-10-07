@@ -70,6 +70,7 @@ struct StagAccountSection: View {
         }
         .padding(.vertical, 2)
 
+        LabeledContent("Škola", value: account.resolvedSchool.name)
         LabeledContent("Osobní číslo", value: account.osCislo)
 
         if let faculty = account.faculty, !faculty.isEmpty {
@@ -181,8 +182,8 @@ struct StagAccountSection: View {
 
     /// „před 5 minutami“, „včera“… nebo „Zatím nikdy“
     private func lastSyncText(_ date: Date?, now: Date) -> String {
-        guard let date else { return "Zatím nikdy" }
-        if now.timeIntervalSince(date) < 60 { return "právě teď" }
+        guard let date else { return String(localized: "Zatím nikdy") }
+        if now.timeIntervalSince(date) < 60 { return String(localized: "právě teď") }
         return date.formatted(
             Date.RelativeFormatStyle(presentation: .named, unitsStyle: .wide, locale: .czech)
         )

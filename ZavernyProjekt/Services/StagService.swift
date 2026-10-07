@@ -342,18 +342,22 @@ nonisolated enum StagError: LocalizedError {
     case invalidCallback
     case anonymousLogin
     case noStudentRole
+    /// HTTP 401 – ticket vypršel nebo byl zneplatněn (účet se odhlásí)
     case unauthorized
+    /// HTTP 403 – přihlášení platí, ale k této službě nebo údajům není oprávnění (účet zůstává)
+    case forbidden
     case server(Int)
     case invalidResponse
 
     var errorDescription: String? {
         switch self {
-        case .invalidCallback: "STAG nevrátil přihlašovací údaje. Zkus se přihlásit znovu."
-        case .anonymousLogin: "Přihlásil ses jako anonymní uživatel. Pro načtení tvých předmětů se přihlas školním účtem."
-        case .noStudentRole: "Účet nemá v IS/STAG roli studenta."
-        case .unauthorized: "Přihlášení vypršelo nebo nebylo přijato. Přihlas se znovu."
-        case .server(let code): "Server IS/STAG vrátil chybu \(code). Zkus to později."
-        case .invalidResponse: "Odpověď ze STAGu se nepodařilo zpracovat."
+        case .invalidCallback: String(localized: "STAG nevrátil přihlašovací údaje. Zkus se přihlásit znovu.")
+        case .anonymousLogin: String(localized: "Přihlásil ses jako anonymní uživatel. Pro načtení tvých předmětů se přihlas školním účtem.")
+        case .noStudentRole: String(localized: "Účet nemá v IS/STAG roli studenta.")
+        case .unauthorized: String(localized: "Přihlášení vypršelo nebo nebylo přijato. Přihlas se znovu.")
+        case .forbidden: String(localized: "IS/STAG k těmto údajům nepovolil přístup. Přihlášení zůstává platné, zkus to později.")
+        case .server(let code): String(localized: "Server IS/STAG vrátil chybu \(code). Zkus to později.", comment: "HTTP stavový kód")
+        case .invalidResponse: String(localized: "Odpověď ze STAGu se nepodařilo zpracovat.")
         }
     }
 }
@@ -367,8 +371,8 @@ nonisolated enum StagError: LocalizedError {
 /// ve vestavěném prohlížeči – heslo tak aplikace nikdy nevidí. Ticket je dlouhodobý
 /// (platí až 90 dní) a `StagAccountStore` ho bezpečně uchovává v Klíčence.
 nonisolated struct StagService {
-    /// Instance IS/STAG na UTB ve Zlíně. Pro jinou školu stačí změnit adresu.
-    static let baseURL = URL(string: "https://stag-ws.utb.cz/ws")!
+    /// Adresa webových služeb IS/STAG zvolené školy (např. https://stag-ws.utb.cz/ws)
+    let baseURL: URL
     /// Vlastní URL schéma, na které STAG po přihlášení přesměruje zpět do aplikace
     static let callbackScheme = "zkousky"
 
@@ -376,9 +380,23 @@ nonisolated struct StagService {
     var ticket: String?
     /// Uživatelské jméno konkrétní role (parametr stagUser) – nutné na školách s přihlášením osoby
     var stagUser: String?
-    var session: URLSession = .shared
+    var session: URLSession = StagService.urlSession
 
-    init(ticket: String? = nil, stagUser: String? = nil) {
+    /// Sdílená session pro STAG bez trvalé cache a cookies – odpovědi s osobními údaji
+    /// (rozvrh, termíny, jméno) se neukládají na disk (`Cache.db`, `Library/Cookies`).
+    static let urlSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.timeoutIntervalForRequest = 20
+        return URLSession(configuration: configuration)
+    }()
+
+    init(baseURL: URL = StagSchool.utb.baseURL, ticket: String? = nil, stagUser: String? = nil) {
+        self.baseURL = baseURL
         self.ticket = ticket
         self.stagUser = stagUser
     }
@@ -387,7 +405,7 @@ nonisolated struct StagService {
 
     /// Adresa přihlašovací stránky. `onlyMainLoginMethod=1` nabídne rovnou školní přihlášení,
     /// `longTicket=1` vydá dlouhodobý ticket (platí až 90 dní), takže se není nutné přihlašovat při každém importu.
-    static func loginURL() -> URL {
+    static func loginURL(baseURL: URL) -> URL {
         let callback = "\(callbackScheme)://stag-login"
         let encodedCallback = callback.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? callback
         var components = URLComponents(url: baseURL.appending(path: "login"), resolvingAgainstBaseURL: false)!
@@ -459,7 +477,7 @@ nonisolated struct StagService {
 
     private func request(_ path: String, _ parameters: [String: String] = [:]) async throws -> Data {
         var components = URLComponents(
-            url: Self.baseURL.appending(path: "services/rest2/\(path)"),
+            url: baseURL.appending(path: "services/rest2/\(path)"),
             resolvingAgainstBaseURL: false
         )!
         var items = parameters.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -469,6 +487,7 @@ nonisolated struct StagService {
 
         var request = URLRequest(url: components.url!)
         request.timeoutInterval = 20
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         if let ticket {
             // Ticket se posílá v HTTP Basic jako uživatelské jméno s prázdným heslem (dle dokumentace IS/STAG).
             let credentials = Data("\(ticket):".utf8).base64EncodedString()
@@ -480,7 +499,9 @@ nonisolated struct StagService {
         switch http.statusCode {
         case 200: return data
         case 204: return Data()
-        case 401, 403: throw StagError.unauthorized
+        case 401: throw StagError.unauthorized
+        // 403 neznamená vypršené přihlášení – neodhlašujeme, jen ukážeme chybu
+        case 403: throw StagError.forbidden
         default: throw StagError.server(http.statusCode)
         }
     }

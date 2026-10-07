@@ -4,6 +4,7 @@ import SwiftData
 import SwiftUI
 import UIKit
 import UserNotifications
+import WidgetKit
 
 /// ViewModel obrazovky Nastavení – stav povolení oznámení, připomínky výuky, mazání dat a informace o verzi.
 @Observable
@@ -26,10 +27,10 @@ final class SettingsViewModel {
 
         var title: String {
             switch self {
-            case .unknown: "Zjišťuji…"
-            case .notDetermined: "Zatím nerozhodnuto"
-            case .authorized: "Povoleno"
-            case .denied: "Zakázáno"
+            case .unknown: String(localized: "Zjišťuji…")
+            case .notDetermined: String(localized: "Zatím nerozhodnuto")
+            case .authorized: String(localized: "Povoleno")
+            case .denied: String(localized: "Zakázáno")
             }
         }
 
@@ -57,6 +58,15 @@ final class SettingsViewModel {
 
     /// Odkaz do systémového Nastavení přímo na oznámení této aplikace
     let notificationSettingsURL = URL(string: UIApplication.openNotificationSettingsURLString)
+
+    /// Odkaz do systémového Nastavení této aplikace – tam iOS nabízí volbu jazyka aplikace
+    let appSettingsURL = URL(string: UIApplication.openSettingsURLString)
+
+    /// Název aktuálního jazyka aplikace („Čeština“ / „English“) – vždy v daném jazyce
+    var appLanguageName: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "cs"
+        return code.hasPrefix("en") ? "English" : "Čeština"
+    }
 
     /// Verze aplikace z Info.plist, např. „1.0 (1)“
     var versionText: String {
@@ -110,10 +120,11 @@ final class SettingsViewModel {
 
     // MARK: - Data
 
-    /// Smaže všechny předměty i deadliny a zruší jejich připomínky.
+    /// Smaže všechna data aplikace: předměty, deadliny, připomínky (deadlinů i hodin), uložený rozvrh
+    /// a termíny zkoušek, ukončí Live Activity a obnoví widgety.
     /// Úkoly předmětů smaže SwiftData kaskádou, úkoly bez předmětu mažeme ručně.
-    /// Přihlášení ke STAGu se tím nemění.
-    func deleteAllData(in context: ModelContext) {
+    /// - Parameter signOut: `true` = navíc odhlásí účet STAG (smaže přístupový klíč a údaje o účtu).
+    func deleteAllData(in context: ModelContext, signOut: Bool = false) {
         do {
             let tasks = try context.fetch(FetchDescriptor<ExamTask>())
             let subjects = try context.fetch(FetchDescriptor<Subject>())
@@ -130,6 +141,20 @@ final class SettingsViewModel {
         } catch {
             print("⚠️ Načtení dat ke smazání selhalo: \(error.localizedDescription)")
         }
+        // Uloží změny a přepíše data widgetu (prázdný seznam deadlinů)
         TaskService.save(context)
+
+        // Data ze STAGu uložená v App Group (čte je i widget „Další hodina“)
+        TimetableStore.shared.clear()
+        ExamTermStore.shared.clear()
+        ClassReminderScheduler.shared.cancelAll()
+        LiveActivityManager.shared.endAll()
+        // Doručená oznámení (deadliny, hodiny, nové termíny) by po smazání jen mátla
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+
+        if signOut {
+            StagAccountStore.shared.signOut()
+        }
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

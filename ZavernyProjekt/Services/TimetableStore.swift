@@ -29,7 +29,7 @@ final class TimetableStore {
     func refresh(context: ModelContext) async {
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
-            errorMessage = "Pro načtení rozvrhu se přihlas do IS/STAG."
+            errorMessage = String(localized: "Pro načtení rozvrhu se přihlas do IS/STAG.")
             return
         }
         guard !isLoading else { return }
@@ -38,7 +38,7 @@ final class TimetableStore {
 
         do {
             // Období je veřejná služba – zjistíme ho bez ticketu
-            let period = try await StagService().currentPeriod()
+            let period = try await StagService(baseURL: account.resolvedSchool.baseURL).currentPeriod()
             let actions = try await service.studentTimetable(
                 osCislo: account.osCislo,
                 semester: period.obdobi,
@@ -63,7 +63,7 @@ final class TimetableStore {
             LiveActivityManager.shared.updateLessonActivity()
         } catch StagError.unauthorized {
             StagAccountStore.shared.signOut()
-            errorMessage = "Přihlášení do STAGu vypršelo, přihlas se znovu."
+            errorMessage = String(localized: "Přihlášení do STAGu vypršelo, přihlas se znovu.")
         } catch {
             errorMessage = error.localizedDescription
         }

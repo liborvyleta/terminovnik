@@ -13,6 +13,10 @@ struct TerminovnikApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // Účet STAG načteme hned při startu (včetně přesunu starších údajů do Klíčenky),
+        // ne až při prvním otevření obrazovky, která ho potřebuje.
+        _ = StagAccountStore.shared
+
         // Notifikace: banner i při otevřené aplikaci + akce „Splněno“ přímo z oznámení.
         // Musí proběhnout hned při startu, aby delegát zachytil akci i při spuštění na pozadí.
         NotificationManager.shared.configure(modelContainer: modelContainer)
@@ -35,8 +39,10 @@ struct TerminovnikApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                // DatePicker a formátování procent se řídí českou lokalizací.
+                // DatePicker a formátování dat se řídí jazykem aplikace.
                 .environment(\.locale, .czech)
+                // onChange(of: scenePhase) se při studeném startu nevyvolá – obnovu spustíme i tady
+                .task { appBecameActive() }
         }
         // Vloží kontejner do prostředí → všechna View mají přístup k @Query a modelContext.
         .modelContainer(modelContainer)
@@ -46,18 +52,22 @@ struct TerminovnikApp: App {
             await BackgroundRefresh.run()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                WidgetSync.refresh(from: modelContainer.mainContext)
-                // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
-                Task { await TimetableStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
-                // Termíny zkoušek – nové termíny ohlásí oznámením hned po otevření
-                Task { await ExamTermStore.shared.refreshIfNeeded(context: modelContainer.mainContext) }
-                // Naplánujeme další kontrolu na pozadí
-                BackgroundRefresh.schedule()
-                // Připomínky hodin posuneme o další dny a Live Activity sladíme s aktuální hodinou
-                ClassReminderScheduler.shared.reschedule()
-                LiveActivityManager.shared.updateLessonActivity()
-            }
+            if newPhase == .active { appBecameActive() }
         }
+    }
+
+    /// Spuštění aplikace nebo návrat do popředí: obnova widgetu, rozvrhu, termínů a připomínek
+    private func appBecameActive() {
+        let context = modelContainer.mainContext
+        WidgetSync.refresh(from: context)
+        // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
+        Task { await TimetableStore.shared.refreshIfNeeded(context: context) }
+        // Termíny zkoušek – nové termíny ohlásí oznámením hned po otevření
+        Task { await ExamTermStore.shared.refreshIfNeeded(context: context) }
+        // Naplánujeme další kontrolu na pozadí
+        BackgroundRefresh.schedule()
+        // Připomínky hodin posuneme o další dny a Live Activity sladíme s aktuální hodinou
+        ClassReminderScheduler.shared.reschedule()
+        LiveActivityManager.shared.updateLessonActivity()
     }
 }

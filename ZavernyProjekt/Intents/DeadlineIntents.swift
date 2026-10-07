@@ -52,6 +52,8 @@ struct AddDeadlineIntent: AppIntent {
     static let title: LocalizedStringResource = "Přidat deadline"
     static let description = IntentDescription("Přidá zkoušku, zápočet, projekt nebo úkol k předmětu a naplánuje připomínku den předem.")
     static let openAppWhenRun: Bool = false
+    /// Zapisuje data – na zamčeném zařízení vyžaduje odemčení (Face ID / kód)
+    static var authenticationPolicy: IntentAuthenticationPolicy { .requiresAuthentication }
 
     @Parameter(title: "Název", requestValueDialog: "Jak se deadline jmenuje?")
     var name: String
@@ -90,7 +92,7 @@ struct AddDeadlineIntent: AppIntent {
         let item = DeadlineSnippetItem(task: task)
         return .result(
             dialog: "Přidáno: \(trimmedName) – \(item.countdown)",
-            view: DeadlineSnippetView(header: "Přidáno", item: item, emptyText: "")
+            view: DeadlineSnippetView(header: String(localized: "Přidáno"), item: item, emptyText: "")
         )
     }
 }

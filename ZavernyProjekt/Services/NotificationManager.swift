@@ -31,10 +31,11 @@ final class NotificationManager {
         center.delegate = notificationDelegate
 
         // Bez volby .foreground → akce se vyřídí na pozadí a aplikace se neotevře.
+        // .authenticationRequired → na zamčeném zařízení akci nejde provést bez odemčení.
         let markDone = UNNotificationAction(
             identifier: Self.markDoneActionID,
-            title: "Splněno",
-            options: [],
+            title: String(localized: "Splněno", comment: "Tlačítko v oznámení: označit deadline jako splněný"),
+            options: [.authenticationRequired],
             icon: UNNotificationActionIcon(systemImageName: "checkmark.circle")
         )
         let category = UNNotificationCategory(
@@ -57,6 +58,14 @@ final class NotificationManager {
             print("⚠️ Žádost o notifikace selhala: \(error.localizedDescription)")
             return false
         }
+    }
+
+    /// Požádá o povolení, jen pokud o něm uživatel ještě nerozhodl (systémový dialog jinak nic neudělá).
+    /// Volá se po přihlášení do STAGu – připomínky zkoušek, hodin a nových termínů bez povolení nefungují.
+    func requestAuthorizationIfNeeded() async {
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .notDetermined else { return }
+        await requestAuthorization()
     }
 
     /// Okamžik připomínky = termín mínus 1 kalendářní den (ve stejný čas).
@@ -118,7 +127,7 @@ final class NotificationManager {
         else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Zítra: \(task.taskType.title)"
+        content.title = String(localized: "Zítra: \(task.taskType.title)", comment: "Nadpis připomínky deadlinu den předem; typ úkolu")
         content.subtitle = task.subject?.name ?? ""
         content.body = "\(task.title) · \(task.dueDate.deadlineFormatted)"
         content.sound = .default
