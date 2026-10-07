@@ -27,6 +27,7 @@ nonisolated extension DeadlineEntry {
 }
 
 nonisolated extension WidgetDeadline {
+    /// Názvy termínů a typů jsou lokalizované (galerie widgetů v angličtině), kódy a názvy předmětů ne.
     static func samples(now: Date = .now) -> [WidgetDeadline] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
@@ -38,45 +39,45 @@ nonisolated extension WidgetDeadline {
 
         return [
             WidgetDeadline(
-                id: UUID(), title: "Zápočtový test", subjectCode: "AP9PT",
+                id: UUID(), title: String(localized: "Zápočtový test"), subjectCode: "AP9PT",
                 subjectName: "Pokročilé mobilní technologie", hexColor: "#3E63DD",
-                typeTitle: "Zápočet", typeSymbol: "checkmark.seal.fill",
+                typeTitle: String(localized: "Zápočet"), typeSymbol: "checkmark.seal.fill",
                 dueDate: at(days: 1, hour: 9)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Odevzdání semestrálního projektu", subjectCode: "AP9PT",
+                id: UUID(), title: String(localized: "Odevzdání semestrálního projektu"), subjectCode: "AP9PT",
                 subjectName: "Pokročilé mobilní technologie", hexColor: "#3E63DD",
-                typeTitle: "Projekt", typeSymbol: "hammer.fill",
+                typeTitle: String(localized: "Projekt"), typeSymbol: "hammer.fill",
                 dueDate: at(days: 3, hour: 23, minute: 59)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Písemná zkouška", subjectCode: "AP9SI",
+                id: UUID(), title: String(localized: "Písemná zkouška"), subjectCode: "AP9SI",
                 subjectName: "Softwarové inženýrství", hexColor: "#E5484D",
-                typeTitle: "Zkouška", typeSymbol: "graduationcap.fill",
+                typeTitle: String(localized: "Zkouška"), typeSymbol: "graduationcap.fill",
                 dueDate: at(days: 5, hour: 8, minute: 30)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Analýza rizik – seminární práce", subjectCode: "AP9BI",
+                id: UUID(), title: String(localized: "Analýza rizik – seminární práce"), subjectCode: "AP9BI",
                 subjectName: "Bezpečnost informačních systémů", hexColor: "#30A46C",
-                typeTitle: "Úkol", typeSymbol: "doc.text.fill",
+                typeTitle: String(localized: "Úkol"), typeSymbol: "doc.text.fill",
                 dueDate: at(days: 8, hour: 12)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Ústní zkouška", subjectCode: "AP9UI",
+                id: UUID(), title: String(localized: "Ústní zkouška"), subjectCode: "AP9UI",
                 subjectName: "Umělá inteligence", hexColor: "#8E4EC6",
-                typeTitle: "Zkouška", typeSymbol: "graduationcap.fill",
+                typeTitle: String(localized: "Zkouška"), typeSymbol: "graduationcap.fill",
                 dueDate: at(days: 12, hour: 10)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Prezentace týmového projektu", subjectCode: "AP9TP",
+                id: UUID(), title: String(localized: "Prezentace týmového projektu"), subjectCode: "AP9TP",
                 subjectName: "Týmový projekt", hexColor: "#F76B15",
-                typeTitle: "Projekt", typeSymbol: "hammer.fill",
+                typeTitle: String(localized: "Projekt"), typeSymbol: "hammer.fill",
                 dueDate: at(days: 16, hour: 14)
             ),
             WidgetDeadline(
-                id: UUID(), title: "Zápočet z cvičení", subjectCode: "AP9DS",
+                id: UUID(), title: String(localized: "Zápočet z cvičení"), subjectCode: "AP9DS",
                 subjectName: "Distribuované systémy", hexColor: "#12A594",
-                typeTitle: "Zápočet", typeSymbol: "checkmark.seal.fill",
+                typeTitle: String(localized: "Zápočet"), typeSymbol: "checkmark.seal.fill",
                 dueDate: at(days: 20, hour: 11)
             )
         ]

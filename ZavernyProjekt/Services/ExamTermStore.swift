@@ -74,7 +74,7 @@ final class ExamTermStore {
     func refresh(context: ModelContext) async -> Int {
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
-            errorMessage = "Pro načtení termínů se přihlas do IS/STAG."
+            errorMessage = String(localized: "Pro načtení termínů se přihlas do IS/STAG.")
             return 0
         }
         guard !isLoading else { return 0 }
@@ -93,7 +93,7 @@ final class ExamTermStore {
             return discovered.count
         } catch StagError.unauthorized {
             StagAccountStore.shared.signOut()
-            errorMessage = "Přihlášení do STAGu vypršelo, přihlas se znovu."
+            errorMessage = String(localized: "Přihlášení do STAGu vypršelo, přihlas se znovu.")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -152,16 +152,16 @@ final class ExamTermStore {
         let content = UNMutableNotificationContent()
         content.sound = .default
         if discovered.count == 1, let term = discovered.first {
-            content.title = "Nový termín: \(term.subjectCode) – \(term.typeName)"
+            content.title = String(localized: "Nový termín: \(term.subjectCode) – \(term.typeName)", comment: "Oznámení: kód předmětu a typ termínu ze STAGu")
             content.subtitle = names[term.subjectCode.uppercased()] ?? ""
             var parts = [term.start.deadlineLongFormatted]
             if let room = term.room { parts.append(room) }
-            if let free = term.freeSpots, let capacity = term.capacity { parts.append("volno \(free)/\(capacity)") }
+            if let free = term.freeSpots, let capacity = term.capacity { parts.append(String(localized: "volno \(free)/\(capacity)", comment: "Volná místa / kapacita termínu")) }
             content.body = parts.joined(separator: " · ")
         } else {
             let codes = Array(Set(discovered.map(\.subjectCode))).sorted().joined(separator: ", ")
-            content.title = "Vypsáno \(discovered.count) \(CzechPlural.form(discovered.count, one: "nový termín", few: "nové termíny", many: "nových termínů"))"
-            content.body = "Předměty: \(codes). Otevři Termínovník a zapiš se, dokud jsou volná místa."
+            content.title = String(localized: "Vypsáno \(discovered.count) nových termínů", comment: "Oznámení o více nových termínech najednou (počet ≥ 2)")
+            content.body = String(localized: "Předměty: \(codes). Otevři Termínovník a zapiš se, dokud jsou volná místa.", comment: "Kódy předmětů oddělené čárkou")
         }
         let request = UNNotificationRequest(identifier: "term-new-\(UUID().uuidString)", content: content, trigger: nil)
         try? await UNUserNotificationCenter.current().add(request)
@@ -181,7 +181,7 @@ final class ExamTermStore {
 
         for term in registered {
             let subject = subjectByCode[term.subjectCode.uppercased()]
-            let note = [term.room.map { "Místnost \($0)" }, term.teacher, term.note].compactMap { $0 }.joined(separator: " · ")
+            let note = [term.room.map { String(localized: "Místnost \($0)", comment: "Poznámka zkoušky: místnost ze STAGu") }, term.teacher, term.note].compactMap { $0 }.joined(separator: " · ")
             if let task = linkedByID[term.id] {
                 // Termín se mohl ve STAGu přesunout – udržujeme datum a místnost aktuální
                 if task.dueDate != term.start || task.note != note {

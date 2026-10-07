@@ -42,12 +42,12 @@ final class TaskFormViewModel {
 
     /// Text pod formulářem, kdy přijde notifikace
     var reminderInfo: String {
-        if isCompleted { return "Úkol je splněný, připomínka je vypnutá." }
-        if dueDate < .now { return "Termín už proběhl." }
+        if isCompleted { return String(localized: "Úkol je splněný, připomínka je vypnutá.") }
+        if dueDate < .now { return String(localized: "Termín už proběhl.") }
         guard willScheduleReminder, let fireDate = NotificationManager.reminderDate(for: dueDate) else {
-            return "Termín je za méně než 24 hodin, připomínka se už nenaplánuje."
+            return String(localized: "Termín je za méně než 24 hodin, připomínka se už nenaplánuje.")
         }
-        return "Připomínka: \(fireDate.deadlineLongFormatted)"
+        return String(localized: "Připomínka: \(fireDate.deadlineLongFormatted)")
     }
 
     // MARK: - Uložení a smazání

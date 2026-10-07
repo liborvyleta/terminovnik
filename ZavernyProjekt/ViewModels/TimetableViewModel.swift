@@ -196,7 +196,15 @@ final class TimetableViewModel {
 
     // MARK: - Texty
 
-    private static let weekdaySymbols = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"]
+    private static let weekdaySymbols = [
+        String(localized: "Po", comment: "Zkratka dne v týdnu: pondělí"),
+        String(localized: "Út", comment: "Zkratka dne v týdnu: úterý"),
+        String(localized: "St", comment: "Zkratka dne v týdnu: středa"),
+        String(localized: "Čt", comment: "Zkratka dne v týdnu: čtvrtek"),
+        String(localized: "Pá", comment: "Zkratka dne v týdnu: pátek"),
+        String(localized: "So", comment: "Zkratka dne v týdnu: sobota"),
+        String(localized: "Ne", comment: "Zkratka dne v týdnu: neděle"),
+    ]
 
     /// „Po“, „Út“…
     func weekdaySymbol(_ day: Date) -> String {
@@ -211,31 +219,31 @@ final class TimetableViewModel {
     func weekTitle(now: Date = .now) -> String {
         let days = calendar.dateComponents([.day], from: monday(of: now), to: weekStart).day ?? 0
         let name = switch days / 7 {
-        case 0: "Tento týden"
-        case 1: "Příští týden"
-        case -1: "Minulý týden"
-        default: "Týden \(isoWeek)"
+        case 0: String(localized: "Tento týden")
+        case 1: String(localized: "Příští týden")
+        case -1: String(localized: "Minulý týden")
+        default: String(localized: "Týden \(isoWeek)", comment: "Číslo týdne v roce (ISO)")
         }
-        return "\(name) · \(isoWeek % 2 == 0 ? "sudý" : "lichý")"
+        let parity = isoWeek % 2 == 0
+            ? String(localized: "sudý", comment: "Sudý týden (rozvrh)")
+            : String(localized: "lichý", comment: "Lichý týden (rozvrh)")
+        return "\(name) · \(parity)"
     }
 
     /// „5. – 9. října“, přes hranici měsíce „28. září – 2. října“
     var weekRangeText: String {
         let end = weekDays.last?.date ?? weekStart
-        let endText = end.formatted(.dateTime.day().month(.wide).locale(.czech))
-        let sameMonth = calendar.isDate(weekStart, equalTo: end, toGranularity: .month)
-        let startText = sameMonth
-            ? "\(calendar.component(.day, from: weekStart))."
-            : weekStart.formatted(.dateTime.day().month(.wide).locale(.czech))
-        return "\(startText) – \(endText)"
+        // Intervalový formát podle jazyka aplikace: „5.–9. října“ / „5–9 October“
+        let style = Date.IntervalFormatStyle().day().month(.wide).locale(.app)
+        return (weekStart..<end).formatted(style)
     }
 
     /// Nadpis sekce dne: „Dnes · úterý 6. října“, „Zítra · …“, jinak „Čtvrtek 8. října“
     func dayTitle(now: Date = .now) -> String {
         let text = selectedDay.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.czech))
         switch selectedDay.calendarDays(from: now, calendar: calendar) {
-        case 0: return "Dnes · \(text)"
-        case 1: return "Zítra · \(text)"
+        case 0: return String(localized: "Dnes · \(text)")
+        case 1: return String(localized: "Zítra · \(text)")
         default: return text.prefix(1).uppercased() + text.dropFirst()
         }
     }
@@ -243,14 +251,15 @@ final class TimetableViewModel {
     /// „3 akce“, „5 akcí“
     var lessonCountText: String {
         let count = selectedOccurrences.count
-        return "\(count) \(CzechPlural.form(count, one: "akce", few: "akce", many: "akcí"))"
+        return String(localized: "\(count) akcí", comment: "Počet akcí rozvrhu ve dni")
     }
 
     /// „Rozvrh ZS 2026/2027 · aktualizováno před 5 min“
     func footerText(now: Date) -> String? {
         guard let snapshot else { return nil }
         let years = Int(snapshot.academicYear).map { "\($0)/\($0 + 1)" } ?? snapshot.academicYear
-        return "Rozvrh \(snapshot.semester) \(years) · aktualizováno \(Self.relativeText(since: snapshot.fetchedAt, now: now))"
+        let updated = Self.relativeText(since: snapshot.fetchedAt, now: now)
+        return String(localized: "Rozvrh \(snapshot.semester) \(years) · aktualizováno \(updated)", comment: "Patička rozvrhu: semestr, akademický rok, kdy aktualizováno")
     }
 
     private var isoWeek: Int {
@@ -288,16 +297,18 @@ final class TimetableViewModel {
     /// Odpočet pro kartu: „za 25 min“, „probíhá ještě 40 min“, „zítra v 8:00“, „čt v 13:00“
     static func countdownText(for occurrence: TimetableOccurrence, now: Date) -> String {
         if occurrence.start <= now {
-            return "probíhá ještě \(durationText(minutes: minutes(from: now, to: occurrence.end)))"
+            let remaining = durationText(minutes: minutes(from: now, to: occurrence.end))
+            return String(localized: "probíhá ještě \(remaining)")
         }
         switch occurrence.start.calendarDays(from: now) {
         case 0:
-            return "za \(durationText(minutes: minutes(from: now, to: occurrence.start)))"
+            let remaining = durationText(minutes: minutes(from: now, to: occurrence.start))
+            return String(localized: "za \(remaining)", comment: "Za jak dlouho začne hodina")
         case 1:
-            return "zítra v \(time(occurrence.start))"
+            return String(localized: "zítra v \(time(occurrence.start))")
         default:
             let weekday = occurrence.start.formatted(.dateTime.weekday(.abbreviated).locale(.czech))
-            return "\(weekday) v \(time(occurrence.start))"
+            return String(localized: "\(weekday) v \(time(occurrence.start))", comment: "Zkratka dne v týdnu a čas: „čt v 13:00“")
         }
     }
 
@@ -310,19 +321,21 @@ final class TimetableViewModel {
 
     /// „25 min“, „1 h 30 min“, „2 h“
     static func durationText(minutes: Int) -> String {
-        guard minutes >= 60 else { return "\(max(minutes, 1)) min" }
+        guard minutes >= 60 else { return String(localized: "\(max(minutes, 1)) min", comment: "Délka v minutách") }
         let hours = minutes / 60
         let rest = minutes % 60
-        return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min"
+        return rest == 0
+            ? String(localized: "\(hours) h", comment: "Délka v hodinách")
+            : String(localized: "\(hours) h \(rest) min", comment: "Délka v hodinách a minutách")
     }
 
     /// „právě teď“, „před 5 min“, „před 3 h“, jinak datum a čas
     static func relativeText(since date: Date, now: Date) -> String {
         let minutes = Int(now.timeIntervalSince(date) / 60)
         switch minutes {
-        case ..<1: return "právě teď"
-        case ..<60: return "před \(minutes) min"
-        case ..<(24 * 60): return "před \(minutes / 60) h"
+        case ..<1: return String(localized: "právě teď")
+        case ..<60: return String(localized: "před \(minutes) min", comment: "Před kolika minutami")
+        case ..<(24 * 60): return String(localized: "před \(minutes / 60) h", comment: "Před kolika hodinami")
         default: return date.formatted(.dateTime.day().month(.defaultDigits).hour().minute().locale(.czech))
         }
     }

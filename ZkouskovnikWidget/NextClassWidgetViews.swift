@@ -53,7 +53,7 @@ struct NextClassSmallView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .environment(\.locale, .czech)
+        .environment(\.locale, .app)
     }
 
     private func content(for occurrence: TimetableOccurrence) -> some View {
@@ -131,7 +131,7 @@ struct NextClassMediumView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .environment(\.locale, .czech)
+        .environment(\.locale, .app)
     }
 }
 
@@ -152,7 +152,7 @@ struct NextClassHeader: View {
             HStack(spacing: 6) {
                 Image(systemName: "calendar.day.timeline.left")
                     .foregroundStyle(brand)
-                Text(showsTomorrow ? "Zítra" : "Dnes")
+                showsTomorrow ? Text("Zítra") : Text("Dnes")
                 Text(NextClassFormat.dayText(day))
                     .foregroundStyle(.secondary)
             }
@@ -309,7 +309,7 @@ struct NextClassRectangularView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .environment(\.locale, .czech)
+        .environment(\.locale, .app)
     }
 }
 
@@ -329,9 +329,9 @@ struct NextClassInlineView: View {
 
     private func title(for occurrence: TimetableOccurrence) -> String {
         let place = NextClassFormat.codeAndRoom(occurrence)
-        if entry.isOngoing(occurrence) { return "Teď \(place)" }
+        if entry.isOngoing(occurrence) { return String(localized: "Teď \(place)") }
         let time = NextClassFormat.time(occurrence.start)
-        return entry.isToday(occurrence) ? "\(time) \(place)" : "Zítra \(time) \(place)"
+        return entry.isToday(occurrence) ? "\(time) \(place)" : String(localized: "Zítra \(time) \(place)")
     }
 }
 
@@ -353,8 +353,10 @@ struct NextClassCircularView: View {
         if let occurrence = entry.soon.first {
             let ongoing = entry.isOngoing(occurrence)
             let footer = ongoing
-                ? "do \(NextClassFormat.time(occurrence.end))"
-                : (entry.isToday(occurrence) ? occurrence.event.locationText ?? occurrence.event.typeShort : "zítra")
+                ? String(localized: "do \(NextClassFormat.time(occurrence.end))")
+                : (entry.isToday(occurrence)
+                    ? occurrence.event.locationText ?? occurrence.event.typeShort
+                    : String(localized: "zítra"))
 
             VStack(spacing: 0) {
                 Text(occurrence.event.subjectCode)
@@ -362,7 +364,7 @@ struct NextClassCircularView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .frame(maxWidth: 44)
-                Text(ongoing ? "teď" : NextClassFormat.time(occurrence.start))
+                Text(ongoing ? String(localized: "teď") : NextClassFormat.time(occurrence.start))
                     .font(.system(size: ongoing ? 19 : 17, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .lineLimit(1)
@@ -477,7 +479,7 @@ struct NextClassEmptyState: View {
                     .padding(.top, 1)
             }
         }
-        .environment(\.locale, .czech)
+        .environment(\.locale, .app)
     }
 
     private var missing: some View {
@@ -497,10 +499,10 @@ struct NextClassEmptyState: View {
     }
 }
 
-/// Formátování pro widget „Další hodina“ (česky, bez úvodní nuly: „8:00“).
+/// Formátování pro widget „Další hodina“ v jazyce aplikace (česky bez úvodní nuly: „8:00“).
 enum NextClassFormat {
     static func time(_ date: Date) -> String {
-        date.formatted(.dateTime.hour().minute().locale(.czech))
+        date.formatted(.dateTime.hour().minute().locale(.app))
     }
 
     /// „10:00–12:00“
@@ -510,7 +512,7 @@ enum NextClassFormat {
 
     /// „po 5. 10.“
     static func dayText(_ date: Date) -> String {
-        date.formatted(.dateTime.weekday(.abbreviated).day().month(.defaultDigits).locale(.czech))
+        date.formatted(.dateTime.weekday(.abbreviated).day().month(.defaultDigits).locale(.app))
     }
 
     /// „AP9PT · 52/202“ (bez místnosti jen kód)

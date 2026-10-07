@@ -20,11 +20,11 @@ enum StagSubjectSync {
 
         /// Text pro uživatele, např. „Přidáno 2, aktualizováno 1“ nebo „Vše je aktuální“
         var summary: String {
-            guard total > 0 else { return "V aktuálním semestru nemáš ve STAGu zapsané žádné předměty." }
-            guard hasChanges else { return "Vše je aktuální" }
+            guard total > 0 else { return String(localized: "V aktuálním semestru nemáš ve STAGu zapsané žádné předměty.") }
+            guard hasChanges else { return String(localized: "Vše je aktuální") }
             var parts: [String] = []
-            if added > 0 { parts.append("přidáno \(added)") }
-            if updated > 0 { parts.append("aktualizováno \(updated)") }
+            if added > 0 { parts.append(String(localized: "přidáno \(added)", comment: "Počet předmětů přidaných ze STAGu (část věty, první písmeno se zvětší)")) }
+            if updated > 0 { parts.append(String(localized: "aktualizováno \(updated)", comment: "Počet předmětů aktualizovaných ze STAGu (část věty)")) }
             let text = parts.joined(separator: ", ")
             return text.prefix(1).uppercased() + text.dropFirst()
         }
@@ -36,7 +36,7 @@ enum StagSubjectSync {
 
         var errorDescription: String? {
             switch self {
-            case .notConnected: "Nejsi přihlášen do IS/STAG. Přihlas se a zkus to znovu."
+            case .notConnected: String(localized: "Nejsi přihlášen do IS/STAG. Přihlas se a zkus to znovu.")
             }
         }
     }

@@ -60,10 +60,10 @@ struct ExamTermsView: View {
             centered {
                 EmptyStateView(
                     symbol: "graduationcap",
-                    title: "Termíny zkoušek ze STAGu",
-                    message: message ?? "Přihlas se do IS/STAG a uvidíš vypsané termíny zkoušek a zápočtů – s obsazeností, místností i do kdy se můžeš přihlásit. Na nové termíny tě hned upozorníme.",
+                    title: String(localized: "Termíny zkoušek ze STAGu"),
+                    message: message ?? String(localized: "Přihlas se do IS/STAG a uvidíš vypsané termíny zkoušek a zápočtů – s obsazeností, místností i do kdy se můžeš přihlásit. Na nové termíny tě hned upozorníme."),
                     tint: .purple,
-                    actionTitle: "Přihlásit se do IS/STAG",
+                    actionTitle: String(localized: "Přihlásit se do IS/STAG"),
                     actionSymbol: "person.crop.circle.badge.checkmark",
                     action: { isShowingLogin = true }
                 )
@@ -83,10 +83,10 @@ struct ExamTermsView: View {
             centered {
                 EmptyStateView(
                     symbol: "wifi.exclamationmark",
-                    title: "Termíny se nepodařilo načíst",
+                    title: String(localized: "Termíny se nepodařilo načíst"),
                     message: message,
                     tint: .orange,
-                    actionTitle: "Zkusit znovu",
+                    actionTitle: String(localized: "Zkusit znovu"),
                     actionSymbol: "arrow.clockwise",
                     action: refresh
                 )
@@ -94,7 +94,7 @@ struct ExamTermsView: View {
 
         case .empty:
             centered {
-                noTermsState(actionTitle: "Obnovit")
+                noTermsState(actionTitle: String(localized: "Obnovit termíny"))
             }
 
         case .ready:
@@ -115,8 +115,8 @@ struct ExamTermsView: View {
     private func noTermsState(actionTitle: String?) -> some View {
         EmptyStateView(
             symbol: "calendar.badge.clock",
-            title: "Zatím žádné vypsané termíny",
-            message: "Jakmile je vyučující vypíšou, objeví se tady a hned tě upozorníme.",
+            title: String(localized: "Zatím žádné vypsané termíny"),
+            message: String(localized: "Jakmile je vyučující vypíšou, objeví se tady a hned tě upozorníme."),
             tint: .teal,
             actionTitle: actionTitle,
             actionSymbol: "arrow.clockwise",
@@ -234,12 +234,12 @@ struct ExamTermsView: View {
             Section {
                 EmptyStateView(
                     symbol: "checkmark.seal",
-                    title: "Zatím nemáš zapsaný termín",
+                    title: String(localized: "Zatím nemáš zapsaný termín"),
                     message: viewModel.availableTerms.isEmpty
-                        ? "Až se na termín zapíšeš ve STAGu, objeví se tady i s odpočtem a připomínkou."
-                        : "Vyber si z vypsaných termínů a zapiš se na portálu IS/STAG – tady pak uvidíš odpočet a dostaneš připomínku.",
+                        ? String(localized: "Až se na termín zapíšeš ve STAGu, objeví se tady i s odpočtem a připomínkou.")
+                        : String(localized: "Vyber si z vypsaných termínů a zapiš se na portálu IS/STAG – tady pak uvidíš odpočet a dostaneš připomínku."),
                     tint: .green,
-                    actionTitle: viewModel.availableTerms.isEmpty ? nil : "Zobrazit vypsané termíny",
+                    actionTitle: viewModel.availableTerms.isEmpty ? nil : String(localized: "Zobrazit vypsané termíny"),
                     actionSymbol: "list.bullet.rectangle",
                     action: viewModel.availableTerms.isEmpty ? nil : { withAnimation(.snappy) { viewModel.segment = .available } }
                 )

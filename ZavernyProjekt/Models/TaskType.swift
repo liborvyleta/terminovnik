@@ -13,10 +13,10 @@ enum TaskType: String, Codable, CaseIterable, Identifiable {
     /// Název zobrazovaný v UI
     var title: String {
         switch self {
-        case .zkouska: "Zkouška"
-        case .zapocet: "Zápočet"
-        case .projekt: "Projekt"
-        case .ukol: "Úkol"
+        case .zkouska: String(localized: "Zkouška")
+        case .zapocet: String(localized: "Zápočet")
+        case .projekt: String(localized: "Projekt")
+        case .ukol: String(localized: "Úkol")
         }
     }
 

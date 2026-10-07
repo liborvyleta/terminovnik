@@ -157,16 +157,22 @@ struct ExamTermDetailView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .firstTextBaseline) {
                         if let occupied = term.occupied {
-                            Text("\(occupied)")
+                            Text(verbatim: "\(occupied)")
                                 .font(.title2.bold())
                                 .monospacedDigit()
-                            Text(term.capacity.map { "z \($0) míst" } ?? CzechPlural.form(occupied, one: "zapsaný", few: "zapsaní", many: "zapsaných"))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            Group {
+                                if let capacity = term.capacity {
+                                    Text("z \(capacity) míst", comment: "Pod počtem zapsaných: z kolika míst")
+                                } else {
+                                    Text(Self.registeredLabel(occupied))
+                                }
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         }
                         Spacer()
                         if let free = term.freeSpots {
-                            Text(term.isFull ? "Plno" : "volno \(free)")
+                            Text(term.isFull ? String(localized: "Plno") : String(localized: "volno \(free)", comment: "Počet volných míst na termínu"))
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(ExamTermsViewModel.occupancyColor(term))
                         }
@@ -246,18 +252,28 @@ struct ExamTermDetailView: View {
     private var calendarTitle: String {
         var title = "\(term.typeName) \(term.subjectCode)"
         if let subjectName { title += ": \(subjectName)" }
-        if term.isRetake { title += " (opravný)" }
+        if term.isRetake { title = String(localized: "\(title) (opravný)", comment: "Název události v Kalendáři u opravného termínu") }
         return title
     }
 
     /// Poznámka události v Kalendáři: místnost, zkoušející, poznámka, zdroj
     private var calendarNotes: String {
         var lines: [String] = []
-        if let room = term.room, !room.isEmpty { lines.append("Místnost: \(room)") }
-        if let teacher = term.teacher, !teacher.isEmpty { lines.append("Zkoušející: \(teacher)") }
+        if let room = term.room, !room.isEmpty { lines.append(String(localized: "Místnost: \(room)")) }
+        if let teacher = term.teacher, !teacher.isEmpty { lines.append(String(localized: "Zkoušející: \(teacher)")) }
         if let note = term.note, !note.isEmpty { lines.append(note) }
-        lines.append("Termín z IS/STAG – Termínovník")
+        lines.append(String(localized: "Termín z IS/STAG – Termínovník"))
         return lines.joined(separator: "\n")
+    }
+
+    /// Popisek pod velkým číslem, když kapacita není známá: „zapsaný“, „zapsaní“, „zapsaných“.
+    /// Číslo je zobrazené zvlášť, proto tvary bez čísla (v angličtině všechny „registered“).
+    private static func registeredLabel(_ count: Int) -> String {
+        switch count {
+        case 1: String(localized: "zapsaný", comment: "Popisek pod počtem 1 zapsaného studenta")
+        case 2...4: String(localized: "zapsaní", comment: "Popisek pod počtem 2–4 zapsaných studentů")
+        default: String(localized: "zapsaných", comment: "Popisek pod počtem 0 nebo 5+ zapsaných studentů")
+        }
     }
 }
 

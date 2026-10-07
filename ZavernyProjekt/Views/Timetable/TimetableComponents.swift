@@ -85,7 +85,7 @@ struct TimetableWeekStrip: View {
         }
     }
 
-    private func weekButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+    private func weekButton(symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button {
             withAnimation(.snappy) { action() }
         } label: {
@@ -166,9 +166,11 @@ struct TimetableWeekStrip: View {
     private func accessibilityLabel(for day: Date, isToday: Bool, count: Int) -> String {
         let date = day.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.czech))
         let lessons = count == 0
-            ? "volno"
-            : "\(count) \(CzechPlural.form(count, one: "akce", few: "akce", many: "akcí"))"
-        return (isToday ? "Dnes, " : "") + "\(date), \(lessons)"
+            ? String(localized: "volno", comment: "Den bez výuky (VoiceOver)")
+            : String(localized: "\(count) akcí", comment: "Počet akcí rozvrhu ve dni")
+        return isToday
+            ? String(localized: "Dnes, \(date), \(lessons)", comment: "VoiceOver: dnešní den, datum, počet akcí")
+            : "\(date), \(lessons)"
     }
 }
 

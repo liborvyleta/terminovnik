@@ -1,12 +1,21 @@
 import Foundation
 
 extension Locale {
-    /// Česká lokalizace – data formátujeme česky nezávisle na jazyku zařízení
-    static let czech = Locale(identifier: "cs_CZ")
+    /// Locale podle jazyka, ve kterém aplikace (nebo widget) právě běží.
+    /// Angličtina → britské zvyklosti (24hodinový čas, den před měsícem), jinak čeština.
+    /// Jazyk se za běhu nemění (iOS při změně jazyka aplikaci ukončí), proto stačí spočítat jednou.
+    nonisolated static let app: Locale = {
+        let language = Bundle.main.preferredLocalizations.first ?? "cs"
+        return language.hasPrefix("en") ? Locale(identifier: "en_GB") : Locale(identifier: "cs_CZ")
+    }()
+
+    /// Jazyk aplikace – alias pro `Locale.app`. Název zůstává kvůli kompatibilitě
+    /// se staršími voláními (`.locale(.czech)`, `.environment(\.locale, .czech)`).
+    nonisolated static var czech: Locale { .app }
 }
 
 extension Date {
-    /// Krátký formát termínu, např. „po 6. 10. 9:00“
+    /// Krátký formát termínu, např. „po 6. 10. 9:00“ (anglicky „Mon 06/10, 09:00“)
     var deadlineFormatted: String {
         formatted(
             .dateTime
@@ -15,11 +24,11 @@ extension Date {
                 .month(.defaultDigits)
                 .hour()
                 .minute()
-                .locale(.czech)
+                .locale(.app)
         )
     }
 
-    /// Dlouhý formát, např. „pondělí 6. října 9:00“
+    /// Dlouhý formát, např. „pondělí 6. října 9:00“ (anglicky „Monday 6 October 09:00“)
     var deadlineLongFormatted: String {
         formatted(
             .dateTime
@@ -28,7 +37,7 @@ extension Date {
                 .month(.wide)
                 .hour()
                 .minute()
-                .locale(.czech)
+                .locale(.app)
         )
     }
 

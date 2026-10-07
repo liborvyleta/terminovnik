@@ -53,20 +53,23 @@ struct StudyActivityModel {
     /// Popisek nad odpočtem
     var countdownLabel: String {
         switch phase {
-        case .upcoming: "Začíná za"
-        case .ongoing: "Končí za"
-        case .deadline: "Do termínu"
-        case .finished: attributes.kind == .exam && state.end <= state.start ? "Termín nastal" : "Skončilo"
+        case .upcoming: String(localized: "Začíná za", comment: "Live Activity: popisek nad odpočtem do začátku hodiny")
+        case .ongoing: String(localized: "Končí za", comment: "Live Activity: popisek nad odpočtem do konce hodiny")
+        case .deadline: String(localized: "Do termínu", comment: "Live Activity: popisek nad odpočtem do termínu zkoušky")
+        case .finished:
+            attributes.kind == .exam && state.end <= state.start
+                ? String(localized: "Termín nastal", comment: "Live Activity: termín zkoušky už nastal")
+                : String(localized: "Skončilo", comment: "Live Activity: hodina skončila")
         }
     }
 
     /// Kratší popisek pro Dynamic Island
     var shortLabel: String {
         switch phase {
-        case .upcoming: "za"
-        case .ongoing: "končí za"
-        case .deadline: "do termínu"
-        case .finished: "konec"
+        case .upcoming: String(localized: "za", comment: "Dynamic Island: krátký popisek nad odpočtem do začátku („za 12:00“)")
+        case .ongoing: String(localized: "končí za", comment: "Dynamic Island: krátký popisek nad odpočtem do konce")
+        case .deadline: String(localized: "do termínu", comment: "Dynamic Island: krátký popisek nad odpočtem do termínu")
+        case .finished: String(localized: "konec", comment: "Dynamic Island: hodina skončila")
         }
     }
 
@@ -159,7 +162,7 @@ struct StudyActivityLockScreenView: View {
                     .fill(StudyActivityStyle.background(attributes.hexColor, scheme: colorScheme))
             }
         }
-        .environment(\.locale, .czech)
+        .environment(\.locale, .app)
     }
 
     private func details(_ model: StudyActivityModel) -> some View {
@@ -479,20 +482,20 @@ enum StudyActivityStyle {
     }
 }
 
-/// Formátování pro Live Activity (česky, bez úvodní nuly: „8:00“).
+/// Formátování pro Live Activity v jazyce aplikace (česky bez úvodní nuly: „8:00“).
 enum StudyActivityFormat {
     static func time(_ date: Date) -> String {
-        date.formatted(.dateTime.hour().minute().locale(.czech))
+        date.formatted(.dateTime.hour().minute().locale(.app))
     }
 
     /// „dnes“, „zítra“, nebo „st 7. 10.“
     static func dayPrefix(_ date: Date, now: Date) -> String {
         let calendar = Calendar.current
-        if calendar.isDate(date, inSameDayAs: now) { return "dnes" }
+        if calendar.isDate(date, inSameDayAs: now) { return String(localized: "dnes") }
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now), calendar.isDate(date, inSameDayAs: tomorrow) {
-            return "zítra"
+            return String(localized: "zítra")
         }
-        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.defaultDigits).locale(.czech))
+        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.defaultDigits).locale(.app))
     }
 
     /// „dnes 14:30“
@@ -512,20 +515,22 @@ enum StudyActivityFormat {
         return ceil(digits * fontSize * 0.62 + colons * fontSize * 0.34 + 2)
     }
 
-    /// SF Symbol podle typu akce („Cvičení“, „Zkouška“…)
+    /// SF Symbol podle typu akce („Cvičení“, „Zkouška“…). Typ může přijít česky (STAG)
+    /// i v jazyce aplikace (název typu povinnosti), proto se hledají české i anglické tvary.
     static func symbol(typeName: String, kind: StudyActivityAttributes.Kind) -> String {
-        let type = typeName.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .czech)
+        let type = typeName.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "cs_CZ"))
+        func matches(_ keywords: String...) -> Bool { keywords.contains { type.contains($0) } }
         switch kind {
         case .exam:
-            if type.contains("zapoc") { return "checkmark.seal.fill" }
-            if type.contains("projekt") { return "hammer.fill" }
-            if type.contains("ukol") { return "doc.text.fill" }
+            if matches("zapoc", "credit") { return "checkmark.seal.fill" }
+            if matches("projekt", "project") { return "hammer.fill" }
+            if matches("ukol", "assignment", "task", "homework") { return "doc.text.fill" }
             return "graduationcap.fill"
         case .lesson:
-            if type.contains("predn") { return "person.wave.2.fill" }
-            if type.contains("cvic") { return "laptopcomputer" }
-            if type.contains("semin") { return "person.3.fill" }
-            if type.contains("lab") { return "flask.fill" }
+            if matches("predn", "lecture") { return "person.wave.2.fill" }
+            if matches("cvic", "exercise", "practical", "tutorial") { return "laptopcomputer" }
+            if matches("semin") { return "person.3.fill" }
+            if matches("lab") { return "flask.fill" }
             return "book.closed.fill"
         }
     }

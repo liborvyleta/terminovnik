@@ -41,7 +41,7 @@ struct SubjectsListView: View {
                 }
             } message: { subject in
                 let count = subject.tasks.count
-                Text("Spolu s předmětem se smaže i \(count) \(CzechPlural.tasks(count)). Akci nelze vrátit.")
+                Text("Spolu s předmětem se smaže i \(count) úkolů. Akci nelze vrátit.")
             }
         }
     }
@@ -52,9 +52,9 @@ struct SubjectsListView: View {
         ScrollView {
             VStack(spacing: 16) {
                 HStack(spacing: 10) {
-                    StatCard(value: subjects.count, title: "Předměty", symbol: "books.vertical.circle.fill", color: .accentColor)
-                    StatCard(value: viewModel.totalCredits(of: subjects), title: "Kredity", symbol: "star.circle.fill", color: .purple)
-                    StatCard(value: viewModel.activeTaskCount(of: subjects), title: "Aktivní úkoly", symbol: "flag.circle.fill", color: .orange)
+                    StatCard(value: subjects.count, title: String(localized: "Předměty"), symbol: "books.vertical.circle.fill", color: .accentColor)
+                    StatCard(value: viewModel.totalCredits(of: subjects), title: String(localized: "Kredity"), symbol: "star.circle.fill", color: .purple)
+                    StatCard(value: viewModel.activeTaskCount(of: subjects), title: String(localized: "Aktivní úkoly"), symbol: "flag.circle.fill", color: .orange)
                 }
 
                 LazyVStack(spacing: 14) {
@@ -77,12 +77,12 @@ struct SubjectsListView: View {
     private var emptyState: some View {
         EmptyStateView(
             symbol: "books.vertical",
-            title: "Žádné předměty",
-            message: "Naimportuj si předměty ze STAGu, nebo je přidej ručně. Ke každému pak můžeš zadávat zkoušky a úkoly.",
-            actionTitle: "Importovat ze STAGu",
+            title: String(localized: "Žádné předměty"),
+            message: String(localized: "Naimportuj si předměty ze STAGu, nebo je přidej ručně. Ke každému pak můžeš zadávat zkoušky a úkoly."),
+            actionTitle: String(localized: "Importovat ze STAGu"),
             actionSymbol: "square.and.arrow.down",
             action: { viewModel.isImportingFromStag = true },
-            secondaryActionTitle: "Přidat předmět ručně",
+            secondaryActionTitle: String(localized: "Přidat předmět ručně"),
             secondaryAction: { viewModel.isAddingSubject = true }
         )
         .frame(maxHeight: .infinity)

@@ -56,10 +56,10 @@ struct TimetableView: View {
             centered {
                 EmptyStateView(
                     symbol: "calendar.day.timeline.left",
-                    title: "Tvůj rozvrh na jednom místě",
-                    message: message ?? "Přihlas se do IS/STAG a uvidíš své přednášky, cvičení a semináře po dnech – i s místnostmi, vyučujícími a odpočtem do další hodiny.",
+                    title: String(localized: "Tvůj rozvrh na jednom místě"),
+                    message: message ?? String(localized: "Přihlas se do IS/STAG a uvidíš své přednášky, cvičení a semináře po dnech – i s místnostmi, vyučujícími a odpočtem do další hodiny."),
                     tint: .indigo,
-                    actionTitle: "Přihlásit se do IS/STAG",
+                    actionTitle: String(localized: "Přihlásit se do IS/STAG"),
                     actionSymbol: "person.crop.circle.badge.checkmark",
                     action: { isShowingLogin = true }
                 )
@@ -79,10 +79,10 @@ struct TimetableView: View {
             centered {
                 EmptyStateView(
                     symbol: "wifi.exclamationmark",
-                    title: "Rozvrh se nepodařilo načíst",
+                    title: String(localized: "Rozvrh se nepodařilo načíst"),
                     message: message,
                     tint: .orange,
-                    actionTitle: "Zkusit znovu",
+                    actionTitle: String(localized: "Zkusit znovu"),
                     actionSymbol: "arrow.clockwise",
                     action: refresh
                 )
@@ -92,10 +92,10 @@ struct TimetableView: View {
             centered {
                 EmptyStateView(
                     symbol: "calendar.badge.checkmark",
-                    title: "Rozvrh je prázdný",
-                    message: "Na tento semestr nemáš ve STAGu žádné rozvrhové akce. Až si je zapíšeš, objeví se tady.",
+                    title: String(localized: "Rozvrh je prázdný"),
+                    message: String(localized: "Na tento semestr nemáš ve STAGu žádné rozvrhové akce. Až si je zapíšeš, objeví se tady."),
                     tint: .teal,
-                    actionTitle: "Obnovit",
+                    actionTitle: String(localized: "Obnovit"),
                     actionSymbol: "arrow.clockwise",
                     action: refresh
                 )
@@ -154,7 +154,7 @@ struct TimetableView: View {
                     )
 
                     if !viewModel.unscheduledEvents.isEmpty {
-                        Text("\(viewModel.unscheduledEvents.count) \(CzechPlural.form(viewModel.unscheduledEvents.count, one: "akce", few: "akce", many: "akcí")) bez pevného termínu najdeš v denním pohledu.")
+                        Text("\(viewModel.unscheduledEvents.count) akcí bez pevného termínu najdeš v denním pohledu.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -354,8 +354,8 @@ enum TimetableDisplayMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .day: "Den"
-        case .week: "Týden"
+        case .day: String(localized: "Den", comment: "Přepínač zobrazení rozvrhu")
+        case .week: String(localized: "Týden", comment: "Přepínač zobrazení rozvrhu")
         }
     }
 }

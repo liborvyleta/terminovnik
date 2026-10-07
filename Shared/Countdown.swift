@@ -46,21 +46,25 @@ enum DeadlineUrgency {
 }
 
 /// Lidsky čitelný odpočet do termínu: „Dnes“, „Zítra“, „Za 5 dní“, „Před 2 dny“…
+/// Texty jsou v String Catalogu; tvary podle počtu („Za 2 dny“ / „Za 5 dní“) řeší plurálové varianty.
 enum Countdown {
     static func text(for date: Date, isCompleted: Bool = false, now: Date = .now) -> String {
-        if isCompleted { return "Splněno" }
+        if isCompleted { return String(localized: "Splněno", comment: "Odpočet: povinnost je splněná") }
         let days = date.calendarDays(from: now)
         switch days {
         case ..<(-1):
-            return "Před \(-days) dny"
+            let daysAgo = -days
+            return String(localized: "Před \(daysAgo) dny", comment: "Odpočet: termín byl před X dny (plurál)")
         case -1:
-            return "Včera"
+            return String(localized: "Včera", comment: "Odpočet: termín byl včera")
         case 0:
-            return date < now ? "Dnes – prošlo" : "Dnes"
+            return date < now
+                ? String(localized: "Dnes – prošlo", comment: "Odpočet: termín byl dnes a už uplynul")
+                : String(localized: "Dnes", comment: "Odpočet: termín je dnes")
         case 1:
-            return "Zítra"
+            return String(localized: "Zítra", comment: "Odpočet: termín je zítra")
         default:
-            return "Za \(days) \(CzechPlural.days(days))"
+            return String(localized: "Za \(days) dní", comment: "Odpočet: termín je za X dní (plurál)")
         }
     }
 }

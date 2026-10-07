@@ -290,7 +290,7 @@ struct CircularDeadlineView: View {
                     Text("Dnes")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .minimumScaleFactor(0.7)
-                    Text(deadline.dueDate.formatted(.dateTime.hour().minute().locale(.czech)))
+                    Text(deadline.dueDate.formatted(.dateTime.hour().minute().locale(.app)))
                         .font(.system(size: 10, weight: .medium))
                         .monospacedDigit()
                 } else {
@@ -298,7 +298,7 @@ struct CircularDeadlineView: View {
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .minimumScaleFactor(0.6)
                         .lineLimit(1)
-                    Text(CzechPlural.days(days))
+                    Text(Self.dayUnit(days))
                         .font(.system(size: 10, weight: .medium))
                 }
             }
@@ -310,6 +310,17 @@ struct CircularDeadlineView: View {
                     .font(.system(size: 10, weight: .semibold))
             }
         }
+    }
+
+    /// Jednotka pod velkým číslem: „den / dny / dní“ (anglicky „day / days“).
+    /// Vezme lokalizovanou frázi „%lld dní“ (plurálové varianty v katalogu) a odebere z ní číslo,
+    /// takže stačí jeden klíč s počtem místo samostatného slova bez kontextu.
+    private static func dayUnit(_ days: Int) -> String {
+        let phrase = String(localized: "\(days) dní", comment: "Počet dní, např. „5 dní“ (plurál)")
+        guard let range = phrase.range(of: String(days)) else { return phrase }
+        var unit = phrase
+        unit.removeSubrange(range)
+        return unit.trimmingCharacters(in: .whitespaces)
     }
 }
 

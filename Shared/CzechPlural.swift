@@ -1,6 +1,9 @@
 import Foundation
 
 /// Správné české tvary podle počtu: 1 kredit, 2–4 kredity, 5+ kreditů.
+///
+/// Jen čeština – nový kód místo toho používá celou frázi s číslem v `String(localized:)`
+/// a plurálové varianty ve String Catalogu (funguje i pro angličtinu).
 enum CzechPlural {
     static func form(_ count: Int, one: String, few: String, many: String) -> String {
         switch abs(count) {

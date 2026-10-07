@@ -71,8 +71,9 @@ struct OnboardingView: View {
 private struct FeatureRow: View {
     let symbol: String
     let color: Color
-    let title: String
-    let text: String
+    /// LocalizedStringKey – literály z volání se přeloží ze String Catalogu
+    let title: LocalizedStringKey
+    let text: LocalizedStringKey
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {

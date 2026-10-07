@@ -167,7 +167,7 @@ struct TimetableEventDetailView: View {
                         .monospacedDigit()
                 }
             } else {
-                LabeledContent("Termín", value: "Bez pevného termínu")
+                LabeledContent("Termín", value: String(localized: "Bez pevného termínu"))
                 if let start = event.startTime, let end = event.endTime {
                     LabeledContent("Čas", value: "\(start)–\(end)")
                 }
@@ -197,13 +197,13 @@ struct TimetableEventDetailView: View {
 
     /// Jak často se akce koná; u akcí bez pevného dne nic
     private var repetitionText: String? {
-        if event.singleDate != nil { return "Jednorázově" }
+        if event.singleDate != nil { return String(localized: "Jednorázově") }
         guard event.weekday != nil else { return nil }
         switch event.weekParity {
-        case "Sudý": return "Sudý týden"
-        case "Lichý": return "Lichý týden"
-        case "Jiný": return "Nepravidelně"
-        default: return "Každý týden"
+        case "Sudý": return String(localized: "Sudý týden")
+        case "Lichý": return String(localized: "Lichý týden")
+        case "Jiný": return String(localized: "Nepravidelně")
+        default: return String(localized: "Každý týden")
         }
     }
 
@@ -212,8 +212,8 @@ struct TimetableEventDetailView: View {
         let style = Date.FormatStyle.dateTime.day().month(.defaultDigits).year().locale(.czech)
         switch (event.dateFrom, event.dateTo) {
         case let (from?, to?): return "\(from.formatted(style)) – \(to.formatted(style))"
-        case let (from?, nil): return "od \(from.formatted(style))"
-        case let (nil, to?): return "do \(to.formatted(style))"
+        case let (from?, nil): return String(localized: "od \(from.formatted(style))", comment: "Platnost akce od data")
+        case let (nil, to?): return String(localized: "do \(to.formatted(style))", comment: "Platnost akce do data")
         default: return nil
         }
     }
@@ -226,9 +226,9 @@ struct TimetableEventDetailView: View {
     /// Poznámka události v Kalendáři: místnost, vyučující, zdroj
     private var calendarNotes: String {
         var lines: [String] = []
-        if let location = event.locationText { lines.append("Místnost: \(location)") }
-        if let teacher = event.teacher, !teacher.isEmpty { lines.append("Vyučující: \(teacher)") }
-        lines.append("Z rozvrhu IS/STAG – Termínovník")
+        if let location = event.locationText { lines.append(String(localized: "Místnost: \(location)")) }
+        if let teacher = event.teacher, !teacher.isEmpty { lines.append(String(localized: "Vyučující: \(teacher)")) }
+        lines.append(String(localized: "Z rozvrhu IS/STAG – Termínovník"))
         return lines.joined(separator: "\n")
     }
 

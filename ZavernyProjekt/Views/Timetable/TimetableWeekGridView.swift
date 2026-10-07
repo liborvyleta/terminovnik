@@ -114,7 +114,7 @@ struct TimetableWeekGridView: View {
                 }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(GridFormat.fullDate(date) + (isToday ? ", dnes" : ""))
+        .accessibilityLabel(isToday ? String(localized: "\(GridFormat.fullDate(date)), dnes", comment: "VoiceOver: datum v hlavičce sloupce, dnešní den") : GridFormat.fullDate(date))
         .accessibilityAddTraits(.isHeader)
     }
 
@@ -170,7 +170,7 @@ struct TimetableWeekGridView: View {
         ForEach(Array(hours), id: \.self) { hour in
             let y = gridTop + CGFloat(hour - hours.lowerBound) * hourHeight
             let isCovered = nowY.map { abs($0 - y) < 11 } ?? false
-            Text("\(hour):00")
+            Text(verbatim: "\(hour):00")
                 .font(.system(size: 10, weight: .medium))
                 .monospacedDigit()
                 .foregroundStyle(Color(.secondaryLabel))
@@ -218,17 +218,17 @@ struct TimetableWeekGridView: View {
         let event = occurrence.event
         var parts = [
             GridFormat.fullDate(occurrence.start),
-            "\(GridFormat.time(occurrence.start)) až \(GridFormat.time(occurrence.end))",
+            String(localized: "\(GridFormat.time(occurrence.start)) až \(GridFormat.time(occurrence.end))", comment: "VoiceOver: čas od–do"),
             "\(event.subjectName) (\(event.subjectCode))",
             event.typeName
         ]
         if let location = event.locationText {
-            parts.append("místnost \(location)")
+            parts.append(String(localized: "místnost \(location)", comment: "VoiceOver: místnost akce"))
         }
         if occurrence.end <= now {
-            parts.append("proběhlo")
+            parts.append(String(localized: "proběhlo", comment: "VoiceOver: akce už proběhla"))
         } else if occurrence.start <= now {
-            parts.append("právě probíhá")
+            parts.append(String(localized: "právě probíhá", comment: "VoiceOver: akce právě probíhá"))
         }
         return parts.joined(separator: ", ")
     }
@@ -418,9 +418,9 @@ private struct GridBlockButtonStyle: ButtonStyle {
     }
 }
 
-/// Formátování dat pro mřížku (UI je česky)
+/// Formátování dat pro mřížku (v jazyce aplikace)
 private enum GridFormat {
-    private static let locale = Locale(identifier: "cs_CZ")
+    private static let locale = Locale.czech
 
     private static let shortWeekdayFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -432,7 +432,8 @@ private enum GridFormat {
     private static let fullDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = locale
-        formatter.dateFormat = "EEEE d. MMMM"
+        // Česky „EEEE d. MMMM“, v ostatních jazycích jejich obvyklé pořadí
+        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
         return formatter
     }()
 

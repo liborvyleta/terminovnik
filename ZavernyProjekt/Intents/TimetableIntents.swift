@@ -15,7 +15,7 @@ struct NextLessonIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog & ShowsSnippetView {
         let now = Date.now
-        let header = "Další hodina"
+        let header = String(localized: "Další hodina")
 
         guard let snapshot = TimetableSnapshot.load(), !snapshot.events.isEmpty else {
             let text = IntentText.timetableNotLoaded
@@ -23,20 +23,23 @@ struct NextLessonIntent: AppIntent {
         }
 
         guard let next = snapshot.upcoming(after: now, limit: 1, daysAhead: 14).first else {
-            let text = "V nejbližších 14 dnech nemáš žádnou výuku."
+            let text = String(localized: "V nejbližších 14 dnech nemáš žádnou výuku.")
             return .result(dialog: "\(text)", view: TimetableSnippetView(title: header, lessons: [], emptyText: text))
         }
 
         let event = next.event
         var sentence: String
         if next.start <= now {
-            sentence = "Právě probíhá: \(event.subjectName) (\(event.typeName)) do \(IntentText.time(next.end))"
+            let end = IntentText.time(next.end)
+            sentence = String(localized: "Právě probíhá: \(event.subjectName) (\(event.typeName)) do \(end)")
         } else {
-            sentence = "Další hodina: \(event.subjectName) (\(event.typeName)) "
-                + "\(IntentText.dayPhrase(next.start)) \(IntentText.atTime(next.start))"
+            let day = IntentText.dayPhrase(next.start)
+            let time = IntentText.atTime(next.start)
+            sentence = String(localized: "Další hodina: \(event.subjectName) (\(event.typeName)) \(day) \(time)",
+                              comment: "Např. „Další hodina: Datamining (Přednáška) zítra v 9:00“")
         }
         if let location = event.locationText {
-            sentence += ", místnost \(location)"
+            sentence += String(localized: ", místnost \(location)", comment: "Doplněk věty o další hodině")
         }
         sentence += "."
 
@@ -73,8 +76,8 @@ struct TimetableForDayIntent: AppIntent {
 
         let lessons = snapshot.occurrences(on: date)
         guard !lessons.isEmpty else {
-            let text = "\(header): Volno – žádná výuka."
-            return .result(dialog: "\(text)", view: TimetableSnippetView(title: header, lessons: [], emptyText: "Volno"))
+            let text = String(localized: "\(header): Volno – žádná výuka.")
+            return .result(dialog: "\(text)", view: TimetableSnippetView(title: header, lessons: [], emptyText: String(localized: "Volno")))
         }
 
         let count = lessons.count
@@ -84,12 +87,13 @@ struct TimetableForDayIntent: AppIntent {
             if let location = event.locationText { item += ", \(location)" }
             return item
         }
-        let countText = "\(count) \(CzechPlural.form(count, one: "hodinu", few: "hodiny", many: "hodin"))"
-        let sentence = "\(header) máš \(countText): \(items.joined(separator: "; "))."
+        let list = items.joined(separator: "; ")
+        let sentence = String(localized: "\(header) máš \(count) hodin: \(list).",
+                              comment: "Např. „Dnes (út 6. 10.) máš 3 hodiny: …“ – plurál podle počtu hodin (2. argument)")
 
         return .result(
             dialog: "\(sentence)",
-            view: TimetableSnippetView(title: header, lessons: lessons, emptyText: "Volno")
+            view: TimetableSnippetView(title: header, lessons: lessons, emptyText: String(localized: "Volno"))
         )
     }
 }

@@ -129,7 +129,7 @@ final class ClassReminderScheduler {
         let content = UNMutableNotificationContent()
         // „Za 15 min: AP9PT · 52/202“
         let place = event.locationText.map { " · \($0)" } ?? ""
-        content.title = "Za \(leadMinutes) min: \(event.subjectCode)\(place)"
+        content.title = String(localized: "Za \(leadMinutes) min: \(event.subjectCode)\(place)", comment: "Připomínka hodiny: předstih v minutách, kód předmětu, volitelně „ · místnost“")
         content.subtitle = event.subjectName
         // „Cvičení · 10:00–12:00 · Ing. …“
         let timeStyle = Date.FormatStyle.dateTime.hour().minute().locale(.czech)

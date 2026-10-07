@@ -9,6 +9,15 @@ enum DashboardFilter: String, CaseIterable, Identifiable {
     case completed = "Splněné"
 
     var id: Self { self }
+
+    /// Název segmentu zobrazovaný v UI
+    var title: String {
+        switch self {
+        case .all: String(localized: "Vše")
+        case .upcoming: String(localized: "Blížící se")
+        case .completed: String(localized: "Splněné")
+        }
+    }
 }
 
 /// Jedna sekce seznamu (např. „Dnes a zítra“)
@@ -56,7 +65,7 @@ final class DashboardViewModel {
 
         let completedSection = completed.isEmpty
             ? []
-            : [TaskSection(id: "completed", title: "Splněné", tasks: completed)]
+            : [TaskSection(id: "completed", title: String(localized: "Splněné"), tasks: completed)]
 
         switch filter {
         case .all: return groupByUrgency(active, now: now) + completedSection
@@ -126,10 +135,10 @@ final class DashboardViewModel {
         }
 
         return [
-            TaskSection(id: "overdue", title: "Po termínu", tasks: overdue),
-            TaskSection(id: "soon", title: "Dnes a zítra", tasks: soon),
-            TaskSection(id: "week", title: "Příštích 7 dní", tasks: week),
-            TaskSection(id: "later", title: "Později", tasks: later)
+            TaskSection(id: "overdue", title: String(localized: "Po termínu"), tasks: overdue),
+            TaskSection(id: "soon", title: String(localized: "Dnes a zítra"), tasks: soon),
+            TaskSection(id: "week", title: String(localized: "Příštích 7 dní"), tasks: week),
+            TaskSection(id: "later", title: String(localized: "Později"), tasks: later)
         ].filter { !$0.tasks.isEmpty }
     }
 }

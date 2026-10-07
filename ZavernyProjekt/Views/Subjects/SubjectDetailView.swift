@@ -32,10 +32,10 @@ struct SubjectDetailView: View {
             if subject.tasks.isEmpty {
                 EmptyStateView(
                     symbol: "tray",
-                    title: "Žádné úkoly",
-                    message: "Přidej k tomuto předmětu zkoušku, zápočet nebo projekt.",
+                    title: String(localized: "Žádné úkoly"),
+                    message: String(localized: "Přidej k tomuto předmětu zkoušku, zápočet nebo projekt."),
                     tint: subject.color,
-                    actionTitle: "Přidat deadline",
+                    actionTitle: String(localized: "Přidat deadline"),
                     action: { isAddingTask = true }
                 )
                 .listRowBackground(Color.clear)
@@ -201,7 +201,7 @@ private struct SubjectHeaderView: View {
                     Text(subject.name)
                         .font(.title3.bold())
                         .lineLimit(3)
-                    Text("\(subject.credits) \(CzechPlural.credits(subject.credits))")
+                    Text("\(subject.credits) kreditů")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

@@ -15,7 +15,7 @@ struct SubjectCardView: View {
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
-                    Text("\(subject.code) · \(subject.credits) \(CzechPlural.credits(subject.credits))")
+                    Text(verbatim: "\(subject.code) · \(creditsText)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -44,6 +44,11 @@ struct SubjectCardView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    /// „4 kredity“ – tvar podle počtu doplňuje String Catalog
+    private var creditsText: String {
+        String(localized: "\(subject.credits) kreditů")
     }
 
     @ViewBuilder

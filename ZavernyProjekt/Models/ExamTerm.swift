@@ -52,12 +52,13 @@ nonisolated extension ExamTerm {
 
     /// Název úkolu, který z termínu vznikne
     func taskTitle(subjectName: String?) -> String {
-        var title = "\(typeName) – \(subjectName ?? subjectCode)"
-        if isRetake { title += " (opravný)" }
-        return title
+        let name = subjectName ?? subjectCode
+        return isRetake
+            ? String(localized: "\(typeName) – \(name) (opravný)")
+            : "\(typeName) – \(name)"
     }
 
-    /// Ukázkové termíny pro náhledy
+    /// Ukázkové termíny pro náhledy (smyšlený zkoušející – žádné skutečné osoby)
     static var samples: [ExamTerm] {
         let calendar = Calendar.current
         func day(_ offset: Int, _ hour: Int) -> Date {
@@ -67,7 +68,7 @@ nonisolated extension ExamTerm {
         func term(_ id: String, _ code: String, _ type: String, _ offset: Int, _ hour: Int, _ room: String,
                   _ occupied: Int, _ capacity: Int, registered: Bool, retake: Bool = false) -> ExamTerm {
             ExamTerm(id: id, subjectCode: code, department: "AUIUI", typeName: type, start: day(offset, hour),
-                     end: day(offset, hour + 2), room: room, teacher: "Ing. Filip Vabroušek", occupied: occupied,
+                     end: day(offset, hour + 2), room: room, teacher: "Ing. Jan Novák", occupied: occupied,
                      capacity: capacity, isRegistered: registered, canChangeRegistration: true, blockReason: nil,
                      registrationOpens: day(-3, 8), registrationDeadline: day(offset - 2, 23),
                      unregisterDeadline: day(offset - 1, 12), isRetake: retake, note: nil, isCancelled: false)

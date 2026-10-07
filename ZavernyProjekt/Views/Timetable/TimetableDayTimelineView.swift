@@ -99,7 +99,7 @@ struct TimetableDayTimelineView: View {
                 }
 
                 // Popisek hodiny – skrytý, pokud by kolidoval s bublinou „teď“
-                Text("\(hour):00")
+                Text(verbatim: "\(hour):00")
                     .font(.caption2.weight(.medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -220,16 +220,16 @@ struct TimetableDayTimelineView: View {
         let event = occurrence.event
         var parts = [
             event.subjectName,
-            "kód \(event.subjectCode)",
+            String(localized: "kód \(event.subjectCode)", comment: "VoiceOver: kód předmětu"),
             event.typeName,
-            "od \(clockText(occurrence.start)) do \(clockText(occurrence.end))"
+            String(localized: "od \(clockText(occurrence.start)) do \(clockText(occurrence.end))", comment: "VoiceOver: čas akce od–do")
         ]
-        if let location = event.locationText { parts.append("místnost \(location)") }
-        if let teacher = event.teacher, !teacher.isEmpty { parts.append("vyučující \(teacher)") }
+        if let location = event.locationText { parts.append(String(localized: "místnost \(location)", comment: "VoiceOver: místnost akce")) }
+        if let teacher = event.teacher, !teacher.isEmpty { parts.append(String(localized: "vyučující \(teacher)", comment: "VoiceOver: vyučující akce")) }
         if let parity = event.parityText { parts.append(parity) }
         switch state(of: occurrence) {
-        case .past: parts.append("proběhlo")
-        case .ongoing: parts.append("právě probíhá")
+        case .past: parts.append(String(localized: "proběhlo", comment: "VoiceOver: akce už proběhla"))
+        case .ongoing: parts.append(String(localized: "právě probíhá", comment: "VoiceOver: akce právě probíhá"))
         case .upcoming: break
         }
         return parts.joined(separator: ", ")

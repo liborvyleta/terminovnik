@@ -75,7 +75,7 @@ struct DashboardView: View {
 
                 Picker("Filtr", selection: $viewModel.filter.animation(.snappy)) {
                     ForEach(DashboardFilter.allCases) { filter in
-                        Text(filter.rawValue).tag(filter)
+                        Text(filter.title).tag(filter)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -190,13 +190,13 @@ struct DashboardView: View {
     private var emptyStateContent: some View {
         EmptyStateView(
             symbol: "calendar.badge.plus",
-            title: "Zatím žádné deadliny",
+            title: String(localized: "Zatím žádné deadliny"),
             message: subjects.isEmpty
-                ? "Načti si své předměty ze STAGu a přidej k nim první zkoušku nebo odevzdání. Den před termínem ti pošleme připomínku."
-                : "Přidej první zkoušku, zápočet nebo projekt. Den před termínem ti pošleme připomínku.",
-            actionTitle: "Přidat deadline",
+                ? String(localized: "Načti si své předměty ze STAGu a přidej k nim první zkoušku nebo odevzdání. Den před termínem ti pošleme připomínku.")
+                : String(localized: "Přidej první zkoušku, zápočet nebo projekt. Den před termínem ti pošleme připomínku."),
+            actionTitle: String(localized: "Přidat deadline"),
             action: { isAddingTask = true },
-            secondaryActionTitle: subjects.isEmpty ? "Načíst předměty ze STAGu" : nil,
+            secondaryActionTitle: subjects.isEmpty ? String(localized: "Načíst předměty ze STAGu") : nil,
             secondaryAction: { isImportingFromStag = true }
         )
         .frame(maxHeight: .infinity)
@@ -210,15 +210,15 @@ struct DashboardView: View {
         } else if viewModel.filter == .completed {
             EmptyStateView(
                 symbol: "tray",
-                title: "Zatím nic splněného",
-                message: "Odškrtni deadline klepnutím na kolečko a objeví se tady.",
+                title: String(localized: "Zatím nic splněného"),
+                message: String(localized: "Odškrtni deadline klepnutím na kolečko a objeví se tady."),
                 tint: .green
             )
         } else {
             EmptyStateView(
                 symbol: "checkmark.seal.fill",
-                title: "Máš hotovo!",
-                message: "Žádné nadcházející deadliny. Užij si volno 🎉",
+                title: String(localized: "Máš hotovo!"),
+                message: String(localized: "Žádné nadcházející deadliny. Užij si volno 🎉"),
                 tint: .green
             )
         }
@@ -240,7 +240,7 @@ private struct NewTermsCard: View {
     }
 
     private var countText: String {
-        "\(terms.count) \(CzechPlural.form(terms.count, one: "nový termín", few: "nové termíny", many: "nových termínů"))"
+        String(localized: "\(terms.count) nových termínů")
     }
 
     var body: some View {

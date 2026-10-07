@@ -245,7 +245,7 @@ struct ExamTermDateTile: View {
                 .font(.caption2.weight(.bold))
                 .textCase(.uppercase)
                 .foregroundStyle(tint)
-            Text("\(Calendar.current.component(.day, from: date))")
+            Text(verbatim: "\(Calendar.current.component(.day, from: date))")
                 .font(.title2.weight(.bold))
                 .monospacedDigit()
             Text(date.formatted(.dateTime.month(.abbreviated).locale(.czech)))
@@ -327,7 +327,7 @@ struct ExamTermNewBadge: View {
 
 /// Malý barevný štítek („opravný“, „Zrušeno“, „Zapsáno“)
 struct ExamTermChip: View {
-    let text: String
+    let text: LocalizedStringKey
     var symbol: String? = nil
     let color: Color
 

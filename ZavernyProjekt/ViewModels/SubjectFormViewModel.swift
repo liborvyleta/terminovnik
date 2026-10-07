@@ -33,10 +33,11 @@ final class SubjectFormViewModel {
         let value = Subject.initials(name: trimmedName, code: trimmedCode)
         return value.isEmpty ? "?" : value
     }
-    var previewName: String { trimmedName.isEmpty ? "Název předmětu" : trimmedName }
+    var previewName: String { trimmedName.isEmpty ? String(localized: "Název předmětu") : trimmedName }
     var previewDetail: String {
-        let code = trimmedCode.isEmpty ? "KÓD" : trimmedCode.uppercased()
-        return "\(code) · \(credits) \(CzechPlural.credits(credits))"
+        let code = trimmedCode.isEmpty ? String(localized: "KÓD") : trimmedCode.uppercased()
+        let creditsText = String(localized: "\(credits) kreditů")
+        return "\(code) · \(creditsText)"
     }
 
     // MARK: - Uložení

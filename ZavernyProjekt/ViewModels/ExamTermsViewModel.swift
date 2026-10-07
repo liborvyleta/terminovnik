@@ -26,8 +26,8 @@ enum ExamTermsSegment: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .registered: "Zapsané"
-        case .available: "Vypsané"
+        case .registered: String(localized: "Zapsané", comment: "Segment: zapsané termíny")
+        case .available: String(localized: "Vypsané", comment: "Segment: vypsané termíny")
         }
     }
 }
@@ -221,7 +221,8 @@ final class ExamTermsViewModel {
     /// „Aktualizováno před 5 min“
     func footerText(now: Date) -> String? {
         guard let fetchedAt else { return nil }
-        return "Aktualizováno \(TimetableViewModel.relativeText(since: fetchedAt, now: now))"
+        let updated = TimetableViewModel.relativeText(since: fetchedAt, now: now)
+        return String(localized: "Aktualizováno \(updated)")
     }
 
     /// „út 14. 10.“
@@ -249,7 +250,7 @@ final class ExamTermsViewModel {
 
     /// „Zkouška“, „Zkouška · opravný“
     static func typeText(_ term: ExamTerm) -> String {
-        term.isRetake ? "\(term.typeName) · opravný" : term.typeName
+        term.isRetake ? String(localized: "\(term.typeName) · opravný", comment: "Typ termínu ze STAGu + opravný termín") : term.typeName
     }
 
     /// Ikona typu termínu
@@ -261,9 +262,12 @@ final class ExamTermsViewModel {
     static func occupancyText(_ term: ExamTerm) -> String? {
         switch (term.occupied, term.capacity) {
         case let (occupied?, capacity?):
-            return term.isFull ? "Plno · \(occupied)/\(capacity)" : "\(occupied)/\(capacity) · volno \(term.freeSpots ?? 0)"
+            let free = term.freeSpots ?? 0
+            return term.isFull
+                ? String(localized: "Plno · \(occupied)/\(capacity)")
+                : String(localized: "\(occupied)/\(capacity) · volno \(free)", comment: "Obsazenost termínu a počet volných míst")
         case let (occupied?, nil):
-            return "\(occupied) \(CzechPlural.form(occupied, one: "zapsaný", few: "zapsaní", many: "zapsaných"))"
+            return String(localized: "\(occupied) zapsaných", comment: "Počet studentů zapsaných na termín")
         default:
             return nil
         }
@@ -296,14 +300,16 @@ final class ExamTermsViewModel {
     static func registrationText(_ term: ExamTerm, now: Date = .now) -> String? {
         switch registrationWindow(term, now: now) {
         case let .opensLater(opens, deadline)?:
-            let base = "Přihlašování od \(opens.deadlineFormatted)"
-            return deadline.map { "\(base) do \($0.deadlineFormatted)" } ?? base
+            let from = opens.deadlineFormatted
+            guard let deadline else { return String(localized: "Přihlašování od \(from)") }
+            let to = deadline.deadlineFormatted
+            return String(localized: "Přihlašování od \(from) do \(to)")
         case let .open(deadline?)?:
-            return "Přihlásit se můžeš do \(deadline.deadlineFormatted)"
+            return String(localized: "Přihlásit se můžeš do \(deadline.deadlineFormatted)")
         case .open(nil)?:
-            return "Přihlašování je otevřené"
+            return String(localized: "Přihlašování je otevřené")
         case .closed?:
-            return "Přihlašování skončilo"
+            return String(localized: "Přihlašování skončilo")
         case nil:
             return nil
         }
@@ -318,7 +324,9 @@ final class ExamTermsViewModel {
     /// „Odhlásit se lze do po 13. 10. 12:00“ / „Odhlásit se už nelze“
     static func unregisterText(_ term: ExamTerm, now: Date = .now) -> String? {
         guard let deadline = term.unregisterDeadline else { return nil }
-        return deadline > now ? "Odhlásit se lze do \(deadline.deadlineFormatted)" : "Odhlásit se už nelze"
+        return deadline > now
+            ? String(localized: "Odhlásit se lze do \(deadline.deadlineFormatted)")
+            : String(localized: "Odhlásit se už nelze")
     }
 
     /// Důvod, proč se nelze zapsat (jen když nějaký STAG uvedl)
@@ -331,12 +339,12 @@ final class ExamTermsViewModel {
     /// „Za 9 dní“, „Zítra“, „Dnes v 9:00“
     static func countdownText(_ term: ExamTerm, now: Date = .now) -> String {
         term.start.calendarDays(from: now) == 0
-            ? "Dnes v \(TimetableViewModel.time(term.start))"
+            ? String(localized: "Dnes v \(TimetableViewModel.time(term.start))")
             : Countdown.text(for: term.start, now: now)
     }
 
     /// „3 termíny“
     static func termCountText(_ count: Int) -> String {
-        "\(count) \(CzechPlural.form(count, one: "termín", few: "termíny", many: "termínů"))"
+        String(localized: "\(count) termínů", comment: "Počet termínů")
     }
 }
