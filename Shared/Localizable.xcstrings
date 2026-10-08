@@ -32,6 +32,17 @@
         }
       }
     },
+    "%@ b." : {
+      "comment" : "Počet bodů z hodnocení",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pts"
+          }
+        }
+      }
+    },
     "%@ máš %lld hodin: %@." : {
       "comment" : "Např. „Dnes (út 6. 10.) máš 3 hodiny: …“ – plurál podle počtu hodin (2. argument)",
       "localizations" : {
@@ -691,6 +702,84 @@
         }
       }
     },
+    "%lld z %lld kreditů" : {
+      "comment" : "Získané kredity z celkového počtu v semestru",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld z %2$lld kreditů"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %#@credits@"
+          },
+          "substitutions" : {
+            "credits" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg credit"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg credits"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld z %lld předmětů" : {
+      "comment" : "Absolvované předměty z celkového počtu",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld z %2$lld předmětů"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %#@subjects@"
+          },
+          "substitutions" : {
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld zapsaných" : {
       "comment" : "Počet studentů zapsaných na termín",
       "localizations" : {
@@ -744,6 +833,17 @@
         }
       }
     },
+    "%lld. pokus" : {
+      "comment" : "Pořadí pokusu u zápočtu nebo zkoušky",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attempt %lld"
+          }
+        }
+      }
+    },
     "%lld/%lld" : {
       "localizations" : {
         "cs" : {
@@ -779,6 +879,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : ", room %@"
+          }
+        }
+      }
+    },
+    "Absolvované předměty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed subjects"
+          }
+        }
+      }
+    },
+    "Absolvováno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
           }
         }
       }
@@ -1301,6 +1421,38 @@
         }
       }
     },
+    "Dobře" : {
+      "comment" : "Slovní hodnocení známky C / 2",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        }
+      }
+    },
+    "Dostatečně" : {
+      "comment" : "Slovní hodnocení známky E / 3",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satisfactory"
+          }
+        }
+      }
+    },
+    "Dáme vědět, jakmile ti vyučující zapíše do STAGu zápočet nebo známku ze zkoušky." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We'll let you know as soon as your teacher enters a credit or an exam grade in STAG."
+          }
+        }
+      }
+    },
     "E-mail" : {
       "localizations" : {
         "en" : {
@@ -1387,6 +1539,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Class on the Lock Screen"
+          }
+        }
+      }
+    },
+    "Hodnocení" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grades"
           }
         }
       }
@@ -1539,6 +1701,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "As soon as teachers post them, they’ll appear here and we’ll notify you right away."
+          }
+        }
+      }
+    },
+    "Jakmile ti vyučující zapíšou do STAGu zápočet nebo známku ze zkoušky, objeví se tady a hned tě upozorníme." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As soon as your teachers enter a credit or an exam grade in STAG, it will appear here and we'll notify you right away."
           }
         }
       }
@@ -1834,6 +2006,17 @@
         }
       }
     },
+    "LS %@" : {
+      "comment" : "Letní semestr, např. „LS 2026/2027“",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summer %@"
+          }
+        }
+      }
+    },
     "Letní semestr" : {
       "localizations" : {
         "en" : {
@@ -1900,6 +2083,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Blue"
+          }
+        }
+      }
+    },
+    "Máš %lld nových známek" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Máš %lld nové známky"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Máš %lld nových známek"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Máš %lld novou známku"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Máš %lld nových známek"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You have %lld new grade"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You have %lld new grades"
+                }
+              }
+            }
           }
         }
       }
@@ -2105,6 +2340,16 @@
         }
       }
     },
+    "Načítám známky ze STAGu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading grades from STAG…"
+          }
+        }
+      }
+    },
     "Ne" : {
       "comment" : "Zkratka dne v týdnu: neděle",
       "localizations" : {
@@ -2112,6 +2357,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sun"
+          }
+        }
+      }
+    },
+    "Nedostatečně" : {
+      "comment" : "Slovní hodnocení známky F / 4",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fail"
           }
         }
       }
@@ -2266,12 +2522,39 @@
         }
       }
     },
+    "Nezapočteno" : {
+      "comment" : "Slovní hodnocení nesplněného zápočtu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not passed"
+          }
+        }
+      }
+    },
     "Nikomu dalšímu. Aplikace nemá vlastní server a neobsahuje analytiku, reklamu, sledování ani knihovny (SDK) třetích stran. Vývojář k tvým datům nemá přístup." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No one else. The app has no server of its own and contains no analytics, advertising, tracking or third-party libraries (SDKs). The developer has no access to your data."
+          }
+        }
+      }
+    },
+    "Nová známka: %@ – %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nová známka: %1$@ – %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New grade: %1$@ – %2$@"
           }
         }
       }
@@ -2419,6 +2702,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Refresh exam dates"
+          }
+        }
+      }
+    },
+    "Obnovit známky" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh grades"
           }
         }
       }
@@ -2920,6 +3213,16 @@
         }
       }
     },
+    "Pro načtení známek se přihlas do IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to load your grades."
+          }
+        }
+      }
+    },
     "Probíhá" : {
       "localizations" : {
         "en" : {
@@ -2982,6 +3285,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Happening now: %1$@ (%2$@) until %3$@"
+          }
+        }
+      }
+    },
+    "Průměr %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %@"
+          }
+        }
+      }
+    },
+    "Průměr je orientační – počítá se z klasifikovaných předmětů vážený kredity." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The average is indicative – it is calculated from graded subjects weighted by credits."
           }
         }
       }
@@ -3313,6 +3636,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sign in to IS/STAG to see posted exam and credit test dates – with capacity, room and registration deadline. We’ll notify you about new dates right away."
+          }
+        }
+      }
+    },
+    "Přihlas se do IS/STAG a uvidíš známky ze zápočtů a zkoušek, získané kredity i vážený studijní průměr. Na nové známky tě hned upozorníme." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to see your credit and exam grades, earned credits and weighted grade average. We'll notify you about new grades right away."
           }
         }
       }
@@ -3991,22 +4324,22 @@
         }
       }
     },
-    "Smaže všechny předměty, deadliny a připomínky i uložený rozvrh a termíny zkoušek. Zároveň se můžeš odhlásit ze STAGu." : {
+    "Smaže všechny předměty, deadliny a připomínky i uložený rozvrh, termíny zkoušek a známky. Zároveň se můžeš odhlásit ze STAGu." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deletes all subjects, deadlines and reminders, as well as the saved timetable and exam dates. You can also sign out of STAG at the same time."
+            "value" : "Deletes all subjects, deadlines and reminders as well as the saved timetable, exam dates and grades. You can also sign out of STAG at the same time."
           }
         }
       }
     },
-    "Smažou se všechny předměty, deadliny a připomínky i uložený rozvrh a termíny zkoušek. Akci nelze vrátit." : {
+    "Smažou se všechny předměty, deadliny a připomínky i uložený rozvrh, termíny zkoušek a známky. Akci nelze vrátit." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "All subjects, deadlines and reminders will be deleted, along with the saved timetable and exam dates. This can’t be undone."
+            "value" : "All subjects, deadlines and reminders as well as the saved timetable, exam dates and grades will be deleted. This can't be undone."
           }
         }
       }
@@ -4200,6 +4533,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Status and grade"
+          }
+        }
+      }
+    },
+    "Studijní výsledky" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study results"
           }
         }
       }
@@ -4600,6 +4943,16 @@
         }
       }
     },
+    "Upozornit na nové známky" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify about new grades"
+          }
+        }
+      }
+    },
     "Upozornit před hodinou" : {
       "localizations" : {
         "en" : {
@@ -4610,12 +4963,12 @@
         }
       }
     },
-    "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny hlídáme, když jsi přihlášený do STAGu." : {
+    "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny a známky hlídáme, když jsi přihlášený do STAGu." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Class reminders and Live Activities work once your timetable is loaded from STAG. We watch for new exam dates while you’re signed in to STAG."
+            "value" : "Class reminders and Live Activities work when your timetable from STAG is loaded. New exam dates and grades are checked while you're signed in to STAG."
           }
         }
       }
@@ -4650,6 +5003,27 @@
         }
       }
     },
+    "Uspokojivě" : {
+      "comment" : "Slovní hodnocení známky D / 2,5",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fair"
+          }
+        }
+      }
+    },
+    "Uznáno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognized"
+          }
+        }
+      }
+    },
     "V aktuálním semestru nemáš ve STAGu zapsané žádné předměty." : {
       "localizations" : {
         "en" : {
@@ -4676,6 +5050,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You aren’t enrolled in any subjects in STAG this semester."
+          }
+        }
+      }
+    },
+    "Velmi dobře" : {
+      "comment" : "Slovní hodnocení známky B / 1,5",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Very good"
           }
         }
       }
@@ -4850,6 +5235,27 @@
         }
       }
     },
+    "Vážený průměr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weighted average"
+          }
+        }
+      }
+    },
+    "Výborně" : {
+      "comment" : "Slovní hodnocení známky A / 1",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excellent"
+          }
+        }
+      }
+    },
     "Výuka" : {
       "localizations" : {
         "en" : {
@@ -4957,6 +5363,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "From the IS/STAG timetable – Termínovník"
+          }
+        }
+      }
+    },
+    "ZS %@" : {
+      "comment" : "Zimní semestr, např. „ZS 2026/2027“",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Winter %@"
           }
         }
       }
@@ -5081,6 +5498,17 @@
         }
       }
     },
+    "Započteno" : {
+      "comment" : "Slovní hodnocení zápočtu Z",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passed"
+          }
+        }
+      }
+    },
     "Zapsané" : {
       "comment" : "Segment: zapsané termíny",
       "localizations" : {
@@ -5138,6 +5566,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registered"
+          }
+        }
+      }
+    },
+    "Zatím bez hodnocení" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not graded yet"
+          }
+        }
+      }
+    },
+    "Zatím bez známek" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No grades yet"
           }
         }
       }
@@ -5208,6 +5656,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No exam dates posted yet"
+          }
+        }
+      }
+    },
+    "Zatím žádné známky" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No grades yet"
           }
         }
       }
@@ -5339,6 +5797,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Change Language"
+          }
+        }
+      }
+    },
+    "Známka %@" : {
+      "comment" : "VoiceOver: známka\nZnámka bez slovního hodnocení",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade %@"
+          }
+        }
+      }
+    },
+    "Známka %@, %@" : {
+      "comment" : "VoiceOver: známka a její slovní hodnocení",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Známka %1$@, %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "Známky se nepodařilo aktualizovat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't update grades"
+          }
+        }
+      }
+    },
+    "Známky se nepodařilo načíst" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load grades"
+          }
+        }
+      }
+    },
+    "Známky ze STAGu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grades from STAG"
+          }
+        }
+      }
+    },
+    "Známky, kredity a vážený průměr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grades, credits and weighted average"
           }
         }
       }
@@ -5489,6 +6015,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AP9PT final project · UTB FAI"
+          }
+        }
+      }
+    },
+    "Získané kredity" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Earned credits"
           }
         }
       }
@@ -5735,6 +6271,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "right now"
+          }
+        }
+      }
+    },
+    "průměr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "average"
           }
         }
       }

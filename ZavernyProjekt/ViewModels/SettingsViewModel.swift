@@ -101,7 +101,6 @@ final class SettingsViewModel {
         ClassReminderScheduler.shared.reschedule()
     }
 
-    /// Změna předstihu připomínky – stará oznámení se nahradí novými.
     /// Zapnutí upozornění na nové termíny – bez povolených oznámení by nepřišla, tak o ně rovnou požádáme
     func examTermAlertsChanged(enabled: Bool) async {
         if enabled, notificationPermission == .notDetermined {
@@ -109,6 +108,12 @@ final class SettingsViewModel {
         }
     }
 
+    /// Zapnutí upozornění na nové známky – stejně jako u termínů rovnou požádáme o povolení oznámení
+    func gradeAlertsChanged(enabled: Bool) async {
+        await examTermAlertsChanged(enabled: enabled)
+    }
+
+    /// Změna předstihu připomínky – stará oznámení se nahradí novými.
     func classReminderLeadChanged() {
         ClassReminderScheduler.shared.reschedule()
     }
@@ -120,8 +125,8 @@ final class SettingsViewModel {
 
     // MARK: - Data
 
-    /// Smaže všechna data aplikace: předměty, deadliny, připomínky (deadlinů i hodin), uložený rozvrh
-    /// a termíny zkoušek, ukončí Live Activity a obnoví widgety.
+    /// Smaže všechna data aplikace: předměty, deadliny, připomínky (deadlinů i hodin), uložený rozvrh,
+    /// termíny zkoušek a známky, ukončí Live Activity a obnoví widgety.
     /// Úkoly předmětů smaže SwiftData kaskádou, úkoly bez předmětu mažeme ručně.
     /// - Parameter signOut: `true` = navíc odhlásí účet STAG (smaže přístupový klíč a údaje o účtu).
     func deleteAllData(in context: ModelContext, signOut: Bool = false) {
@@ -147,6 +152,7 @@ final class SettingsViewModel {
         // Data ze STAGu uložená v App Group (čte je i widget „Další hodina“)
         TimetableStore.shared.clear()
         ExamTermStore.shared.clear()
+        GradeStore.shared.clear()
         ClassReminderScheduler.shared.cancelAll()
         LiveActivityManager.shared.endAll()
         // Doručená oznámení (deadliny, hodiny, nové termíny) by po smazání jen mátla

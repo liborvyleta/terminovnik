@@ -22,6 +22,10 @@ struct SubjectCardView: View {
 
                 Spacer(minLength: 0)
 
+                if let grade, grade.displayGrade != nil {
+                    GradeBadge(grade: grade)
+                }
+
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.tertiary)
@@ -44,6 +48,11 @@ struct SubjectCardView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    /// Hodnocení ze STAGu (@Observable singleton – nová známka se na kartě hned ukáže)
+    private var grade: SubjectGrade? {
+        subject.code.isEmpty ? nil : GradeStore.shared.grade(forSubjectCode: subject.code)
     }
 
     /// „4 kredity“ – tvar podle počtu doplňuje String Catalog

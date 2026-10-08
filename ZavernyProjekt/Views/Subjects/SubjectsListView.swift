@@ -57,6 +57,8 @@ struct SubjectsListView: View {
                     StatCard(value: viewModel.activeTaskCount(of: subjects), title: String(localized: "Aktivní úkoly"), symbol: "flag.circle.fill", color: .orange)
                 }
 
+                gradesEntry
+
                 LazyVStack(spacing: 14) {
                     ForEach(subjects) { subject in
                         NavigationLink(value: subject) {
@@ -71,6 +73,20 @@ struct SubjectsListView: View {
                 }
             }
             .padding()
+        }
+    }
+
+    /// Karta „Studijní výsledky“ – jen s připojeným účtem STAG nebo uloženými známkami
+    @ViewBuilder
+    private var gradesEntry: some View {
+        let store = GradeStore.shared
+        if StagAccountStore.shared.isConnected || store.hasGrades {
+            NavigationLink {
+                GradesView()
+            } label: {
+                GradesEntryCard(summary: store.overallSummary, hasGrades: store.hasGrades)
+            }
+            .buttonStyle(.plain)
         }
     }
 

@@ -19,6 +19,8 @@ struct SettingsView: View {
     @AppStorage("lessonLiveActivityEnabled") private var lessonLiveActivityEnabled = true
     /// Upozornění na nově vypsané termíny zkoušek – klíč čte ExamTermStore
     @AppStorage(ExamTermStore.alertsEnabledKey) private var examTermAlertsEnabled = true
+    /// Upozornění na nové známky – klíč čte GradeStore
+    @AppStorage(GradeStore.alertsEnabledKey) private var gradeAlertsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -151,6 +153,19 @@ struct SettingsView: View {
                     Image(systemName: "graduationcap")
                 }
             }
+
+            Toggle(isOn: $gradeAlertsEnabled) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Upozornit na nové známky")
+                        Text("Dáme vědět, jakmile ti vyučující zapíše do STAGu zápočet nebo známku ze zkoušky.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "rosette")
+                }
+            }
         } header: {
             Text("Výuka")
         } footer: {
@@ -168,11 +183,14 @@ struct SettingsView: View {
         .onChange(of: examTermAlertsEnabled) { _, enabled in
             Task { await viewModel.examTermAlertsChanged(enabled: enabled) }
         }
+        .onChange(of: gradeAlertsEnabled) { _, enabled in
+            Task { await viewModel.gradeAlertsChanged(enabled: enabled) }
+        }
     }
 
     private var lessonsFooter: String {
-        var text = String(localized: "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny hlídáme, když jsi přihlášený do STAGu.")
-        if classRemindersEnabled || examTermAlertsEnabled, viewModel.notificationPermission == .denied {
+        var text = String(localized: "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny a známky hlídáme, když jsi přihlášený do STAGu.")
+        if classRemindersEnabled || examTermAlertsEnabled || gradeAlertsEnabled, viewModel.notificationPermission == .denied {
             text += " " + String(localized: "Oznámení jsou ale v nastavení iOS vypnutá.")
         }
         return text
@@ -250,7 +268,7 @@ struct SettingsView: View {
         } header: {
             Text("Data")
         } footer: {
-            Text("Smaže všechny předměty, deadliny a připomínky i uložený rozvrh a termíny zkoušek. Zároveň se můžeš odhlásit ze STAGu.")
+            Text("Smaže všechny předměty, deadliny a připomínky i uložený rozvrh, termíny zkoušek a známky. Zároveň se můžeš odhlásit ze STAGu.")
         }
     }
 
@@ -259,11 +277,12 @@ struct SettingsView: View {
         !subjects.isEmpty || !tasks.isEmpty
             || TimetableStore.shared.snapshot != nil
             || !ExamTermStore.shared.terms.isEmpty
+            || GradeStore.shared.hasGrades
             || StagAccountStore.shared.isConnected
     }
 
     private var deleteAllMessage: String {
-        var text = String(localized: "Smažou se všechny předměty, deadliny a připomínky i uložený rozvrh a termíny zkoušek. Akci nelze vrátit.")
+        var text = String(localized: "Smažou se všechny předměty, deadliny a připomínky i uložený rozvrh, termíny zkoušek a známky. Akci nelze vrátit.")
         if StagAccountStore.shared.isConnected {
             text += " " + String(localized: "Účet STAG může zůstat přihlášený, nebo se můžeš rovnou odhlásit.")
         }

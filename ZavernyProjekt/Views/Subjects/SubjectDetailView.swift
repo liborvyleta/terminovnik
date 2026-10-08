@@ -21,12 +21,18 @@ struct SubjectDetailView: View {
         let completed = viewModel.completedTasks(of: subject)
         // Termíny ze STAGu (@Observable singleton – změny se v body sledují)
         let examTerms = subject.code.isEmpty ? [] : ExamTermStore.shared.terms(forSubject: subject.code)
+        // Hodnocení ze STAGu (nejnovější zápis předmětu)
+        let grade = subject.code.isEmpty ? nil : GradeStore.shared.grade(forSubjectCode: subject.code)
 
         List {
             Section {
                 SubjectHeaderView(subject: subject)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
+            }
+
+            if let grade {
+                gradeSection(grade)
             }
 
             if subject.tasks.isEmpty {
@@ -84,6 +90,21 @@ struct SubjectDetailView: View {
         }
         .sheet(isPresented: $isEditingSubject) { SubjectFormSheet(subject: subject) }
         .sensoryFeedback(.success, trigger: viewModel.completionFeedback)
+    }
+
+    /// Sekce „Hodnocení“: velká známka, zápočet a zkouška (jen části, které STAG uvádí)
+    private func gradeSection(_ grade: SubjectGrade) -> some View {
+        Section {
+            SubjectGradeSummaryRow(grade: grade)
+            if let creditTest = grade.creditTest {
+                GradePartDetailRow(title: "Zápočet", symbol: "checkmark.seal.fill", part: creditTest)
+            }
+            if let exam = grade.exam {
+                GradePartDetailRow(title: "Zkouška", symbol: "graduationcap.fill", part: exam)
+            }
+        } header: {
+            Text("Hodnocení")
+        }
     }
 
     /// Řádek s gesty: klepnutí = úprava, swipe doleva = smazat, dlouhé podržení = kontextové menu
