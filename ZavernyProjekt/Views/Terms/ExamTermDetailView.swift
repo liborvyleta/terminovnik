@@ -1,14 +1,33 @@
 import SwiftUI
+import SwiftData
 
-/// Detail termínu zkoušky (sheet): kdy, kde, kdo, obsazenost, přihlašování a přidání do Kalendáře.
+/// Detail termínu zkoušky (sheet): kdy, kde, kdo, obsazenost, přihlašování, zápis/odhlášení ve STAGu
+/// a přidání do Kalendáře.
 struct ExamTermDetailView: View {
-    let term: ExamTerm
+    /// Termín při otevření – aktuální podobu (po zápisu se mění) bere z ViewModelu
+    private let initialTerm: ExamTerm
     let subjectName: String?
     let tint: Color
-    var isNew: Bool = false
+    var isNew: Bool
+    let viewModel: ExamTermsViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var isAddingToCalendar = false
+    /// Akce čekající na potvrzení v dialogu
+    @State private var registrationRequest: ExamTermRegistrationRequest?
+    /// Výsledek poslední akce (ukázaný v sekci zápisu)
+    @State private var lastOutcome: ExamTermRegistrationOutcome?
+
+    init(term: ExamTerm, subjectName: String?, tint: Color, isNew: Bool = false, viewModel: ExamTermsViewModel) {
+        initialTerm = term
+        self.subjectName = subjectName
+        self.tint = tint
+        self.isNew = isNew
+        self.viewModel = viewModel
+    }
+
+    /// Aktuální podoba termínu ze store / náhledu
+    private var term: ExamTerm { viewModel.latest(initialTerm) }
 
     var body: some View {
         NavigationStack {
@@ -24,8 +43,12 @@ struct ExamTermDetailView: View {
 
                     whenSection(now: now)
                     whereSection
+                    if let room = term.room, !room.isEmpty {
+                        BuildingMapSection(buildingCode: ExamTermsViewModel.buildingCode(from: room), room: room)
+                    }
                     occupancySection
                     registrationSection(now: now)
+                    registrationActionSection(now: now)
 
                     if let note = term.note?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
                         Section("Poznámka") {
@@ -55,6 +78,9 @@ struct ExamTermDetailView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Hotovo") { dismiss() }
                 }
+            }
+            .examTermRegistrationFlow($registrationRequest, viewModel: viewModel, showsSuccessAlert: false) { outcome in
+                withAnimation(.snappy) { lastOutcome = outcome }
             }
             .sheet(isPresented: $isAddingToCalendar) {
                 CalendarEventEditor(
@@ -222,6 +248,67 @@ struct ExamTermDetailView: View {
         }
     }
 
+    /// Zápis / odhlášení / fronta přímo ve STAGu (vždy přes potvrzovací dialog)
+    @ViewBuilder
+    private func registrationActionSection(now: Date) -> some View {
+        if let action = viewModel.registrationAction(for: term, now: now) {
+            let enabled = ExamTermsViewModel.isRegistrationActionEnabled(action, term: term)
+            let pending = viewModel.pendingRegistration
+            Section {
+                if let pending, pending.termID == term.id {
+                    HStack(spacing: 12) {
+                        ProgressView()
+                        Text(pending.action.progressText)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .accessibilityElement(children: .combine)
+                } else {
+                    Button(role: action.isDestructive ? .destructive : nil) {
+                        lastOutcome = nil
+                        registrationRequest = ExamTermRegistrationRequest(term: term, action: action, subjectName: subjectName)
+                    } label: {
+                        Label(action.title, systemImage: action.symbol)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(action.isDestructive ? .red : tint)
+                    .disabled(!enabled || pending != nil)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
+
+                if let lastOutcome, lastOutcome.termID == term.id {
+                    Label(lastOutcome.message, systemImage: lastOutcome.isSuccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .labelStyle(.compact(spacing: 8))
+                        .font(.subheadline)
+                        .foregroundStyle(lastOutcome.isSuccess ? Color.green : Color.red)
+                        .transition(.opacity)
+                }
+            } header: {
+                Text("Zápis ve STAGu")
+            } footer: {
+                registrationActionFooter(action, enabled: enabled, now: now)
+            }
+        }
+    }
+
+    /// Proč akce nejde (důvod ze STAGu + termíny přihlašování/odhlašování), jinak upozornění na ostrou změnu
+    private func registrationActionFooter(_ action: StagTermRegistrationAction, enabled: Bool, now: Date) -> some View {
+        var lines: [String] = []
+        if enabled {
+            lines.append(String(localized: "Změna proběhne přímo v IS/STAG – před provedením ji ještě potvrdíš."))
+            if action == .register, let unregister = ExamTermsViewModel.unregisterText(term, now: now) { lines.append(unregister) }
+        } else {
+            lines.append(ExamTermsViewModel.blockReasonText(term) ?? String(localized: "STAG teď změnu zápisu nedovoluje."))
+            if let registration = ExamTermsViewModel.registrationText(term, now: now) { lines.append(registration) }
+            if let unregister = ExamTermsViewModel.unregisterText(term, now: now) { lines.append(unregister) }
+        }
+        return Text(lines.joined(separator: "\n"))
+    }
+
     private var calendarSection: some View {
         Section {
             Button {
@@ -238,8 +325,6 @@ struct ExamTermDetailView: View {
             .listRowBackground(Color.clear)
         } footer: {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Zapsat/odhlásit se můžeš na portálu IS/STAG.", systemImage: "info.circle")
-                    .labelStyle(.compact(spacing: 6))
                 Text("Událost uložíš v systémovém Kalendáři – aplikace k němu nepotřebuje přístup.")
             }
             .padding(.top, 4)
@@ -280,14 +365,27 @@ struct ExamTermDetailView: View {
 #Preview("Zapsaný") {
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            ExamTermDetailView(term: ExamTerm.samples[0], subjectName: "Pokročilé mobilní technologie", tint: Color(hex: "#3E63DD"))
+            ExamTermDetailView(term: ExamTerm.samples[0], subjectName: "Pokročilé mobilní technologie", tint: Color(hex: "#3E63DD"),
+                               viewModel: ExamTermsViewModel(previewTerms: ExamTerm.samples))
         }
+        .modelContainer(for: [Subject.self, ExamTask.self], inMemory: true)
+}
+
+#Preview("Vypsaný – zapsat se") {
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            ExamTermDetailView(term: ExamTerm.samples[1], subjectName: "Pokročilé mobilní technologie", tint: Color(hex: "#3E63DD"),
+                               viewModel: ExamTermsViewModel(previewTerms: ExamTerm.samples))
+        }
+        .modelContainer(for: [Subject.self, ExamTask.self], inMemory: true)
 }
 
 #Preview("Vypsaný – plno") {
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            ExamTermDetailView(term: ExamTerm.samples[2], subjectName: "Evoluční výpočetní techniky", tint: Color(hex: "#B8860B"), isNew: true)
+            ExamTermDetailView(term: ExamTerm.samples[2], subjectName: "Evoluční výpočetní techniky", tint: Color(hex: "#B8860B"), isNew: true,
+                               viewModel: ExamTermsViewModel(previewTerms: ExamTerm.samples))
         }
+        .modelContainer(for: [Subject.self, ExamTask.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

@@ -14,6 +14,8 @@ struct ExamTermsView: View {
     @State private var viewModel: ExamTermsViewModel
     @State private var selectedTerm: ExamTerm?
     @State private var isShowingLogin = false
+    /// Zápis/odhlášení z kontextové nabídky – čeká na potvrzení v dialogu
+    @State private var registrationRequest: ExamTermRegistrationRequest?
 
     /// Ostrý režim – data z `ExamTermStore.shared`
     init() {
@@ -38,9 +40,11 @@ struct ExamTermsView: View {
                         term: term,
                         subjectName: viewModel.subjectName(for: term.subjectCode, subjects: subjects),
                         tint: viewModel.tint(for: term.subjectCode, subjects: subjects),
-                        isNew: viewModel.isNew(term)
+                        isNew: viewModel.isNew(term),
+                        viewModel: viewModel
                     )
                 }
+                .examTermRegistrationFlow($registrationRequest, viewModel: viewModel)
                 .sheet(isPresented: $isShowingLogin) { StagImportView() }
                 // Spustí se při otevření i hned po přihlášení do STAGu
                 .task(id: viewModel.isConnected) {
@@ -200,6 +204,7 @@ struct ExamTermsView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .contextMenu { registrationMenu(for: first) }
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0))
                 .listRowBackground(Color.clear)
             }
@@ -216,6 +221,7 @@ struct ExamTermsView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .contextMenu { registrationMenu(for: term) }
                     }
                 } header: {
                     HStack {
@@ -228,7 +234,7 @@ struct ExamTermsView: View {
 
             Section {
             } footer: {
-                Text("Ke každému zapsanému termínu máš v Přehledu zkoušku s připomínkou den předem. Zapsat nebo odhlásit se můžeš na portálu IS/STAG.")
+                Text("Ke každému zapsanému termínu máš v Přehledu zkoušku s připomínkou den předem. Odhlásit se můžeš v detailu termínu nebo podržením řádku.")
             }
         } else {
             Section {
@@ -237,7 +243,7 @@ struct ExamTermsView: View {
                     title: String(localized: "Zatím nemáš zapsaný termín"),
                     message: viewModel.availableTerms.isEmpty
                         ? String(localized: "Až se na termín zapíšeš ve STAGu, objeví se tady i s odpočtem a připomínkou.")
-                        : String(localized: "Vyber si z vypsaných termínů a zapiš se na portálu IS/STAG – tady pak uvidíš odpočet a dostaneš připomínku."),
+                        : String(localized: "Vyber si z vypsaných termínů a zapiš se – tady pak uvidíš odpočet a dostaneš připomínku."),
                     tint: .green,
                     actionTitle: viewModel.availableTerms.isEmpty ? nil : String(localized: "Zobrazit vypsané termíny"),
                     actionSymbol: "list.bullet.rectangle",
@@ -268,6 +274,7 @@ struct ExamTermsView: View {
                             ExamTermAvailableRow(term: term, tint: tint, isNew: viewModel.isNew(term), now: now)
                         }
                         .buttonStyle(.plain)
+                        .contextMenu { registrationMenu(for: term) }
                     }
                 } header: {
                     subjectHeader(group, tint: tint)
@@ -276,7 +283,7 @@ struct ExamTermsView: View {
 
             Section {
             } footer: {
-                Text("Zapsat se můžeš na portálu IS/STAG. Na nově vypsané termíny tě upozorníme.")
+                Text("Zapsat se můžeš v detailu termínu nebo podržením řádku. Na nově vypsané termíny tě upozorníme.")
             }
         }
     }
@@ -337,13 +344,23 @@ struct ExamTermsView: View {
     private var toolbarContent: some ToolbarContent {
         if viewModel.isConnected {
             ToolbarItem(placement: .topBarTrailing) {
-                if viewModel.isLoading {
+                if viewModel.isLoading || viewModel.pendingRegistration != nil {
                     ProgressView()
                 } else {
                     Button("Obnovit termíny", systemImage: "arrow.clockwise", action: refresh)
                 }
             }
         }
+    }
+
+    /// Kontextová nabídka řádku: zápis / odhlášení / fronta (provede se až po potvrzení)
+    private func registrationMenu(for term: ExamTerm) -> some View {
+        ExamTermRegistrationMenuItem(
+            term: term,
+            subjectName: viewModel.subjectName(for: term.subjectCode, subjects: subjects),
+            viewModel: viewModel,
+            request: $registrationRequest
+        )
     }
 
     private func refresh() {

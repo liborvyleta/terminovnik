@@ -22,6 +22,17 @@ final class ExamTermStore {
     private(set) var errorMessage: String?
     /// Termíny objevené při posledních kontrolách, které si uživatel ještě neprohlédl (štítek „Nový“)
     private(set) var newTermIDs: Set<String> = []
+    /// Termíny, do jejichž fronty čekatelů se uživatel zapsal z aplikace
+    /// (STAG to v seznamu termínů neuvádí – evidujeme lokálně, aby šlo nabídnout odhlášení z fronty)
+    private(set) var queuedTermIDs: Set<String> = []
+    /// Právě probíhající zápis/odhlášení (pro ProgressView a zablokování dalších akcí)
+    private(set) var pendingRegistration: PendingRegistration?
+
+    /// Probíhající změna zápisu na termín
+    struct PendingRegistration: Equatable {
+        let termID: String
+        let action: StagTermRegistrationAction
+    }
 
     /// Jak starý seznam se při otevření aplikace obnoví
     private let maxAge: TimeInterval = 15 * 60
@@ -30,6 +41,7 @@ final class ExamTermStore {
         static let snapshot = "examTerms.v1"
         static let seen = "examTerms.seenIDs"
         static let new = "examTerms.newIDs"
+        static let queued = "examTerms.queuedIDs"
     }
 
     private struct Snapshot: Codable {
@@ -45,6 +57,7 @@ final class ExamTermStore {
             fetchedAt = snapshot.fetchedAt
         }
         newTermIDs = Set(defaults?.stringArray(forKey: Keys.new) ?? [])
+        queuedTermIDs = Set(defaults?.stringArray(forKey: Keys.queued) ?? [])
     }
 
     // MARK: - Odvozené seznamy
@@ -88,6 +101,7 @@ final class ExamTermStore {
             fetchedAt = .now
             errorMessage = nil
             persist()
+            pruneQueuedTerms()
             syncRegisteredTasks(in: context)
             if !discovered.isEmpty { await notifyAboutNewTerms(discovered, context: context) }
             return discovered.count
@@ -119,11 +133,88 @@ final class ExamTermStore {
         terms = []
         fetchedAt = nil
         newTermIDs = []
+        queuedTermIDs = []
         errorMessage = nil
         let defaults = AppGroup.defaults
         defaults?.removeObject(forKey: Keys.snapshot)
         defaults?.removeObject(forKey: Keys.seen)
         defaults?.removeObject(forKey: Keys.new)
+        defaults?.removeObject(forKey: Keys.queued)
+    }
+
+    // MARK: - Zápis na termíny (OSTRÉ operace ve STAGu)
+    // Volat VÝHRADNĚ po výslovném potvrzení uživatelem v dialogu.
+
+    /// Zapíše studenta na termín
+    func register(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
+        await changeRegistration(.register, for: term, context: context)
+    }
+
+    /// Odhlásí studenta z termínu
+    func unregister(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
+        await changeRegistration(.unregister, for: term, context: context)
+    }
+
+    /// Zapíše studenta do fronty čekatelů na plný termín
+    func joinQueue(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
+        await changeRegistration(.joinQueue, for: term, context: context)
+    }
+
+    /// Odhlásí studenta z fronty čekatelů
+    func leaveQueue(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
+        await changeRegistration(.leaveQueue, for: term, context: context)
+    }
+
+    func isQueued(_ term: ExamTerm) -> Bool { queuedTermIDs.contains(term.id) }
+
+    /// Provede změnu zápisu ve STAGu; po úspěchu obnoví termíny (zapsané se samy převedou na zkoušky s připomínkou).
+    func changeRegistration(_ action: StagTermRegistrationAction, for term: ExamTerm,
+                            context: ModelContext) async -> StagTermRegistrationResult {
+        guard let account = StagAccountStore.shared.account,
+              let service = StagAccountStore.shared.makeService() else {
+            return .failure(String(localized: "Pro zápis na termín se přihlas do IS/STAG."))
+        }
+        guard pendingRegistration == nil else {
+            return .failure(String(localized: "Počkej, než se dokončí předchozí změna zápisu."))
+        }
+        pendingRegistration = PendingRegistration(termID: term.id, action: action)
+        defer { pendingRegistration = nil }
+
+        let result: StagTermRegistrationResult
+        do {
+            result = try await service.changeTermRegistration(action, osCislo: account.osCislo, termIdno: term.id)
+        } catch StagError.unauthorized {
+            StagAccountStore.shared.signOut()
+            return .failure(String(localized: "Přihlášení do STAGu vypršelo, přihlas se znovu."))
+        } catch {
+            // Stav ve STAGu je nejistý (např. vypadlo spojení po odeslání) – obnovíme seznam
+            await refresh(context: context)
+            return .failure(error.localizedDescription)
+        }
+
+        if result == .success {
+            switch action {
+            case .joinQueue: queuedTermIDs.insert(term.id)
+            case .leaveQueue, .register, .unregister: queuedTermIDs.remove(term.id)
+            }
+            persistQueued()
+        }
+        // Obnovíme i po neúspěchu – STAG mohl mezitím změnit obsazenost či stav termínu
+        await refresh(context: context)
+        return result
+    }
+
+    /// Fronta u termínů, které zmizely, proběhly nebo na které už je student zapsaný, nedává smysl
+    private func pruneQueuedTerms() {
+        let valid = Set(terms.filter { !$0.isRegistered && $0.isUpcoming() }.map(\.id))
+        let pruned = queuedTermIDs.intersection(valid)
+        guard pruned != queuedTermIDs else { return }
+        queuedTermIDs = pruned
+        persistQueued()
+    }
+
+    private func persistQueued() {
+        AppGroup.defaults?.set(Array(queuedTermIDs), forKey: Keys.queued)
     }
 
     // MARK: - Nové termíny

@@ -655,6 +655,43 @@ nonisolated struct StagService {
         try await list("mistnost/getBudovy", [:])
     }
 
+    // MARK: Zápis na termíny (OSTRÉ operace – mění data studenta ve STAGu)
+
+    /// Zapíše / odhlásí studenta z termínu nebo z fronty čekatelů (vyžaduje přihlášení).
+    ///
+    /// Jde o ostrou změnu ve STAGu – volat výhradně po výslovném potvrzení uživatelem.
+    /// STAG vrací text „OK“ při úspěchu, jinak text s důvodem neúspěchu.
+    /// - Parameters:
+    ///   - queueValidUntil: jen pro zápis do fronty – do kdy má zápis ve frontě platit (volitelné)
+    func changeTermRegistration(
+        _ action: StagTermRegistrationAction,
+        osCislo: String,
+        termIdno: String,
+        lang: String = StagService.preferredLanguage,
+        queueValidUntil: Date? = nil
+    ) async throws -> StagTermRegistrationResult {
+        var parameters = ["osCislo": osCislo, "termIdno": termIdno, "lang": lang]
+        if action == .joinQueue, let queueValidUntil {
+            parameters["platnostZapisuDo"] = Self.stagDateFormatter.string(from: queueValidUntil)
+        }
+        let data = try await request(action.path, parameters)
+        return StagTermRegistrationResult.parse(data)
+    }
+
+    /// Jazyk textů ze STAGu (důvody neúspěchu) podle jazyka aplikace
+    static var preferredLanguage: String {
+        Locale.current.language.languageCode?.identifier == "cs" ? "cs" : "en"
+    }
+
+    /// Datum ve formátu STAGu „d.M.yyyy“
+    private static let stagDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "cs_CZ")
+        formatter.timeZone = TimeZone(identifier: "Europe/Prague")
+        formatter.dateFormat = "d.M.yyyy"
+        return formatter
+    }()
+
     /// Role uživatele podle ticketu – záloha, kdyby STAG nepřiložil stagUserInfo do návratové adresy
     func userInfo(forTicket ticket: String) async throws -> StagUserInfo {
         try JSONDecoder().decode(StagUserInfo.self, from: await request("help/getStagUserListForLoginTicket", ["ticket": ticket]))
@@ -712,6 +749,69 @@ nonisolated struct StagService {
 
         let arrayData = try JSONSerialization.data(withJSONObject: array)
         return try JSONDecoder().decode([Lossy<T>].self, from: arrayData).compactMap(\.value)
+    }
+}
+
+// MARK: - Zápis na termíny
+
+/// Změna zápisu na termín zkoušky – odpovídá službám `terminy/…` IS/STAG
+nonisolated enum StagTermRegistrationAction: String, CaseIterable, Sendable {
+    /// Zápis na termín
+    case register
+    /// Odhlášení z termínu
+    case unregister
+    /// Zápis do fronty čekatelů (plný termín)
+    case joinQueue
+    /// Odhlášení z fronty čekatelů
+    case leaveQueue
+
+    /// Cesta služby v REST API IS/STAG
+    var path: String {
+        switch self {
+        case .register: "terminy/zapisStudentaNaTermin"
+        case .unregister: "terminy/odhlasStudentaZTerminu"
+        case .joinQueue: "terminy/zapisStudentaDoFronty"
+        case .leaveQueue: "terminy/odhlasStudentaZFronty"
+        }
+    }
+}
+
+/// Výsledek zápisu/odhlášení: STAG vrací „OK“, jinak text s důvodem neúspěchu.
+nonisolated enum StagTermRegistrationResult: Equatable, Sendable {
+    case success
+    case failure(String)
+
+    /// Rozpozná odpověď – holý text „OK“, JSON řetězec "\"OK\"", případně objekt/pole s jediným textem.
+    /// Mezery, uvozovky i velikost písmen se ignorují. Prázdná odpověď = neúspěch s obecnou hláškou.
+    static func parse(_ data: Data) -> StagTermRegistrationResult {
+        let message = text(from: data)
+        if message.caseInsensitiveCompare("OK") == .orderedSame { return .success }
+        return .failure(message.isEmpty
+            ? String(localized: "STAG změnu nepotvrdil. Zkontroluj stav termínu na portálu IS/STAG.")
+            : message)
+    }
+
+    /// Text odpovědi bez obalu (JSON řetězec, uvozovky, bílé znaky)
+    static func text(from data: Data) -> String {
+        if let decoded = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
+           let text = firstText(in: decoded) {
+            return clean(text)
+        }
+        return clean(String(decoding: data, as: UTF8.self))
+    }
+
+    private static func firstText(in object: Any) -> String? {
+        switch object {
+        case let text as String: text
+        case let array as [Any]: array.lazy.compactMap(firstText).first
+        case let dictionary as [String: Any] where dictionary.count == 1: dictionary.values.first.flatMap(firstText)
+        default: nil
+        }
+    }
+
+    private static func clean(_ text: String) -> String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\"'")))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

@@ -66,7 +66,10 @@ enum ExamTermRegistrationWindow: Equatable {
 final class ExamTermsViewModel {
     /// Náhledový režim – data jsou vstříknutá, síť se nevolá
     let isPreview: Bool
-    private let previewTerms: [ExamTerm]?
+    /// V náhledu se zápis jen simuluje (mění se vstříknuté termíny), proto `var`
+    private var previewTerms: [ExamTerm]?
+    private var previewQueuedIDs: Set<String> = []
+    private var previewPending: ExamTermStore.PendingRegistration?
     private let previewNewTermIDs: Set<String>
     private let previewFetchedAt: Date?
 
@@ -135,6 +138,28 @@ final class ExamTermsViewModel {
 
     func isNew(_ term: ExamTerm) -> Bool { newTermIDs.contains(term.id) }
 
+    /// Aktuální podoba termínu (po zápisu/obnovení se mění) – záložně ta předaná
+    func latest(_ term: ExamTerm) -> ExamTerm {
+        terms.first { $0.id == term.id } ?? term
+    }
+
+    /// Student je ve frontě čekatelů (zapsal se do ní z aplikace)
+    func isQueued(_ term: ExamTerm) -> Bool {
+        isPreview ? previewQueuedIDs.contains(term.id) : ExamTermStore.shared.isQueued(term)
+    }
+
+    /// Právě probíhající změna zápisu
+    var pendingRegistration: ExamTermStore.PendingRegistration? {
+        isPreview ? previewPending : ExamTermStore.shared.pendingRegistration
+    }
+
+    func isRegistrationPending(_ term: ExamTerm) -> Bool { pendingRegistration?.termID == term.id }
+
+    /// Akce, kterou lze u termínu nabídnout (zápis / odhlášení / fronta)
+    func registrationAction(for term: ExamTerm, now: Date = .now) -> StagTermRegistrationAction? {
+        Self.registrationAction(for: term, isQueued: isQueued(term), now: now)
+    }
+
     /// Počet nových vypsaných termínů (štítek u segmentu)
     var newAvailableCount: Int { availableTerms.filter(isNew).count }
 
@@ -174,6 +199,38 @@ final class ExamTermsViewModel {
     func refreshIfNeeded(context: ModelContext) async {
         guard !isPreview else { return }
         await ExamTermStore.shared.refreshIfNeeded(context: context)
+    }
+
+    /// Provede změnu zápisu ve STAGu – OSTRÁ operace, volat jen po potvrzení uživatelem v dialogu.
+    /// V náhledovém režimu se nic neposílá, změna se jen nasimuluje na vstříknutých termínech.
+    func performRegistration(_ action: StagTermRegistrationAction, for term: ExamTerm,
+                             context: ModelContext) async -> StagTermRegistrationResult {
+        guard isPreview else {
+            return await ExamTermStore.shared.changeRegistration(action, for: term, context: context)
+        }
+        previewPending = ExamTermStore.PendingRegistration(termID: term.id, action: action)
+        defer { previewPending = nil }
+        try? await Task.sleep(for: .seconds(1))
+        simulatePreview(action, for: term)
+        return .success
+    }
+
+    private func simulatePreview(_ action: StagTermRegistrationAction, for term: ExamTerm) {
+        switch action {
+        case .joinQueue: previewQueuedIDs.insert(term.id); return
+        case .leaveQueue: previewQueuedIDs.remove(term.id); return
+        case .register, .unregister: break
+        }
+        guard let index = previewTerms?.firstIndex(where: { $0.id == term.id }), let old = previewTerms?[index] else { return }
+        let registering = action == .register
+        previewTerms?[index] = ExamTerm(
+            id: old.id, subjectCode: old.subjectCode, department: old.department, typeName: old.typeName,
+            start: old.start, end: old.end, room: old.room, teacher: old.teacher,
+            occupied: old.occupied.map { max(0, $0 + (registering ? 1 : -1)) }, capacity: old.capacity,
+            isRegistered: registering, canChangeRegistration: old.canChangeRegistration, blockReason: old.blockReason,
+            registrationOpens: old.registrationOpens, registrationDeadline: old.registrationDeadline,
+            unregisterDeadline: old.unregisterDeadline, isRetake: old.isRetake, note: old.note, isCancelled: old.isCancelled
+        )
     }
 
     /// Uživatel si nové termíny prohlédl – štítky „Nový“ zmizí
@@ -343,8 +400,128 @@ final class ExamTermsViewModel {
             : Countdown.text(for: term.start, now: now)
     }
 
+    // MARK: - Zápis na termín
+
+    /// Která akce dává u termínu smysl: zapsaný → odhlásit, ve frontě → opustit frontu,
+    /// plný → zapsat do fronty, jinak zapsat. Proběhlé a zrušené (nezapsané) termíny nic nenabízí.
+    static func registrationAction(for term: ExamTerm, isQueued: Bool, now: Date = .now) -> StagTermRegistrationAction? {
+        guard term.isUpcoming(now: now) else { return nil }
+        if term.isRegistered { return .unregister }
+        if term.isCancelled { return nil }
+        if isQueued { return .leaveQueue }
+        return term.isFull ? .joinQueue : .register
+    }
+
+    /// Akce je povolená jen tehdy, když STAG změnu zápisu dovoluje (`lzeZapsatOdepsat`).
+    /// Opuštění fronty necháváme vždy – rozhodne STAG a případný důvod ukážeme.
+    static func isRegistrationActionEnabled(_ action: StagTermRegistrationAction, term: ExamTerm) -> Bool {
+        action == .leaveQueue || term.canChangeRegistration
+    }
+
+    /// Shrnutí v potvrzovacím dialogu: předmět, typ, datum a čas, místnost + upozornění na změnu ve STAGu
+    static func confirmationMessage(_ action: StagTermRegistrationAction, term: ExamTerm, subjectName: String?) -> String {
+        var lines = [
+            subjectName.map { "\(term.subjectCode) – \($0)" } ?? term.subjectCode,
+            typeText(term),
+            "\(longDayText(term.start)), \(timeText(term))"
+        ]
+        if let room = term.room, !room.isEmpty {
+            lines.append(String(localized: "Místnost \(room)", comment: "Potvrzení zápisu: místnost termínu"))
+        }
+        lines.append("")
+        lines.append(action.warningText)
+        return lines.joined(separator: "\n")
+    }
+
+    /// Kód budovy z místnosti STAGu: „52/202“ → „52“ (bez lomítka nil – nevíme, co je budova)
+    static func buildingCode(from room: String?) -> String? {
+        guard let room = room?.trimmingCharacters(in: .whitespaces), let slash = room.firstIndex(of: "/") else { return nil }
+        let code = room[..<slash].trimmingCharacters(in: .whitespaces)
+        return code.isEmpty ? nil : code
+    }
+
     /// „3 termíny“
     static func termCountText(_ count: Int) -> String {
         String(localized: "\(count) termínů", comment: "Počet termínů")
+    }
+}
+
+// MARK: - Texty akcí zápisu
+
+extension StagTermRegistrationAction {
+    /// Popisek tlačítka a položky kontextové nabídky
+    var title: String {
+        switch self {
+        case .register: String(localized: "Zapsat se na termín")
+        case .unregister: String(localized: "Odhlásit se z termínu")
+        case .joinQueue: String(localized: "Zapsat se do fronty")
+        case .leaveQueue: String(localized: "Odhlásit se z fronty")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .register: "person.crop.circle.badge.plus"
+        case .unregister: "person.crop.circle.badge.minus"
+        case .joinQueue: "person.3.sequence.fill"
+        case .leaveQueue: "person.crop.circle.badge.xmark"
+        }
+    }
+
+    /// Odhlášení je destruktivní (místo může obsadit někdo jiný)
+    var isDestructive: Bool { self == .unregister || self == .leaveQueue }
+
+    /// Nadpis potvrzovacího dialogu
+    var confirmationTitle: String {
+        switch self {
+        case .register: String(localized: "Zapsat se na tento termín?")
+        case .unregister: String(localized: "Odhlásit se z tohoto termínu?")
+        case .joinQueue: String(localized: "Zapsat se do fronty čekatelů?")
+        case .leaveQueue: String(localized: "Odhlásit se z fronty čekatelů?")
+        }
+    }
+
+    /// Tlačítko v potvrzovacím dialogu
+    var confirmButtonTitle: String {
+        switch self {
+        case .register: String(localized: "Zapsat se")
+        case .unregister: String(localized: "Odhlásit se")
+        case .joinQueue: String(localized: "Zapsat do fronty")
+        case .leaveQueue: String(localized: "Opustit frontu")
+        }
+    }
+
+    /// Upozornění v dialogu – jde o ostrou změnu ve STAGu
+    var warningText: String {
+        switch self {
+        case .register:
+            String(localized: "Zápis proběhne přímo v IS/STAG. Odhlásit se půjde jen do termínu odhlašování.")
+        case .unregister:
+            String(localized: "Odhlášení proběhne přímo v IS/STAG. Uvolněné místo může hned obsadit někdo jiný.")
+        case .joinQueue:
+            String(localized: "Zápis do fronty proběhne přímo v IS/STAG. Na samotný termín tím zapsaný nejsi – sleduj, jestli se uvolní místo.")
+        case .leaveQueue:
+            String(localized: "Odhlášení z fronty proběhne přímo v IS/STAG. O pořadí ve frontě přijdeš.")
+        }
+    }
+
+    /// Hláška po úspěchu
+    var successText: String {
+        switch self {
+        case .register: String(localized: "Jsi zapsaný na termín. Zkoušku s připomínkou najdeš v Přehledu.")
+        case .unregister: String(localized: "Z termínu jsi odhlášený.")
+        case .joinQueue: String(localized: "Jsi ve frontě čekatelů na termín.")
+        case .leaveQueue: String(localized: "Z fronty čekatelů jsi odhlášený.")
+        }
+    }
+
+    /// Text při probíhající akci
+    var progressText: String {
+        switch self {
+        case .register: String(localized: "Zapisuji na termín…")
+        case .unregister: String(localized: "Odhlašuji z termínu…")
+        case .joinQueue: String(localized: "Zapisuji do fronty…")
+        case .leaveQueue: String(localized: "Odhlašuji z fronty…")
+        }
     }
 }
