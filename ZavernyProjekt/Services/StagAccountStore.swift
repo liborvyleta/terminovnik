@@ -110,6 +110,7 @@ final class StagAccountStore {
 
         TimetableStore.shared.clear()
         ExamTermStore.shared.clear()
+        GradeStore.shared.clear()
         ClassReminderScheduler.shared.cancelAll()
         LiveActivityManager.shared.endAll()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()

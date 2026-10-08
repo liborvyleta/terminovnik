@@ -64,6 +64,8 @@ struct TerminovnikApp: App {
         Task { await TimetableStore.shared.refreshIfNeeded(context: context) }
         // Termíny zkoušek – nové termíny ohlásí oznámením hned po otevření
         Task { await ExamTermStore.shared.refreshIfNeeded(context: context) }
+        // Známky – nová známka se ohlásí oznámením
+        Task { await GradeStore.shared.refreshIfNeeded() }
         // Naplánujeme další kontrolu na pozadí
         BackgroundRefresh.schedule()
         // Připomínky hodin posuneme o další dny a Live Activity sladíme s aktuální hodinou

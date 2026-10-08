@@ -55,6 +55,7 @@ final class StagAccountViewModel {
             // Spolu s předměty obnovíme i rozvrh
             await TimetableStore.shared.refresh(context: context)
             await ExamTermStore.shared.refresh(context: context)
+            await GradeStore.shared.refresh()
             state = .finished(result)
         } catch {
             state = .failed(error.localizedDescription)

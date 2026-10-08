@@ -194,7 +194,8 @@ nonisolated struct StagExamTerm: Decodable {
         func text(_ key: CodingKeys) -> String? {
             if let value = try? c.decodeIfPresent(String.self, forKey: key) { return value.isEmpty ? nil : value }
             if let number = try? c.decodeIfPresent(Int.self, forKey: key) { return String(number) }
-            if let box = (try? c.decodeIfPresent(ValueBox.self, forKey: key)) ?? nil { return box.value }
+            if let box = (try? c.decodeIfPresent(ValueBox.self, forKey: key)) ?? nil,
+               let value = box.value?.trimmingCharacters(in: .whitespaces), !value.isEmpty { return value }
             return nil
         }
         func number(_ key: CodingKeys) -> Int? {
@@ -293,6 +294,109 @@ nonisolated enum StagDateParser {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Prague")!
         return calendar.date(bySettingHour: hours, minute: minutes, second: 0, of: day)
+    }
+}
+
+/// Známky studenta z jednoho předmětu (služba znamky/getZnamkyByStudent, položky „studentNaPredmetu“).
+/// Prefix „zk“ = zkouška, „zppzk“ = zápočet / zápočet před zkouškou.
+nonisolated struct StagGradeRecord: Decodable {
+    let katedra: String?
+    let zkratka: String?
+    let rok: String?
+    let semestr: String?
+    let zkHodnoceni: String?
+    let zkDatum: String?
+    let zkBody: String?
+    let zkPokus: String?
+    let zkUcitJmeno: String?
+    let zppzkHodnoceni: String?
+    let zppzkDatum: String?
+    let zppzkPokus: String?
+    let zppzkUcitJmeno: String?
+    let predmetUznany: Bool?
+    let stavAbsolvovani: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case katedra, zkratka, rok, semestr, zkHodnoceni, zkDatum, zkBody, zkPokus, zkUcitJmeno
+        case zppzkHodnoceni, zppzkDatum, zppzkPokus, zppzkUcitJmeno, predmetUznany, stavAbsolvovani
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func text(_ key: CodingKeys) -> String? { StagFlexible.text(c, key) }
+        katedra = text(.katedra); zkratka = text(.zkratka); rok = text(.rok); semestr = text(.semestr)
+        zkHodnoceni = text(.zkHodnoceni); zkDatum = text(.zkDatum); zkBody = text(.zkBody)
+        zkPokus = text(.zkPokus); zkUcitJmeno = text(.zkUcitJmeno)
+        zppzkHodnoceni = text(.zppzkHodnoceni); zppzkDatum = text(.zppzkDatum)
+        zppzkPokus = text(.zppzkPokus); zppzkUcitJmeno = text(.zppzkUcitJmeno)
+        predmetUznany = StagFlexible.flag(c, .predmetUznany); stavAbsolvovani = text(.stavAbsolvovani)
+    }
+
+    var exam: GradePart? {
+        guard let result = zkHodnoceni else { return nil }
+        return GradePart(result: result, date: StagDateParser.date(zkDatum), attempt: zkPokus.flatMap { Int($0) },
+                         examiner: zkUcitJmeno, points: zkBody)
+    }
+
+    var creditTest: GradePart? {
+        guard let result = zppzkHodnoceni else { return nil }
+        return GradePart(result: result, date: StagDateParser.date(zppzkDatum), attempt: zppzkPokus.flatMap { Int($0) },
+                         examiner: zppzkUcitJmeno, points: nil)
+    }
+}
+
+/// Předmět studenta s informací o absolvování (služba student/getStudentPredmetyAbsolvoval, položky „predmetAbsolvoval“).
+nonisolated struct StagPassedSubject: Decodable {
+    let katedra: String?
+    let zkratka: String?
+    let rok: String?
+    let semestr: String?
+    let datum: String?
+    let absolvoval: Bool?
+    let znamka: String?
+    let nazevPredmetu: String?
+    let pocetKreditu: Int?
+
+    private enum CodingKeys: String, CodingKey {
+        case katedra, zkratka, rok, semestr, datum, absolvoval, znamka, nazevPredmetu, pocetKreditu
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        katedra = StagFlexible.text(c, .katedra); zkratka = StagFlexible.text(c, .zkratka)
+        rok = StagFlexible.text(c, .rok); semestr = StagFlexible.text(c, .semestr)
+        datum = StagFlexible.text(c, .datum); znamka = StagFlexible.text(c, .znamka)
+        nazevPredmetu = StagFlexible.text(c, .nazevPredmetu)
+        absolvoval = StagFlexible.flag(c, .absolvoval)
+        pocetKreditu = StagFlexible.number(c, .pocetKreditu)
+    }
+}
+
+/// Tolerantní čtení hodnot STAGu: text, číslo, Bool („A“/„N“) i obal {"value": …}
+nonisolated enum StagFlexible {
+    private struct ValueBox: Decodable { let value: String? }
+
+    static func text<K: CodingKey>(_ c: KeyedDecodingContainer<K>, _ key: K) -> String? {
+        if let value = try? c.decodeIfPresent(String.self, forKey: key) {
+            let trimmed = value.trimmingCharacters(in: .whitespaces)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        if let number = try? c.decodeIfPresent(Int.self, forKey: key) { return String(number) }
+        if let number = try? c.decodeIfPresent(Double.self, forKey: key) { return String(number) }
+        if let box = (try? c.decodeIfPresent(ValueBox.self, forKey: key)) ?? nil,
+           let value = box.value?.trimmingCharacters(in: .whitespaces), !value.isEmpty { return value }
+        return nil
+    }
+
+    static func number<K: CodingKey>(_ c: KeyedDecodingContainer<K>, _ key: K) -> Int? {
+        if let value = try? c.decodeIfPresent(Int.self, forKey: key) { return value }
+        return text(c, key).flatMap { Int($0) }
+    }
+
+    static func flag<K: CodingKey>(_ c: KeyedDecodingContainer<K>, _ key: K) -> Bool? {
+        if let value = try? c.decodeIfPresent(Bool.self, forKey: key) { return value }
+        guard let raw = text(c, key)?.lowercased() else { return nil }
+        return ["a", "ano", "true", "1", "y"].contains(raw)
     }
 }
 
@@ -461,6 +565,16 @@ nonisolated struct StagService {
     /// Termíny zkoušek studenta – zapsané i ty, na které se může zapsat (vyžaduje přihlášení)
     func studentExamTerms(osCislo: String) async throws -> [StagExamTerm] {
         try await list("terminy/getTerminyProStudenta", ["osCislo": osCislo, "lang": "cs"])
+    }
+
+    /// Známky studenta ze zápočtů a zkoušek za celé studium (vyžaduje přihlášení)
+    func studentGrades(osCislo: String) async throws -> [StagGradeRecord] {
+        try await list("znamky/getZnamkyByStudent", ["osCislo": osCislo, "vracetIUznane": "true"])
+    }
+
+    /// Předměty studenta s výslednou známkou, kredity a informací o absolvování (vyžaduje přihlášení)
+    func studentPassedSubjects(osCislo: String) async throws -> [StagPassedSubject] {
+        try await list("student/getStudentPredmetyAbsolvoval", ["osCislo": osCislo])
     }
 
     /// Rozvrh předmětu (veřejné) – stejná struktura dat, hodí se pro testy

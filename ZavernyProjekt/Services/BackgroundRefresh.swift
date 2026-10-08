@@ -27,6 +27,7 @@ enum BackgroundRefresh {
         guard StagAccountStore.shared.isConnected else { return }
         let context = PersistenceController.shared.mainContext
         await ExamTermStore.shared.refresh(context: context)
+        await GradeStore.shared.refresh()
         await TimetableStore.shared.refreshIfNeeded(context: context)
     }
 }
