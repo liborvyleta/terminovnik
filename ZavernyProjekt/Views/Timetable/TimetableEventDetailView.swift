@@ -181,14 +181,15 @@ struct TimetableEventDetailView: View {
         }
     }
 
+    /// S budovou: název, adresa, mapa a navigace; bez budovy jen místnost
     @ViewBuilder
     private var whereSection: some View {
-        if let location = event.locationText {
+        if let building = event.building, !building.isEmpty {
+            BuildingMapSection(buildingCode: building, room: event.room)
+                .tint(tint)
+        } else if let location = event.locationText {
             Section("Kde") {
                 LabeledContent("Místnost", value: location)
-                if let building = event.building, !building.isEmpty {
-                    LabeledContent("Budova", value: building)
-                }
             }
         }
     }

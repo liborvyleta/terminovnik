@@ -400,6 +400,74 @@ nonisolated enum StagFlexible {
     }
 }
 
+/// Budova školy (veřejná služba mistnost/getBudovy). Kód `code` odpovídá poli `budova` v rozvrhu.
+/// Codable kvůli cache – kódování používá stejné klíče, takže uložená data jdou přečíst stejně jako odpověď STAGu.
+nonisolated struct StagBuilding: Codable, Hashable {
+    /// Zkratka budovy („52“, „U5“…)
+    let code: String
+    /// Ulice, často s názvem budovy („U52 - (Severní pavilon B) Nad stráněmi“)
+    let street: String?
+    /// Číslo popisné („3685“)
+    let streetNumber: String?
+    let city: String?
+    let locality: String?
+    /// Zeměpisná šířka (STAG ji vrací jako gpsBudovaX)
+    let latitude: Double?
+    /// Zeměpisná délka (STAG ji vrací jako gpsBudovaY)
+    let longitude: Double?
+    /// Provoz od/do ve formátu d.M.yyyy
+    let operatingFrom: String?
+    let operatingTo: String?
+
+    enum CodingKeys: String, CodingKey {
+        case code = "zkrBudovy"
+        case street = "ulice"
+        case streetNumber = "cisloUlice"
+        case city = "obec"
+        case locality = "lokalita"
+        case latitude = "gpsBudovaX"
+        case longitude = "gpsBudovaY"
+        case operatingFrom = "provozOd"
+        case operatingTo = "provozDo"
+    }
+
+    init(code: String, street: String?, streetNumber: String?, city: String?, locality: String? = nil,
+         latitude: Double?, longitude: Double?, operatingFrom: String? = nil, operatingTo: String? = nil) {
+        self.code = code
+        self.street = street
+        self.streetNumber = streetNumber
+        self.city = city
+        self.locality = locality
+        self.latitude = latitude
+        self.longitude = longitude
+        self.operatingFrom = operatingFrom
+        self.operatingTo = operatingTo
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        guard let code = StagFlexible.text(c, .code) else {
+            throw DecodingError.dataCorruptedError(forKey: .code, in: c, debugDescription: "Chybí zkratka budovy")
+        }
+        self.code = code
+        street = StagFlexible.text(c, .street)
+        streetNumber = StagFlexible.text(c, .streetNumber)
+        city = StagFlexible.text(c, .city)
+        locality = StagFlexible.text(c, .locality)
+        latitude = Self.coordinate(c, .latitude)
+        longitude = Self.coordinate(c, .longitude)
+        operatingFrom = StagFlexible.text(c, .operatingFrom)
+        operatingTo = StagFlexible.text(c, .operatingTo)
+    }
+
+    /// Souřadnice jako číslo i text (s desetinnou čárkou nebo tečkou)
+    private static func coordinate(_ c: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> Double? {
+        if let value = try? c.decodeIfPresent(Double.self, forKey: key) { return value }
+        guard let text = StagFlexible.text(c, key) else { return nil }
+        return Double(text.replacingOccurrences(of: ",", with: "."))
+    }
+}
+
 /// Aktuální období podle STAGu (služba kalendar/getAktualniObdobiInfo)
 nonisolated struct StagPeriod: Decodable {
     /// „ZS“ (zimní) nebo „LS“ (letní)
@@ -580,6 +648,11 @@ nonisolated struct StagService {
     /// Rozvrh předmětu (veřejné) – stejná struktura dat, hodí se pro testy
     func subjectTimetable(department: String, code: String, semester: String, year: String) async throws -> [StagTimetableAction] {
         try await list("rozvrhy/getRozvrhByPredmet", ["katedra": department, "zkratka": code, "semestr": semester, "rok": year])
+    }
+
+    /// Budovy školy s adresou a GPS (veřejné)
+    func buildings() async throws -> [StagBuilding] {
+        try await list("mistnost/getBudovy", [:])
     }
 
     /// Role uživatele podle ticketu – záloha, kdyby STAG nepřiložil stagUserInfo do návratové adresy
