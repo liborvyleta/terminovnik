@@ -17,6 +17,7 @@ Aplikace je v češtině a angličtině.
 - **Lokální notifikace 1 den před termínem** s tlačítkem **„Splněno“** přímo v oznámení. Přeplánuje se při každé změně a zruší se po splnění nebo smazání.
 - **Rozvrh ze STAGu** v samostatné záložce: denní časová osa a týdenní mřížka, právě probíhající a další hodina, místnost, vyučující. Načítá se přes uložený účet a funguje i offline.
 - **Termíny zkoušek ze STAGu** v samostatné záložce: zapsané i vypsané termíny s obsazeností a oknem přihlašování. Zapsané termíny se samy přidají jako zkoušky s připomínkou a na nově vypsané termíny upozorní oznámení.
+- **Známky a studijní výsledky ze STAGu:** hodnocení zápočtu a zkoušky u každého předmětu, přehled po semestrech, vážený průměr podle kreditů a získané kredity. Nová známka přijde jako oznámení.
 - **Upozornění před hodinou** s nastavitelným předstihem a **Live Activity** s odpočtem probíhající hodiny nebo zkoušky na zamčené obrazovce a v Dynamic Islandu.
 - **Siri, Zkratky a Spotlight:** další hodina, rozvrh na den, nejbližší zkouška a přidání deadlinu.
 - **Widgety** na plochu a zamčenou obrazovku: *Nejbližší deadliny* s odpočtem a *Další hodina* z rozvrhu.
@@ -49,6 +50,7 @@ ZavernyProjekt/
 │   ├── StagSubjectSync.swift         aktualizace předmětů ze STAGu
 │   ├── TimetableStore.swift          rozvrh studenta ze STAGu (ukládá se do App Group)
 │   ├── ExamTermStore.swift           termíny zkoušek ze STAGu, převod zapsaných na zkoušky, nové termíny
+│   ├── GradeStore.swift              známky a studijní výsledky ze STAGu, upozornění na nové známky
 │   ├── BackgroundRefresh.swift       kontrola termínů na pozadí (Background App Refresh)
 │   ├── PersistenceController.swift   sdílený ModelContainer (aplikace i App Intents)
 │   ├── ClassReminderScheduler.swift  upozornění před hodinou
@@ -126,6 +128,10 @@ Aplikace používá REST rozhraní IS/STAG zvolené školy (seznam škol je v `M
 Termíny se načítají službou `terminy/getTerminyProStudenta` přes uložený účet. Kontrolují se při každém otevření aplikace a průběžně na pozadí (Background App Refresh). Kontrolu na pozadí spouští iOS podle svého uvážení, takže upozornění na nový termín může přijít se zpožděním. Okamžitá upozornění při zavřené aplikaci by vyžadovala vlastní server s push notifikacemi.
 
 Zapsané termíny se převádí na zkoušky (`ExamTask.stagTermID`) s připomínkou den předem. Po odhlášení z termínu ve STAGu se taková zkouška z aplikace odstraní.
+
+## Známky
+
+Známky se načítají dvěma službami: `znamky/getZnamkyByStudent` (zápočet a zkouška s datem, pokusem a zkoušejícím) a `student/getStudentPredmetyAbsolvoval` (názvy, kredity, výsledná známka a absolvování za celé studium). Výsledky se spojí podle katedry, kódu, roku a semestru. Vážený průměr počítá jen klasifikované předměty (A = 1 … F = 4) vážené kredity a je orientační.
 
 ## Widget a App Group
 
