@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		000000000000000160000000 /* ZkouskovnikWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		000000000000000460000000 /* TerminovnikWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 000000000000000000000420 /* TerminovnikWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,6 +26,13 @@
 			remoteGlobalIDString = 000000000000000100000000;
 			remoteInfo = ZavernyProjekt;
 		};
+		000000000000000470000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000400000000;
+			remoteInfo = TerminovnikWatch;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,12 +45,22 @@
 			);
 			name = "Embed Foundation Extensions";
 		};
+		000000000000000450000000 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				000000000000000460000000 /* TerminovnikWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* ZavernyProjekt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZavernyProjekt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZkouskovnikWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000320 /* ZavernyProjektTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZavernyProjektTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000420 /* TerminovnikWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerminovnikWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -59,6 +77,13 @@
 				Info.plist,
 			);
 			target = 000000000000000100000000 /* ZavernyProjekt */;
+		};
+		000000000000000490000000 /* Exceptions for "TerminovnikWatch" folder in "TerminovnikWatch" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 000000000000000400000000 /* TerminovnikWatch */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -89,6 +114,14 @@
 			path = ZavernyProjektTests;
 			sourceTree = "<group>";
 		};
+		000000000000000000000060 /* TerminovnikWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				000000000000000490000000 /* Exceptions for "TerminovnikWatch" folder in "TerminovnikWatch" target */,
+			);
+			path = TerminovnikWatch;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +140,11 @@
 			files = (
 			);
 		};
+		000000000000000430000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -117,6 +155,7 @@
 				000000000000000000000030 /* Shared */,
 				000000000000000000000040 /* ZkouskovnikWidget */,
 				000000000000000000000050 /* ZavernyProjektTests */,
+				000000000000000000000060 /* TerminovnikWatch */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -127,6 +166,7 @@
 				000000000000000000000120 /* ZavernyProjekt.app */,
 				000000000000000000000220 /* ZkouskovnikWidgetExtension.appex */,
 				000000000000000000000320 /* ZavernyProjektTests.xctest */,
+				000000000000000000000420 /* TerminovnikWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -142,11 +182,13 @@
 				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
 				000000000000000150000000 /* Embed Foundation Extensions */,
+				000000000000000450000000 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				000000000000000180000000 /* PBXTargetDependency */,
+				000000000000000480000000 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* ZavernyProjekt */,
@@ -197,6 +239,25 @@
 			productReference = 000000000000000000000320 /* ZavernyProjektTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		000000000000000400000000 /* TerminovnikWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000410000000 /* Build configuration list for PBXNativeTarget "TerminovnikWatch" */;
+			buildPhases = (
+				000000000000000420000000 /* Sources */,
+				000000000000000430000000 /* Frameworks */,
+				000000000000000440000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000060 /* TerminovnikWatch */,
+				000000000000000000000030 /* Shared */,
+			);
+			name = TerminovnikWatch;
+			productName = TerminovnikWatch;
+			productReference = 000000000000000000000420 /* TerminovnikWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -211,6 +272,9 @@
 						CreatedOnToolsVersion = 26.3;
 					};
 					000000000000000200000000 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					000000000000000400000000 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 					000000000000000300000000 = {
@@ -237,6 +301,7 @@
 				000000000000000100000000 /* ZavernyProjekt */,
 				000000000000000200000000 /* ZkouskovnikWidgetExtension */,
 				000000000000000300000000 /* ZavernyProjektTests */,
+				000000000000000400000000 /* TerminovnikWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -253,6 +318,11 @@
 			);
 		};
 		000000000000000340000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		000000000000000440000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -275,6 +345,11 @@
 			files = (
 			);
 		};
+		000000000000000420000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -287,6 +362,11 @@
 			isa = PBXTargetDependency;
 			target = 000000000000000100000000 /* ZavernyProjekt */;
 			targetProxy = 000000000000000350000000 /* PBXContainerItemProxy */;
+		};
+		000000000000000480000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000400000000 /* TerminovnikWatch */;
+			targetProxy = 000000000000000470000000 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -452,7 +532,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -496,7 +576,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -520,6 +600,7 @@
 				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ZkouskovnikWidget/Info.plist;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WIDGET_EXTENSION $(inherited)";
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -527,7 +608,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjekt.Widget";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -549,6 +630,7 @@
 				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ZkouskovnikWidget/Info.plist;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WIDGET_EXTENSION $(inherited)";
 				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -556,7 +638,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjekt.Widget";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -578,7 +660,7 @@
 				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjektTests";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -601,7 +683,7 @@
 				DEVELOPMENT_TEAM = RH4J54WWP8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).ZavernyProjektTests";
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -612,6 +694,64 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ZavernyProjekt.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ZavernyProjekt";
+			};
+			name = Release;
+		};
+		000000000000000411000000 /* Debug configuration for PBXNativeTarget "TerminovnikWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerminovnikWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		000000000000000412000000 /* Release configuration for PBXNativeTarget "TerminovnikWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RH4J54WWP8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerminovnikWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Termínovník";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.liborvyleta.terminovnik.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -647,6 +787,14 @@
 			buildConfigurations = (
 				000000000000000311000000 /* Debug configuration for PBXNativeTarget "ZavernyProjektTests" */,
 				000000000000000312000000 /* Release configuration for PBXNativeTarget "ZavernyProjektTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		000000000000000410000000 /* Build configuration list for PBXNativeTarget "TerminovnikWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000411000000 /* Debug configuration for PBXNativeTarget "TerminovnikWatch" */,
+				000000000000000412000000 /* Release configuration for PBXNativeTarget "TerminovnikWatch" */,
 			);
 			defaultConfigurationName = Release;
 		};

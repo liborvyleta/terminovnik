@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -56,6 +57,7 @@ struct SmallDeadlineView: View {
                     Image(systemName: urgency.symbol)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(urgency.color)
+                    WidgetCompleteToggle(deadline: deadline, font: .title3)
                 }
 
                 HStack(spacing: 3) {
@@ -71,6 +73,8 @@ struct SmallDeadlineView: View {
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+                    // Během zpracování „Označit jako splněné“ systém obsah zneplatní (shimmer).
+                    .invalidatableContent()
 
                 Spacer(minLength: 0)
 
@@ -182,6 +186,8 @@ struct WidgetDeadlineRow: View {
         let urgency = DeadlineUrgency(dueDate: deadline.dueDate, now: now)
 
         HStack(alignment: .center, spacing: 8) {
+            WidgetCompleteToggle(deadline: deadline, font: isLarge ? .title3 : .body)
+
             VStack(alignment: .leading, spacing: 1) {
                 Text(deadline.title)
                     .font(isLarge ? .subheadline.weight(.semibold) : .footnote.weight(.semibold))
@@ -208,6 +214,7 @@ struct WidgetDeadlineRow: View {
             }
             .layoutPriority(1)
         }
+        .invalidatableContent()
         .padding(.leading, 10)
         .overlay(alignment: .leading) {
             Capsule()
@@ -338,6 +345,40 @@ struct InlineDeadlineView: View {
 }
 
 // MARK: - Sdílené prvky
+
+/// Kroužek u deadlinu – klepnutí ho označí jako splněný bez otevření aplikace (iOS 17).
+///
+/// `Toggle(isOn:intent:)` systém po klepnutí okamžitě překreslí do opačného stavu (kroužek → fajfka),
+/// zatímco `CompleteDeadlineIntent` běží v aplikaci. Ta pak přepíše přehled a deadline z widgetu zmizí.
+struct WidgetCompleteToggle: View {
+    let deadline: WidgetDeadline
+    var font: Font = .body
+
+    var body: some View {
+        // Widget ukazuje jen nesplněné deadliny → výchozí stav je vždy „nesplněno“.
+        Toggle(isOn: false, intent: CompleteDeadlineIntent(deadlineID: deadline.id)) {
+            Text("Označit jako splněné")
+        }
+        .toggleStyle(WidgetCheckToggleStyle(font: font))
+        .accessibilityLabel(Text("Označit jako splněné"))
+        .accessibilityValue(Text(deadline.title))
+    }
+}
+
+/// Vzhled přepínače: prázdný kroužek, po klepnutí zelená fajfka s animací symbolu.
+struct WidgetCheckToggleStyle: ToggleStyle {
+    let font: Font
+
+    func makeBody(configuration: Configuration) -> some View {
+        Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
+            .font(font)
+            .foregroundStyle(configuration.isOn ? AnyShapeStyle(Color.green) : AnyShapeStyle(.tertiary))
+            .contentTransition(.symbolEffect(.replace))
+            .widgetAccentable()
+            .frame(minWidth: 24, minHeight: 24)
+            .contentShape(Rectangle())
+    }
+}
 
 /// Štítek předmětu – kapsle v barvě předmětu s bílým kódem.
 struct WidgetSubjectBadge: View {

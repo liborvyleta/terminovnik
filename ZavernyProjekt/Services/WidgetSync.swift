@@ -30,5 +30,7 @@ enum WidgetSync {
         }
         WidgetSnapshot(deadlines: deadlines, generatedAt: .now).save()
         WidgetCenter.shared.reloadAllTimelines()
+        // Stejná data dostanou i hodinky
+        WatchSync.shared.push()
     }
 }

@@ -30,6 +30,10 @@ struct TerminovnikApp: App {
 
         // Starší připomínky přeplánujeme, aby dostaly tlačítko „Splněno“.
         NotificationManager.shared.rescheduleAll(in: modelContainer.mainContext)
+        // Spojení s Apple Watch – hodinky dostávají deadliny a rozvrh.
+        WatchSync.shared.activate()
+        // Deadliny odškrtnuté ve widgetu (záložní fronta) zpracujeme dřív, než se přehled přepíše.
+        WidgetActionQueue.processPending(in: modelContainer.mainContext)
         // Widget dostane aktuální přehled hned po spuštění.
         WidgetSync.refresh(from: modelContainer.mainContext)
         // Připomínky hodin z uloženého rozvrhu (plánují se jen na pár dní dopředu).
@@ -59,6 +63,7 @@ struct TerminovnikApp: App {
     /// Spuštění aplikace nebo návrat do popředí: obnova widgetu, rozvrhu, termínů a připomínek
     private func appBecameActive() {
         let context = modelContainer.mainContext
+        WidgetActionQueue.processPending(in: context)
         WidgetSync.refresh(from: context)
         // Rozvrh ze STAGu obnovíme, pokud je starší než pár hodin (jen s přihlášeným účtem)
         Task { await TimetableStore.shared.refreshIfNeeded(context: context) }
