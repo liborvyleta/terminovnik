@@ -1,8 +1,73 @@
 {
   "sourceLanguage" : "cs",
   "strings" : {
+    ", místnost %@" : {
+      "comment" : "Doplněk věty o další hodině",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", room %@"
+          }
+        }
+      }
+    },
     "%@" : {
       "shouldTranslate" : false
+    },
+    "%@ – %@ (opravný)" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ – %2$@ (opravný)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ – %2$@ (retake)"
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ · opravný" : {
+      "comment" : "Typ termínu ze STAGu + opravný termín",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · retake"
+          }
+        }
+      }
+    },
+    "%@ · za %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · za %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · in %2$@"
+          }
+        }
+      }
     },
     "%@ (opravný)" : {
       "comment" : "Název události v Kalendáři u opravného termínu",
@@ -39,6 +104,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ pts"
+          }
+        }
+      }
+    },
+    "%@ budova %@" : {
+      "comment" : "Vyhledání budovy v Mapách: název školy a kód budovy",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ budova %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ building %2$@"
           }
         }
       }
@@ -133,59 +215,16 @@
         }
       }
     },
-    "%@ · %@" : {
+    "%@–%@" : {
       "localizations" : {
         "cs" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ · %2$@"
+            "value" : "%1$@–%2$@"
           }
         }
       },
       "shouldTranslate" : false
-    },
-    "%@ · opravný" : {
-      "comment" : "Typ termínu ze STAGu + opravný termín",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ · retake"
-          }
-        }
-      }
-    },
-    "%@ · za %@" : {
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · za %2$@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · in %2$@"
-          }
-        }
-      }
-    },
-    "%@ – %@ (opravný)" : {
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ – %2$@ (opravný)"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ – %2$@ (retake)"
-          }
-        }
-      }
     },
     "%@, dnes" : {
       "comment" : "VoiceOver: datum v hlavičce sloupce, dnešní den",
@@ -229,17 +268,6 @@
           }
         }
       }
-    },
-    "%@–%@" : {
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@–%2$@"
-          }
-        }
-      },
-      "shouldTranslate" : false
     },
     "%lld" : {
       "shouldTranslate" : false
@@ -872,13 +900,12 @@
         }
       }
     },
-    ", místnost %@" : {
-      "comment" : "Doplněk věty o další hodině",
+    "© 2026 %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ", room %@"
+            "value" : "© 2026 %@"
           }
         }
       }
@@ -953,22 +980,33 @@
         }
       }
     },
-    "Aktualizovat předměty ze STAGu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Update subjects from STAG"
-          }
-        }
-      }
-    },
     "Aktualizováno %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Updated %@"
+          }
+        }
+      }
+    },
+    "aktualizováno %lld" : {
+      "comment" : "Počet předmětů aktualizovaných ze STAGu (část věty)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld updated"
+          }
+        }
+      }
+    },
+    "Aktualizovat předměty ze STAGu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update subjects from STAG"
           }
         }
       }
@@ -1033,22 +1071,22 @@
         }
       }
     },
-    "Azurová" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Azure"
-          }
-        }
-      }
-    },
     "Až se na termín zapíšeš ve STAGu, objeví se tady i s odpočtem a připomínkou." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Once you register for an exam date in STAG, it will show up here with a countdown and a reminder."
+          }
+        }
+      }
+    },
+    "Azurová" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azure"
           }
         }
       }
@@ -1069,6 +1107,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You can change the color, credits and name in the subject details after importing."
+          }
+        }
+      }
+    },
+    "Bez budovy se sekce nezobrazí" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The section is hidden without a building"
           }
         }
       }
@@ -1114,11 +1163,43 @@
       }
     },
     "Budova" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Building"
+          }
+        }
+      }
+    },
+    "Budova %@" : {
+      "comment" : "Kód budovy školy",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Building %@"
+          }
+        }
+      }
+    },
+    "Čas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
+    },
+    "Červená" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Red"
           }
         }
       }
@@ -1129,6 +1210,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Smart planner for exams and deadlines"
+          }
+        }
+      }
+    },
+    "Čt" : {
+      "comment" : "Zkratka dne v týdnu: čtvrtek",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu"
           }
         }
       }
@@ -1186,6 +1278,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Other registered"
+          }
+        }
+      }
+    },
+    "Dáme vědět, jakmile ti vyučující zapíše do STAGu zápočet nebo známku ze zkoušky." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We'll let you know as soon as your teacher enters a credit or an exam grade in STAG."
           }
         }
       }
@@ -1311,6 +1413,16 @@
         }
       }
     },
+    "dnes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "today"
+          }
+        }
+      }
+    },
     "Dnes" : {
       "comment" : "Odpočet: termín je dnes",
       "localizations" : {
@@ -1318,6 +1430,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
+          }
+        }
+      }
+    },
+    "Dnes – prošlo" : {
+      "comment" : "Odpočet: termín byl dnes a už uplynul",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today – passed"
+          }
+        }
+      }
+    },
+    "Dnes · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today · %@"
           }
         }
       }
@@ -1342,6 +1475,16 @@
         }
       }
     },
+    "Dnes nemáš žádnou výuku." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no classes today."
+          }
+        }
+      }
+    },
     "Dnes už volno" : {
       "localizations" : {
         "en" : {
@@ -1362,23 +1505,12 @@
         }
       }
     },
-    "Dnes · %@" : {
+    "Dnes volno" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Today · %@"
-          }
-        }
-      }
-    },
-    "Dnes – prošlo" : {
-      "comment" : "Odpočet: termín byl dnes a už uplynul",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Today – passed"
+            "value" : "Day off"
           }
         }
       }
@@ -1400,12 +1532,34 @@
         }
       }
     },
+    "do %@" : {
+      "comment" : "Platnost akce do data",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "until %@"
+          }
+        }
+      }
+    },
     "Do 7 dní" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Within 7 days"
+          }
+        }
+      }
+    },
+    "do termínu" : {
+      "comment" : "Dynamic Island: krátký popisek nad odpočtem do termínu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "until exam"
           }
         }
       }
@@ -1439,16 +1593,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Satisfactory"
-          }
-        }
-      }
-    },
-    "Dáme vědět, jakmile ti vyučující zapíše do STAGu zápočet nebo známku ze zkoušky." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We'll let you know as soon as your teacher enters a credit or an exam grade in STAG."
           }
         }
       }
@@ -1563,6 +1707,16 @@
         }
       }
     },
+    "hotovo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "done"
+          }
+        }
+      }
+    },
     "Hotovo" : {
       "localizations" : {
         "en" : {
@@ -1573,12 +1727,12 @@
         }
       }
     },
-    "IS/STAG k těmto údajům nepovolil přístup. Přihlášení zůstává platné, zkus to později." : {
+    "ID deadlinu" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "IS/STAG didn’t allow access to this data. You’re still signed in – try again later."
+            "value" : "Deadline ID"
           }
         }
       }
@@ -1665,6 +1819,16 @@
         }
       }
     },
+    "IS/STAG k těmto údajům nepovolil přístup. Přihlášení zůstává platné, zkus to později." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IS/STAG didn’t allow access to this data. You’re still signed in – try again later."
+          }
+        }
+      }
+    },
     "Jak data smazat" : {
       "localizations" : {
         "en" : {
@@ -1695,6 +1859,16 @@
         }
       }
     },
+    "Jaká data aplikace zpracovává" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What data the app processes"
+          }
+        }
+      }
+    },
     "Jakmile je vyučující vypíšou, objeví se tady a hned tě upozorníme." : {
       "localizations" : {
         "en" : {
@@ -1711,16 +1885,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "As soon as your teachers enter a credit or an exam grade in STAG, it will appear here and we'll notify you right away."
-          }
-        }
-      }
-    },
-    "Jaká data aplikace zpracovává" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What data the app processes"
           }
         }
       }
@@ -1791,6 +1955,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "First and last name, student ID, username, faculty and selected school."
+          }
+        }
+      }
+    },
+    "Jsi ve frontě čekatelů na termín." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are on the waiting list for this exam date."
+          }
+        }
+      }
+    },
+    "Jsi zapsaný na termín. Zkoušku s připomínkou najdeš v Přehledu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are registered for the exam date. The exam with a reminder is in Overview."
           }
         }
       }
@@ -1895,7 +2079,18 @@
         }
       }
     },
+    "Ke každému zapsanému termínu máš v Přehledu zkoušku s připomínkou den předem. Odhlásit se můžeš v detailu termínu nebo podržením řádku." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each registered exam date has an exam with a reminder one day before in Overview. You can unregister in the exam date detail or by long-pressing the row."
+          }
+        }
+      }
+    },
     "Ke každému zapsanému termínu máš v Přehledu zkoušku s připomínkou den předem. Zapsat nebo odhlásit se můžeš na portálu IS/STAG." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1925,12 +2120,96 @@
         }
       }
     },
+    "Kód" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        }
+      }
+    },
+    "KÓD" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CODE"
+          }
+        }
+      }
+    },
+    "Kód (např. AP9PT)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code (e.g. AP9PT)"
+          }
+        }
+      }
+    },
+    "kód %@" : {
+      "comment" : "VoiceOver: kód předmětu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "code %@"
+          }
+        }
+      }
+    },
     "Komu se data předávají" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Who the data is shared with"
+          }
+        }
+      }
+    },
+    "končí za" : {
+      "comment" : "Dynamic Island: krátký popisek nad odpočtem do konce",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ends in"
+          }
+        }
+      }
+    },
+    "Končí za" : {
+      "comment" : "Live Activity: popisek nad odpočtem do konce hodiny",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ends in"
+          }
+        }
+      }
+    },
+    "Končí za %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ends in %@"
+          }
+        }
+      }
+    },
+    "konec" : {
+      "comment" : "Dynamic Island: hodina skončila",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ended"
           }
         }
       }
@@ -1955,17 +2234,6 @@
         }
       }
     },
-    "Končí za" : {
-      "comment" : "Live Activity: popisek nad odpočtem do konce hodiny",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ends in"
-          }
-        }
-      }
-    },
     "Kredity" : {
       "localizations" : {
         "en" : {
@@ -1976,53 +2244,23 @@
         }
       }
     },
-    "KÓD" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CODE"
-          }
-        }
-      }
-    },
-    "Kód" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code"
-          }
-        }
-      }
-    },
-    "Kód (např. AP9PT)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code (e.g. AP9PT)"
-          }
-        }
-      }
-    },
-    "LS %@" : {
-      "comment" : "Letní semestr, např. „LS 2026/2027“",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Summer %@"
-          }
-        }
-      }
-    },
     "Letní semestr" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Summer semester"
+          }
+        }
+      }
+    },
+    "lichý" : {
+      "comment" : "Lichý týden (rozvrh)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "odd"
           }
         }
       }
@@ -2067,22 +2305,23 @@
         }
       }
     },
-    "Minulý týden" : {
+    "LS %@" : {
+      "comment" : "Letní semestr, např. „LS 2026/2027“",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Last week"
+            "value" : "Summer %@"
           }
         }
       }
     },
-    "Modrá" : {
+    "Mapa s polohou budovy" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blue"
+            "value" : "Map showing the building location"
           }
         }
       }
@@ -2149,6 +2388,16 @@
         }
       }
     },
+    "Minulý týden" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last week"
+          }
+        }
+      }
+    },
     "Místnost" : {
       "localizations" : {
         "en" : {
@@ -2159,8 +2408,19 @@
         }
       }
     },
+    "místnost %@" : {
+      "comment" : "VoiceOver: místnost akce",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "room %@"
+          }
+        }
+      }
+    },
     "Místnost %@" : {
-      "comment" : "Poznámka zkoušky: místnost ze STAGu",
+      "comment" : "Potvrzení zápisu: místnost termínu\nPoznámka zkoušky: místnost ze STAGu",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2186,6 +2446,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Room: %@"
+          }
+        }
+      }
+    },
+    "Modrá" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blue"
           }
         }
       }
@@ -2216,6 +2486,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Never miss an exam or a project submission."
+          }
+        }
+      }
+    },
+    "Načíst předměty ze STAGu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load subjects from STAG"
+          }
+        }
+      }
+    },
+    "Načítám adresu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading address…"
+          }
+        }
+      }
+    },
+    "Načítám rozvrh ze STAGu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading timetable from STAG…"
+          }
+        }
+      }
+    },
+    "Načítám termíny ze STAGu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading exam dates from STAG…"
+          }
+        }
+      }
+    },
+    "Načítám tvoje předměty…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading your subjects…"
+          }
+        }
+      }
+    },
+    "Načítám známky ze STAGu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading grades from STAG…"
+          }
+        }
+      }
+    },
+    "Načte předměty zapsané v aktuálním semestru: nové přidá, u stávajících upraví název a kredity. Nic nemaže." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loads the subjects you’re enrolled in this semester: adds new ones and updates the name and credits of existing ones. Nothing is deleted."
+          }
+        }
+      }
+    },
+    "Načti si své předměty ze STAGu a přidej k nim první zkoušku nebo odevzdání. Den před termínem ti pošleme připomínku." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load your subjects from STAG and add your first exam or submission. We’ll send you a reminder the day before."
           }
         }
       }
@@ -2280,72 +2630,52 @@
         }
       }
     },
-    "Načte předměty zapsané v aktuálním semestru: nové přidá, u stávajících upraví název a kredity. Nic nemaže." : {
+    "Navigovat" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loads the subjects you’re enrolled in this semester: adds new ones and updates the name and credits of existing ones. Nothing is deleted."
+            "value" : "Directions"
           }
         }
       }
     },
-    "Načti si své předměty ze STAGu a přidej k nim první zkoušku nebo odevzdání. Den před termínem ti pošleme připomínku." : {
+    "Název" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Load your subjects from STAG and add your first exam or submission. We’ll send you a reminder the day before."
+            "value" : "Name"
           }
         }
       }
     },
-    "Načíst předměty ze STAGu" : {
+    "Název (např. Mobilní aplikace)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Load subjects from STAG"
+            "value" : "Name (e.g. Mobile Apps)"
           }
         }
       }
     },
-    "Načítám rozvrh ze STAGu…" : {
+    "Název (např. Zkouška – 1. termín)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loading timetable from STAG…"
+            "value" : "Name (e.g. Exam – 1st attempt)"
           }
         }
       }
     },
-    "Načítám termíny ze STAGu…" : {
+    "Název předmětu" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loading exam dates from STAG…"
-          }
-        }
-      }
-    },
-    "Načítám tvoje předměty…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading your subjects…"
-          }
-        }
-      }
-    },
-    "Načítám známky ze STAGu…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading grades from STAG…"
+            "value" : "Subject name"
           }
         }
       }
@@ -2392,22 +2722,22 @@
         }
       }
     },
-    "Nejbližší projekt" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Next project"
-          }
-        }
-      }
-    },
     "Nejbližší přednáška nebo cvičení z rozvrhu – čas, místnost a odpočet do začátku." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your next lecture or lab from the timetable – time, room and a countdown to the start."
+          }
+        }
+      }
+    },
+    "Nejbližší projekt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next project"
           }
         }
       }
@@ -2432,12 +2762,12 @@
         }
       }
     },
-    "Nejbližší zkouška" : {
+    "Nejbližší úkol" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next exam"
+            "value" : "Next assignment"
           }
         }
       }
@@ -2452,12 +2782,12 @@
         }
       }
     },
-    "Nejbližší úkol" : {
+    "Nejbližší zkouška" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next assignment"
+            "value" : "Next exam"
           }
         }
       }
@@ -2468,6 +2798,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You’re not signed in to IS/STAG. Sign in and try again."
+          }
+        }
+      }
+    },
+    "Nemáš žádné nesplněné deadliny." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no open deadlines."
           }
         }
       }
@@ -2616,62 +2956,12 @@
         }
       }
     },
-    "Název" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Name"
-          }
-        }
-      }
-    },
-    "Název (např. Mobilní aplikace)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Name (e.g. Mobile Apps)"
-          }
-        }
-      }
-    },
-    "Název (např. Zkouška – 1. termín)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Name (e.g. Exam – 1st attempt)"
-          }
-        }
-      }
-    },
-    "Název předmětu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Subject name"
-          }
-        }
-      }
-    },
     "O aplikaci" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "About"
-          }
-        }
-      }
-    },
-    "OK" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
           }
         }
       }
@@ -2746,6 +3036,34 @@
         }
       }
     },
+    "od %@" : {
+      "comment" : "Platnost akce od data",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "from %@"
+          }
+        }
+      }
+    },
+    "od %@ do %@" : {
+      "comment" : "VoiceOver: čas akce od–do",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "od %1$@ do %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "from %1$@ to %2$@"
+          }
+        }
+      }
+    },
     "Odevzdání semestrálního projektu" : {
       "localizations" : {
         "en" : {
@@ -2756,12 +3074,42 @@
         }
       }
     },
+    "Odhlášení proběhne přímo v IS/STAG. Uvolněné místo může hned obsadit někdo jiný." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will be unregistered directly in IS/STAG. Someone else may take the freed spot right away."
+          }
+        }
+      }
+    },
+    "Odhlášení z fronty proběhne přímo v IS/STAG. O pořadí ve frontě přijdeš." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will leave the waiting list directly in IS/STAG and lose your position."
+          }
+        }
+      }
+    },
     "Odhlásit" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sign Out"
+          }
+        }
+      }
+    },
+    "Odhlásit se" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unregister"
           }
         }
       }
@@ -2796,6 +3144,46 @@
         }
       }
     },
+    "Odhlásit se z fronty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave waiting list"
+          }
+        }
+      }
+    },
+    "Odhlásit se z fronty čekatelů?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave the waiting list?"
+          }
+        }
+      }
+    },
+    "Odhlásit se z termínu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unregister from exam date"
+          }
+        }
+      }
+    },
+    "Odhlásit se z tohoto termínu?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unregister from this exam date?"
+          }
+        }
+      }
+    },
     "Odhlásit ze STAGu" : {
       "localizations" : {
         "en" : {
@@ -2816,22 +3204,32 @@
         }
       }
     },
+    "Odhlašuji z fronty…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leaving the waiting list…"
+          }
+        }
+      }
+    },
+    "Odhlašuji z termínu…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unregistering…"
+          }
+        }
+      }
+    },
     "Odinstalace aplikace" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uninstalling the app"
-          }
-        }
-      }
-    },
-    "Odpověď ze STAGu se nepodařilo zpracovat." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn’t process the response from STAG."
           }
         }
       }
@@ -2876,6 +3274,16 @@
         }
       }
     },
+    "Odpověď ze STAGu se nepodařilo zpracovat." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t process the response from STAG."
+          }
+        }
+      }
+    },
     "Odškrtni deadline klepnutím na kolečko a objeví se tady." : {
       "localizations" : {
         "en" : {
@@ -2886,12 +3294,42 @@
         }
       }
     },
+    "OK" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
     "Opakování" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Repeats"
+          }
+        }
+      }
+    },
+    "opravný" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "retake"
+          }
+        }
+      }
+    },
+    "Opustit frontu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave queue"
           }
         }
       }
@@ -2926,6 +3364,16 @@
         }
       }
     },
+    "Otevře pěší trasu k budově v Apple Mapách" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens walking directions to the building in Apple Maps"
+          }
+        }
+      }
+    },
     "Otevře systémový editor události s předvyplněným termínem. Aplikace nepotřebuje přístup ke kalendáři." : {
       "localizations" : {
         "en" : {
@@ -2956,6 +3404,16 @@
         }
       }
     },
+    "Otevři Termínovník na iPhonu a přihlas se do STAGu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Termínovník on your iPhone and sign in to STAG."
+          }
+        }
+      }
+    },
     "Otevřít nastavení iOS" : {
       "localizations" : {
         "en" : {
@@ -2972,6 +3430,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verify and Use"
+          }
+        }
+      }
+    },
+    "Označí deadline jako splněný přímo z widgetu na ploše." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marks a deadline as done right from the Home Screen widget."
+          }
+        }
+      }
+    },
+    "Označit deadline jako splněný" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark deadline as done"
           }
         }
       }
@@ -3012,6 +3490,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "However, notifications are turned off in iOS Settings."
+          }
+        }
+      }
+    },
+    "Pá" : {
+      "comment" : "Zkratka dne v týdnu: pátek",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fri"
+          }
+        }
+      }
+    },
+    "Písemná zkouška" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam"
           }
         }
       }
@@ -3093,6 +3592,16 @@
         }
       }
     },
+    "Počkej, než se dokončí předchozí změna zápisu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wait until the previous registration change finishes."
+          }
+        }
+      }
+    },
     "Podle GDPR máš právo na přístup ke svým údajům, jejich opravu a výmaz, omezení zpracování a přenositelnost a právo podat stížnost u Úřadu pro ochranu osobních údajů (uoou.gov.cz)." : {
       "localizations" : {
         "en" : {
@@ -3163,12 +3672,12 @@
         }
       }
     },
-    "Poznámka" : {
+    "pozítří" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Note"
+            "value" : "the day after tomorrow"
           }
         }
       }
@@ -3183,92 +3692,33 @@
         }
       }
     },
-    "Prezentace týmového projektu" : {
+    "Poznámka" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Team project presentation"
+            "value" : "Note"
           }
         }
       }
     },
-    "Pro načtení rozvrhu se přihlas do IS/STAG." : {
+    "právě probíhá" : {
+      "comment" : "VoiceOver: akce právě probíhá",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sign in to IS/STAG to load your timetable."
+            "value" : "happening now"
           }
         }
       }
     },
-    "Pro načtení termínů se přihlas do IS/STAG." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in to IS/STAG to load exam dates."
-          }
-        }
-      }
-    },
-    "Pro načtení známek se přihlas do IS/STAG." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in to IS/STAG to load your grades."
-          }
-        }
-      }
-    },
-    "Probíhá" : {
+    "Právě probíhá" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "In progress"
-          }
-        }
-      }
-    },
-    "Probíhá · do %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In progress · until %@"
-          }
-        }
-      }
-    },
-    "Projekt" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Project"
-          }
-        }
-      }
-    },
-    "Protože data zůstávají jen v tvém zařízení, většinu práv uplatníš přímo v aplikaci – údaje si zobrazíš, upravíš i smažeš. S dotazy se obrať na autora." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Because your data stays only on your device, you can exercise most of these rights directly in the app – you can view, edit and delete your data there. If you have any questions, contact the author."
-          }
-        }
-      }
-    },
-    "Prošlo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passed"
           }
         }
       }
@@ -3289,43 +3739,12 @@
         }
       }
     },
-    "Průměr %@" : {
+    "právě teď" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Average %@"
-          }
-        }
-      }
-    },
-    "Průměr je orientační – počítá se z klasifikovaných předmětů vážený kredity." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The average is indicative – it is calculated from graded subjects weighted by credits."
-          }
-        }
-      }
-    },
-    "Pá" : {
-      "comment" : "Zkratka dne v týdnu: pátek",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fri"
-          }
-        }
-      }
-    },
-    "Písemná zkouška" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Written exam"
+            "value" : "right now"
           }
         }
       }
@@ -3383,6 +3802,28 @@
         }
       }
     },
+    "před %lld h" : {
+      "comment" : "Před kolika hodinami",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld h ago"
+          }
+        }
+      }
+    },
+    "před %lld min" : {
+      "comment" : "Před kolika minutami",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min ago"
+          }
+        }
+      }
+    },
     "Předchozí týden" : {
       "localizations" : {
         "en" : {
@@ -3433,22 +3874,22 @@
         }
       }
     },
-    "Předměty, deadliny, poznámky, body a známky." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Subjects, deadlines, notes, points and grades."
-          }
-        }
-      }
-    },
     "Předměty, časy, místnosti a jména vyučujících." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subjects, times, rooms and teachers’ names."
+          }
+        }
+      }
+    },
+    "Předměty, deadliny, poznámky, body a známky." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subjects, deadlines, notes, points and grades."
           }
         }
       }
@@ -3494,6 +3935,63 @@
         }
       }
     },
+    "Prezentace týmového projektu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Team project presentation"
+          }
+        }
+      }
+    },
+    "Přidá zkoušku, zápočet, projekt nebo úkol k předmětu a naplánuje připomínku den předem." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds an exam, credit test, project or assignment to a subject and schedules a reminder the day before."
+          }
+        }
+      }
+    },
+    "Přidáno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added"
+          }
+        }
+      }
+    },
+    "přidáno %lld" : {
+      "comment" : "Počet předmětů přidaných ze STAGu (část věty, první písmeno se zvětší)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld added"
+          }
+        }
+      }
+    },
+    "Přidáno: %@ – %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Přidáno: %1$@ – %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added: %1$@ – %2$@"
+          }
+        }
+      }
+    },
     "Přidat" : {
       "localizations" : {
         "en" : {
@@ -3504,22 +4002,22 @@
         }
       }
     },
-    "Přidat ${kind} ${name} k předmětu ${subject} na ${dueDate}" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add ${kind} ${name} to ${subject} on ${dueDate}"
-          }
-        }
-      }
-    },
     "Přidat (%lld)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add (%lld)"
+          }
+        }
+      }
+    },
+    "Přidat ${kind} ${name} k předmětu ${subject} na ${dueDate}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add ${kind} ${name} to ${subject} on ${dueDate}"
           }
         }
       }
@@ -3584,42 +4082,6 @@
         }
       }
     },
-    "Přidá zkoušku, zápočet, projekt nebo úkol k předmětu a naplánuje připomínku den předem." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adds an exam, credit test, project or assignment to a subject and schedules a reminder the day before."
-          }
-        }
-      }
-    },
-    "Přidáno" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Added"
-          }
-        }
-      }
-    },
-    "Přidáno: %@ – %@" : {
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Přidáno: %1$@ – %2$@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Added: %1$@ – %2$@"
-          }
-        }
-      }
-    },
     "Přihlas se do IS/STAG a uvidíš své přednášky, cvičení a semináře po dnech – i s místnostmi, vyučujícími a odpočtem do další hodiny." : {
       "localizations" : {
         "en" : {
@@ -3660,6 +4122,16 @@
         }
       }
     },
+    "Přihlas se do STAGu v Termínovníku na iPhonu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to STAG in Termínovník on your iPhone."
+          }
+        }
+      }
+    },
     "Přihlas se školním účtem %@ a načteme jen předměty, které máš zapsané." : {
       "localizations" : {
         "en" : {
@@ -3686,6 +4158,116 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sign in with your school account to update the subjects you’re enrolled in on STAG with a single tap anytime."
+          }
+        }
+      }
+    },
+    "Přihlášení do STAGu vypršelo, přihlas se znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your STAG sign-in has expired. Please sign in again."
+          }
+        }
+      }
+    },
+    "Přihlášení platí až 90 dní, potom se stačí přihlásit znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign-in is valid for up to 90 days; after that, just sign in again."
+          }
+        }
+      }
+    },
+    "Přihlášení proběhne na zabezpečené stránce %@. Aplikace tvé heslo nevidí, dostane jen přístupový klíč, který se bezpečně uloží v Klíčence. Platí až 90 dní a odhlášením se smaže." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’ll sign in on the secure %@ page. The app never sees your password – it only gets an access token, stored securely in the Keychain. It’s valid for up to 90 days and is deleted when you sign out."
+          }
+        }
+      }
+    },
+    "Přihlášení se nepodařilo bezpečně uložit do Klíčenky. Zkus se přihlásit znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t securely save your sign-in to the Keychain. Try signing in again."
+          }
+        }
+      }
+    },
+    "Přihlášení vypršelo nebo nebylo přijato. Přihlas se znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your sign-in expired or wasn’t accepted. Please sign in again."
+          }
+        }
+      }
+    },
+    "Přihlášený student" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signed-in student"
+          }
+        }
+      }
+    },
+    "Přihlásil ses jako anonymní uživatel. Pro načtení tvých předmětů se přihlas školním účtem." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You signed in as an anonymous user. Sign in with your school account to load your subjects."
+          }
+        }
+      }
+    },
+    "Přihlásíš se na serveru %@. Pokračuj, jen pokud mu důvěřuješ." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’ll sign in on the server %@. Continue only if you trust it."
+          }
+        }
+      }
+    },
+    "Přihlásit se do" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register by"
+          }
+        }
+      }
+    },
+    "Přihlásit se do IS/STAG" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG"
+          }
+        }
+      }
+    },
+    "Přihlásit se můžeš do %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can register until %@"
           }
         }
       }
@@ -3766,116 +4348,6 @@
         }
       }
     },
-    "Přihlásil ses jako anonymní uživatel. Pro načtení tvých předmětů se přihlas školním účtem." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You signed in as an anonymous user. Sign in with your school account to load your subjects."
-          }
-        }
-      }
-    },
-    "Přihlásit se do" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Register by"
-          }
-        }
-      }
-    },
-    "Přihlásit se do IS/STAG" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in to IS/STAG"
-          }
-        }
-      }
-    },
-    "Přihlásit se můžeš do %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can register until %@"
-          }
-        }
-      }
-    },
-    "Přihlásíš se na serveru %@. Pokračuj, jen pokud mu důvěřuješ." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You’ll sign in on the server %@. Continue only if you trust it."
-          }
-        }
-      }
-    },
-    "Přihlášení do STAGu vypršelo, přihlas se znovu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your STAG sign-in has expired. Please sign in again."
-          }
-        }
-      }
-    },
-    "Přihlášení platí až 90 dní, potom se stačí přihlásit znovu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign-in is valid for up to 90 days; after that, just sign in again."
-          }
-        }
-      }
-    },
-    "Přihlášení proběhne na zabezpečené stránce %@. Aplikace tvé heslo nevidí, dostane jen přístupový klíč, který se bezpečně uloží v Klíčence. Platí až 90 dní a odhlášením se smaže." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You’ll sign in on the secure %@ page. The app never sees your password – it only gets an access token, stored securely in the Keychain. It’s valid for up to 90 days and is deleted when you sign out."
-          }
-        }
-      }
-    },
-    "Přihlášení se nepodařilo bezpečně uložit do Klíčenky. Zkus se přihlásit znovu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn’t securely save your sign-in to the Keychain. Try signing in again."
-          }
-        }
-      }
-    },
-    "Přihlášení vypršelo nebo nebylo přijato. Přihlas se znovu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your sign-in expired or wasn’t accepted. Please sign in again."
-          }
-        }
-      }
-    },
-    "Přihlášený student" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Signed-in student"
-          }
-        }
-      }
-    },
     "Připojeno" : {
       "localizations" : {
         "en" : {
@@ -3936,22 +4408,18 @@
         }
       }
     },
-    "Přístupový klíč" : {
+    "Příště %@ · %@" : {
       "localizations" : {
-        "en" : {
+        "cs" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Access token"
+            "state" : "new",
+            "value" : "Příště %1$@ · %2$@"
           }
-        }
-      }
-    },
-    "Přístupový klíč. Zůstává jen v tomto zařízení, nesynchronizuje se přes iCloud a nepřenese se na jiné zařízení." : {
-      "localizations" : {
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The access token. It stays only on this device, isn’t synced via iCloud and isn’t transferred to another device."
+            "value" : "Next %1$@ · %2$@"
           }
         }
       }
@@ -3976,18 +4444,183 @@
         }
       }
     },
-    "Příště %@ · %@" : {
+    "Přístupový klíč" : {
       "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Příště %1$@ · %2$@"
-          }
-        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next %1$@ · %2$@"
+            "value" : "Access token"
+          }
+        }
+      }
+    },
+    "Přístupový klíč. Zůstává jen v tomto zařízení, nesynchronizuje se přes iCloud a nepřenese se na jiné zařízení." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The access token. It stays only on this device, isn’t synced via iCloud and isn’t transferred to another device."
+          }
+        }
+      }
+    },
+    "Pro načtení rozvrhu se přihlas do IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to load your timetable."
+          }
+        }
+      }
+    },
+    "Pro načtení termínů se přihlas do IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to load exam dates."
+          }
+        }
+      }
+    },
+    "Pro načtení známek se přihlas do IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to load your grades."
+          }
+        }
+      }
+    },
+    "Pro zápis na termín se přihlas do IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to IS/STAG to register for exam dates."
+          }
+        }
+      }
+    },
+    "proběhlo" : {
+      "comment" : "VoiceOver: akce už proběhla",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "finished"
+          }
+        }
+      }
+    },
+    "Probíhá" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress"
+          }
+        }
+      }
+    },
+    "Probíhá · do %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress · until %@"
+          }
+        }
+      }
+    },
+    "probíhá ještě %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ left"
+          }
+        }
+      }
+    },
+    "Projekt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project"
+          }
+        }
+      }
+    },
+    "Prošlo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passed"
+          }
+        }
+      }
+    },
+    "Protože data zůstávají jen v tvém zařízení, většinu práv uplatníš přímo v aplikaci – údaje si zobrazíš, upravíš i smažeš. S dotazy se obrať na autora." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Because your data stays only on your device, you can exercise most of these rights directly in the app – you can view, edit and delete your data there. If you have any questions, contact the author."
+          }
+        }
+      }
+    },
+    "průměr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "average"
+          }
+        }
+      }
+    },
+    "Průměr %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average %@"
+          }
+        }
+      }
+    },
+    "Průměr je orientační – počítá se z klasifikovaných předmětů vážený kredity." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The average is indicative – it is calculated from graded subjects weighted by credits."
+          }
+        }
+      }
+    },
+    "Řekne nejbližší nesplněný termín – zkoušku, zápočet, projekt nebo úkol – a kolik zbývá času." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tells you your next pending deadline – exam, credit test, project or assignment – and how much time is left."
+          }
+        }
+      }
+    },
+    "Řekne, kdy a kde máš nejbližší hodinu podle rozvrhu ze STAGu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tells you when and where your next class is, based on your STAG timetable."
           }
         }
       }
@@ -4059,6 +4692,26 @@
         }
       }
     },
+    "Rozvrh není" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No timetable"
+          }
+        }
+      }
+    },
+    "Rozvrh se načte po přihlášení do STAGu na iPhonu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The timetable loads after you sign in to STAG on your iPhone."
+          }
+        }
+      }
+    },
     "Rozvrh se nepodařilo aktualizovat" : {
       "localizations" : {
         "en" : {
@@ -4109,25 +4762,22 @@
         }
       }
     },
-    "STAG" : {
-      "shouldTranslate" : false
-    },
-    "STAG nevrátil přihlašovací údaje. Zkus se přihlásit znovu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "STAG didn’t return sign-in credentials. Try signing in again."
-          }
-        }
-      }
-    },
     "Sdílené úložiště pro widget (App Group)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shared widget storage (App Group)"
+          }
+        }
+      }
+    },
+    "Šedá" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gray"
           }
         }
       }
@@ -4169,6 +4819,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couldn’t verify the server"
+          }
+        }
+      }
+    },
+    "Škola" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "School"
           }
         }
       }
@@ -4355,6 +5015,26 @@
         }
       }
     },
+    "Splněné" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        }
+      }
+    },
+    "Splněné (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed (%lld)"
+          }
+        }
+      }
+    },
     "Splněno" : {
       "comment" : "Odpočet: povinnost je splněná\nTlačítko v oznámení: označit deadline jako splněný",
       "localizations" : {
@@ -4434,26 +5114,6 @@
         }
       }
     },
-    "Splněné" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completed"
-          }
-        }
-      }
-    },
-    "Splněné (%lld)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completed (%lld)"
-          }
-        }
-      }
-    },
     "Spolu s předmětem se smaže i %lld úkolů. Akci nelze vrátit." : {
       "localizations" : {
         "cs" : {
@@ -4517,6 +5177,49 @@
         }
       }
     },
+    "STAG" : {
+      "shouldTranslate" : false
+    },
+    "STAG nevrátil přihlašovací údaje. Zkus se přihlásit znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STAG didn’t return sign-in credentials. Try signing in again."
+          }
+        }
+      }
+    },
+    "STAG teď změnu zápisu nedovoluje." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STAG does not allow changing the registration right now."
+          }
+        }
+      }
+    },
+    "STAG změnu nepotvrdil. Zkontroluj stav termínu na portálu IS/STAG." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STAG did not confirm the change. Check the exam date in the IS/STAG portal."
+          }
+        }
+      }
+    },
+    "stag-ws.skola.cz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stag-ws.school.cz"
+          }
+        }
+      }
+    },
     "Stav" : {
       "localizations" : {
         "en" : {
@@ -4547,6 +5250,17 @@
         }
       }
     },
+    "sudý" : {
+      "comment" : "Sudý týden (rozvrh)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "even"
+          }
+        }
+      }
+    },
     "Sudý týden" : {
       "localizations" : {
         "en" : {
@@ -4557,12 +5271,42 @@
         }
       }
     },
+    "teď" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "now"
+          }
+        }
+      }
+    },
     "TEĎ" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "NOW"
+          }
+        }
+      }
+    },
+    "Teď %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now %@"
+          }
+        }
+      }
+    },
+    "Teď probíhá" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Happening now"
           }
         }
       }
@@ -4731,26 +5475,6 @@
         }
       }
     },
-    "Teď %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Now %@"
-          }
-        }
-      }
-    },
-    "Teď probíhá" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Happening now"
-          }
-        }
-      }
-    },
     "Tuto akci nelze vrátit." : {
       "localizations" : {
         "en" : {
@@ -4821,6 +5545,28 @@
         }
       }
     },
+    "Týden" : {
+      "comment" : "Přepínač zobrazení rozvrhu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week"
+          }
+        }
+      }
+    },
+    "Týden %lld" : {
+      "comment" : "Číslo týdne v roce (ISO)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %lld"
+          }
+        }
+      }
+    },
     "Typ" : {
       "localizations" : {
         "en" : {
@@ -4871,24 +5617,92 @@
         }
       }
     },
-    "Týden" : {
-      "comment" : "Přepínač zobrazení rozvrhu",
+    "Účet IS/STAG" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Week"
+            "value" : "IS/STAG account"
           }
         }
       }
     },
-    "Týden %lld" : {
-      "comment" : "Číslo týdne v roce (ISO)",
+    "Účet nemá v IS/STAG roli studenta." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Week %lld"
+            "value" : "This account doesn’t have a student role in IS/STAG."
+          }
+        }
+      }
+    },
+    "Účet STAG může zůstat přihlášený, nebo se můžeš rovnou odhlásit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your STAG account can stay signed in, or you can sign out right away."
+          }
+        }
+      }
+    },
+    "Účet zůstane připojený. Přístupový klíč je bezpečně uložený v Klíčence, platí až 90 dní a odhlášením se smaže. Heslo aplikace nevidí." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account stays connected. The access token is stored securely in the Keychain, is valid for up to 90 days and is deleted when you sign out. The app never sees your password."
+          }
+        }
+      }
+    },
+    "Účinné od 7. října 2026" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effective October 7, 2026"
+          }
+        }
+      }
+    },
+    "Údaje o předmětu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subject details"
+          }
+        }
+      }
+    },
+    "Údaje o účtu, předměty, deadliny, rozvrh a termíny." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account details, subjects, deadlines, timetable and exam dates."
+          }
+        }
+      }
+    },
+    "Údaje přímo v IS/STAG spravuje tvoje škola. Žádosti o jejich opravu, výmaz nebo odvolání souhlasu směřuj na ni." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data held directly in IS/STAG is managed by your school. Please direct any requests for its rectification or erasure, or for withdrawal of consent, to your school."
+          }
+        }
+      }
+    },
+    "Údaje, které zadáš sám" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data you enter yourself"
           }
         }
       }
@@ -4913,6 +5727,36 @@
         }
       }
     },
+    "Úkol" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assignment"
+          }
+        }
+      }
+    },
+    "Úkol je splněný, připomínka je vypnutá." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The task is done, so the reminder is off."
+          }
+        }
+      }
+    },
+    "Úložiště aplikace" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App storage"
+          }
+        }
+      }
+    },
     "Uložit" : {
       "localizations" : {
         "en" : {
@@ -4929,6 +5773,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elapsed part of the class"
+          }
+        }
+      }
+    },
+    "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny a známky hlídáme, když jsi přihlášený do STAGu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Class reminders and Live Activities work when your timetable from STAG is loaded. New exam dates and grades are checked while you're signed in to STAG."
           }
         }
       }
@@ -4959,16 +5813,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remind before class"
-          }
-        }
-      }
-    },
-    "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny a známky hlídáme, když jsi přihlášený do STAGu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Class reminders and Live Activities work when your timetable from STAG is loaded. New exam dates and grades are checked while you're signed in to STAG."
           }
         }
       }
@@ -5014,12 +5858,54 @@
         }
       }
     },
+    "Ústní zkouška" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam"
+          }
+        }
+      }
+    },
+    "Út" : {
+      "comment" : "Zkratka dne v týdnu: úterý",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tue"
+          }
+        }
+      }
+    },
+    "už máš v aplikaci" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "already in the app"
+          }
+        }
+      }
+    },
     "Uznáno" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recognized"
+          }
+        }
+      }
+    },
+    "v %@" : {
+      "comment" : "Čas do věty, např. „v 10:00“ (anglicky „at 10:00“)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "at %@"
           }
         }
       }
@@ -5034,6 +5920,16 @@
         }
       }
     },
+    "v neděli %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Sunday %@"
+          }
+        }
+      }
+    },
     "V nejbližších 14 dnech nemáš žádnou výuku." : {
       "localizations" : {
         "en" : {
@@ -5044,12 +5940,114 @@
         }
       }
     },
+    "V nejbližších dvou týdnech nemáš žádnou hodinu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no classes in the next two weeks."
+          }
+        }
+      }
+    },
+    "v pátek %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Friday %@"
+          }
+        }
+      }
+    },
+    "v pondělí %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Monday %@"
+          }
+        }
+      }
+    },
+    "v sobotu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Saturday %@"
+          }
+        }
+      }
+    },
     "V tomto semestru nemáš ve STAGu zapsané žádné předměty." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You aren’t enrolled in any subjects in STAG this semester."
+          }
+        }
+      }
+    },
+    "v úterý %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Tuesday %@"
+          }
+        }
+      }
+    },
+    "Vážený průměr" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weighted average"
+          }
+        }
+      }
+    },
+    "Včera" : {
+      "comment" : "Odpočet: termín byl včera",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday"
+          }
+        }
+      }
+    },
+    "ve %@" : {
+      "comment" : "Čas do věty, např. „ve 12:00“ (anglicky „at 12:00“)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "at %@"
+          }
+        }
+      }
+    },
+    "ve čtvrtek %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Thursday %@"
+          }
+        }
+      }
+    },
+    "ve středu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on Wednesday %@"
           }
         }
       }
@@ -5075,12 +6073,51 @@
         }
       }
     },
+    "volno" : {
+      "comment" : "Den bez výuky (VoiceOver)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "free"
+          }
+        }
+      }
+    },
     "Volno" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Free"
+          }
+        }
+      }
+    },
+    "volno %lld" : {
+      "comment" : "Počet volných míst na termínu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld free"
+          }
+        }
+      }
+    },
+    "volno %lld/%lld" : {
+      "comment" : "Volná místa / kapacita termínu",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "volno %1$lld/%2$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld free"
           }
         }
       }
@@ -5095,12 +6132,94 @@
         }
       }
     },
+    "Vše" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        }
+      }
+    },
+    "Vše hotovo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All done"
+          }
+        }
+      }
+    },
+    "Vše hotovo – žádné deadliny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All done – no deadlines"
+          }
+        }
+      }
+    },
+    "Vše je aktuální" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything is up to date"
+          }
+        }
+      }
+    },
+    "Vše splněno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All completed"
+          }
+        }
+      }
+    },
+    "Všechny termíny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All exam dates"
+          }
+        }
+      }
+    },
+    "Vyber si z vypsaných termínů a zapiš se – tady pak uvidíš odpočet a dostaneš připomínku." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick one of the available exam dates and register – you will then see a countdown here and get a reminder."
+          }
+        }
+      }
+    },
     "Vyber si z vypsaných termínů a zapiš se na portálu IS/STAG – tady pak uvidíš odpočet a dostaneš připomínku." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pick one of the posted exam dates and register on the IS/STAG portal – you’ll then see a countdown here and get a reminder."
+          }
+        }
+      }
+    },
+    "Výborně" : {
+      "comment" : "Slovní hodnocení známky A / 1",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excellent"
           }
         }
       }
@@ -5111,6 +6230,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Select All"
+          }
+        }
+      }
+    },
+    "Vypíše hodiny vybraného dne – čas, předmět, typ a místnost." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lists the classes of the selected day – time, subject, type and room."
           }
         }
       }
@@ -5205,22 +6334,23 @@
         }
       }
     },
-    "Vypíše hodiny vybraného dne – čas, předmět, typ a místnost." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lists the classes of the selected day – time, subject, type and room."
-          }
-        }
-      }
-    },
     "Vyučující" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teacher"
+          }
+        }
+      }
+    },
+    "vyučující %@" : {
+      "comment" : "VoiceOver: vyučující akce",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "teacher %@"
           }
         }
       }
@@ -5235,104 +6365,12 @@
         }
       }
     },
-    "Vážený průměr" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weighted average"
-          }
-        }
-      }
-    },
-    "Výborně" : {
-      "comment" : "Slovní hodnocení známky A / 1",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Excellent"
-          }
-        }
-      }
-    },
     "Výuka" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Classes"
-          }
-        }
-      }
-    },
-    "Včera" : {
-      "comment" : "Odpočet: termín byl včera",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yesterday"
-          }
-        }
-      }
-    },
-    "Vše" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All"
-          }
-        }
-      }
-    },
-    "Vše hotovo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All done"
-          }
-        }
-      }
-    },
-    "Vše hotovo – žádné deadliny" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All done – no deadlines"
-          }
-        }
-      }
-    },
-    "Vše je aktuální" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything is up to date"
-          }
-        }
-      }
-    },
-    "Vše splněno" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All completed"
-          }
-        }
-      }
-    },
-    "Všechny termíny" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All exam dates"
           }
         }
       }
@@ -5357,6 +6395,69 @@
         }
       }
     },
+    "z %lld míst" : {
+      "comment" : "Pod počtem zapsaných: z kolika míst",
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ze %lld míst"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "z %lld míst"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "z %lld místa"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "z %lld míst"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "of %lld seat"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "of %lld seats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Z fronty čekatelů jsi odhlášený." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You left the waiting list."
+          }
+        }
+      }
+    },
     "Z rozvrhu IS/STAG – Termínovník" : {
       "localizations" : {
         "en" : {
@@ -5367,13 +6468,34 @@
         }
       }
     },
-    "ZS %@" : {
-      "comment" : "Zimní semestr, např. „ZS 2026/2027“",
+    "Z termínu jsi odhlášený." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Winter %@"
+            "value" : "You are unregistered from the exam date."
+          }
+        }
+      }
+    },
+    "za" : {
+      "comment" : "Dynamic Island: krátký popisek nad odpočtem do začátku („za 12:00“)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in"
+          }
+        }
+      }
+    },
+    "za %@" : {
+      "comment" : "Za jak dlouho začne hodina",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in %@"
           }
         }
       }
@@ -5448,6 +6570,27 @@
         }
       }
     },
+    "Začíná za" : {
+      "comment" : "Live Activity: popisek nad odpočtem do začátku hodiny",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts in"
+          }
+        }
+      }
+    },
+    "Začíná za %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts in %@"
+          }
+        }
+      }
+    },
     "Zadej adresu serveru, např. stag-ws.skola.cz (jen HTTPS)." : {
       "localizations" : {
         "en" : {
@@ -5464,6 +6607,106 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter your school’s IS/STAG web services address. We’ll verify it before you sign in.\n\nOnly sign in on a server you trust – you’ll enter your school password there."
+          }
+        }
+      }
+    },
+    "Žádná nadcházející zkouška." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming exams."
+          }
+        }
+      }
+    },
+    "Žádná výuka" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No classes"
+          }
+        }
+      }
+    },
+    "Žádné nadcházející deadliny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming deadlines"
+          }
+        }
+      }
+    },
+    "Žádné nadcházející deadliny. Užij si volno 🎉" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming deadlines. Enjoy your free time 🎉"
+          }
+        }
+      }
+    },
+    "Žádné předměty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No subjects"
+          }
+        }
+      }
+    },
+    "Žádné úkoly" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tasks"
+          }
+        }
+      }
+    },
+    "Žádný nadcházející projekt." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming projects."
+          }
+        }
+      }
+    },
+    "Žádný nadcházející termín – máš hotovo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming deadlines – you’re all done."
+          }
+        }
+      }
+    },
+    "Žádný nadcházející úkol." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming assignments."
+          }
+        }
+      }
+    },
+    "Žádný nadcházející zápočet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming credit tests."
           }
         }
       }
@@ -5488,12 +6731,82 @@
         }
       }
     },
+    "Zápis do fronty proběhne přímo v IS/STAG. Na samotný termín tím zapsaný nejsi – sleduj, jestli se uvolní místo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will join the waiting list directly in IS/STAG. This does not register you for the exam date itself – watch for a free spot."
+          }
+        }
+      }
+    },
+    "Zápis proběhne přímo v IS/STAG. Odhlásit se půjde jen do termínu odhlašování." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will be registered directly in IS/STAG. You can unregister only until the unregistration deadline."
+          }
+        }
+      }
+    },
+    "Zápis ve STAGu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registration in STAG"
+          }
+        }
+      }
+    },
+    "Zapisuji do fronty…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joining the waiting list…"
+          }
+        }
+      }
+    },
+    "Zapisuji na termín…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registering…"
+          }
+        }
+      }
+    },
     "Zaplněnost termínu" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exam date occupancy"
+          }
+        }
+      }
+    },
+    "Zápočet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Credit test"
+          }
+        }
+      }
+    },
+    "Zápočet z cvičení" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lab credit test"
           }
         }
       }
@@ -5505,6 +6818,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passed"
+          }
+        }
+      }
+    },
+    "Zápočtový test" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Credit test"
           }
         }
       }
@@ -5540,22 +6863,13 @@
         }
       }
     },
-    "Zapsat se můžeš na portálu IS/STAG. Na nově vypsané termíny tě upozorníme." : {
+    "zapsaní" : {
+      "comment" : "Popisek pod počtem 2–4 zapsaných studentů",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You can register on the IS/STAG portal. We’ll notify you about newly posted dates."
-          }
-        }
-      }
-    },
-    "Zapsat/odhlásit se můžeš na portálu IS/STAG." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can register or deregister on the IS/STAG portal."
+            "value" : "registered"
           }
         }
       }
@@ -5566,6 +6880,150 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registered"
+          }
+        }
+      }
+    },
+    "zapsaný" : {
+      "comment" : "Popisek pod počtem 1 zapsaného studenta",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "registered"
+          }
+        }
+      }
+    },
+    "zapsaných" : {
+      "comment" : "Popisek pod počtem 0 nebo 5+ zapsaných studentů",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "registered"
+          }
+        }
+      }
+    },
+    "Zapsat do fronty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join queue"
+          }
+        }
+      }
+    },
+    "Zapsat se" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register"
+          }
+        }
+      }
+    },
+    "Zapsat se do fronty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join waiting list"
+          }
+        }
+      }
+    },
+    "Zapsat se do fronty čekatelů?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join the waiting list?"
+          }
+        }
+      }
+    },
+    "Zapsat se můžeš na portálu IS/STAG. Na nově vypsané termíny tě upozorníme." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can register on the IS/STAG portal. We’ll notify you about newly posted dates."
+          }
+        }
+      }
+    },
+    "Zapsat se můžeš v detailu termínu nebo podržením řádku. Na nově vypsané termíny tě upozorníme." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can register in the exam date detail or by long-pressing the row. We will notify you about new exam dates."
+          }
+        }
+      }
+    },
+    "Zapsat se na tento termín?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register for this exam date?"
+          }
+        }
+      }
+    },
+    "Zapsat se na termín" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register for exam date"
+          }
+        }
+      }
+    },
+    "Zapsat/odhlásit se můžeš na portálu IS/STAG." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can register or deregister on the IS/STAG portal."
+          }
+        }
+      }
+    },
+    "Zásady na webu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Policy on the Web"
+          }
+        }
+      }
+    },
+    "Zásady ochrany osobních údajů" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        }
+      }
+    },
+    "Zásady ochrany osobních údajů na webu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy on the Web"
           }
         }
       }
@@ -5590,22 +7048,22 @@
         }
       }
     },
-    "Zatím nemáš zapsaný termín" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You’re not registered for any exam date yet"
-          }
-        }
-      }
-    },
     "Zatím nemáš žádný předmět" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You have no subjects yet"
+          }
+        }
+      }
+    },
+    "Zatím nemáš zapsaný termín" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’re not registered for any exam date yet"
           }
         }
       }
@@ -5670,13 +7128,12 @@
         }
       }
     },
-    "Začíná za" : {
-      "comment" : "Live Activity: popisek nad odpočtem do začátku hodiny",
+    "Závěrečný projekt AP9PT · UTB FAI" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Starts in"
+            "value" : "AP9PT final project · UTB FAI"
           }
         }
       }
@@ -5707,6 +7164,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Winter semester"
+          }
+        }
+      }
+    },
+    "Získané kredity" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Earned credits"
+          }
+        }
+      }
+    },
+    "zítra" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tomorrow"
+          }
+        }
+      }
+    },
+    "Zítra" : {
+      "comment" : "Odpočet: termín je zítra",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow"
+          }
+        }
+      }
+    },
+    "Zítra · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow · %@"
+          }
+        }
+      }
+    },
+    "Zítra %@ %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Zítra %1$@ %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "zítra v %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tomorrow at %@"
+          }
+        }
+      }
+    },
+    "Zítra: %@" : {
+      "comment" : "Nadpis připomínky deadlinu den předem; typ úkolu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow: %@"
+          }
+        }
+      }
+    },
+    "Živé aktivity se nepodařilo spustit. Zkontroluj, že je máš povolené v Nastavení iOS → Termínovník." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t start Live Activities. Make sure they’re enabled in iOS Settings → Termínovník."
           }
         }
       }
@@ -5791,12 +7336,32 @@
         }
       }
     },
+    "Změna proběhne přímo v IS/STAG – před provedením ji ještě potvrdíš." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The change happens directly in IS/STAG – you will confirm it first."
+          }
+        }
+      }
+    },
     "Změnit jazyk" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Change Language"
+          }
+        }
+      }
+    },
+    "Změnu se nepodařilo provést" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The change could not be made"
           }
         }
       }
@@ -5879,16 +7444,6 @@
         }
       }
     },
-    "Zobrazit vypsané termíny" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show posted exam dates"
-          }
-        }
-      }
-    },
     "Zobrazí podrobnosti akce" : {
       "localizations" : {
         "en" : {
@@ -5915,6 +7470,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows exam date details"
+          }
+        }
+      }
+    },
+    "Zobrazit vypsané termíny" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show posted exam dates"
           }
         }
       }
@@ -5949,1004 +7514,13 @@
         }
       }
     },
-    "Zápočet" : {
+    "ZS %@" : {
+      "comment" : "Zimní semestr, např. „ZS 2026/2027“",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Credit test"
-          }
-        }
-      }
-    },
-    "Zápočet z cvičení" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lab credit test"
-          }
-        }
-      }
-    },
-    "Zápočtový test" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Credit test"
-          }
-        }
-      }
-    },
-    "Zásady na webu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Policy on the Web"
-          }
-        }
-      }
-    },
-    "Zásady ochrany osobních údajů" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Privacy Policy"
-          }
-        }
-      }
-    },
-    "Zásady ochrany osobních údajů na webu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Privacy Policy on the Web"
-          }
-        }
-      }
-    },
-    "Závěrečný projekt AP9PT · UTB FAI" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AP9PT final project · UTB FAI"
-          }
-        }
-      }
-    },
-    "Získané kredity" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Earned credits"
-          }
-        }
-      }
-    },
-    "Zítra" : {
-      "comment" : "Odpočet: termín je zítra",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomorrow"
-          }
-        }
-      }
-    },
-    "Zítra %@ %@" : {
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Zítra %1$@ %2$@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomorrow %1$@ %2$@"
-          }
-        }
-      }
-    },
-    "Zítra · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomorrow · %@"
-          }
-        }
-      }
-    },
-    "Zítra: %@" : {
-      "comment" : "Nadpis připomínky deadlinu den předem; typ úkolu",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tomorrow: %@"
-          }
-        }
-      }
-    },
-    "aktualizováno %lld" : {
-      "comment" : "Počet předmětů aktualizovaných ze STAGu (část věty)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld updated"
-          }
-        }
-      }
-    },
-    "dnes" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "today"
-          }
-        }
-      }
-    },
-    "do %@" : {
-      "comment" : "Platnost akce do data",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "until %@"
-          }
-        }
-      }
-    },
-    "do termínu" : {
-      "comment" : "Dynamic Island: krátký popisek nad odpočtem do termínu",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "until exam"
-          }
-        }
-      }
-    },
-    "hotovo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "done"
-          }
-        }
-      }
-    },
-    "konec" : {
-      "comment" : "Dynamic Island: hodina skončila",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ended"
-          }
-        }
-      }
-    },
-    "končí za" : {
-      "comment" : "Dynamic Island: krátký popisek nad odpočtem do konce",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ends in"
-          }
-        }
-      }
-    },
-    "kód %@" : {
-      "comment" : "VoiceOver: kód předmětu",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "code %@"
-          }
-        }
-      }
-    },
-    "lichý" : {
-      "comment" : "Lichý týden (rozvrh)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "odd"
-          }
-        }
-      }
-    },
-    "místnost %@" : {
-      "comment" : "VoiceOver: místnost akce",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "room %@"
-          }
-        }
-      }
-    },
-    "od %@" : {
-      "comment" : "Platnost akce od data",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "from %@"
-          }
-        }
-      }
-    },
-    "od %@ do %@" : {
-      "comment" : "VoiceOver: čas akce od–do",
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "od %1$@ do %2$@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "from %1$@ to %2$@"
-          }
-        }
-      }
-    },
-    "opravný" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "retake"
-          }
-        }
-      }
-    },
-    "pozítří" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "the day after tomorrow"
-          }
-        }
-      }
-    },
-    "probíhá ještě %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ left"
-          }
-        }
-      }
-    },
-    "proběhlo" : {
-      "comment" : "VoiceOver: akce už proběhla",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "finished"
-          }
-        }
-      }
-    },
-    "právě probíhá" : {
-      "comment" : "VoiceOver: akce právě probíhá",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "happening now"
-          }
-        }
-      }
-    },
-    "právě teď" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "right now"
-          }
-        }
-      }
-    },
-    "průměr" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "average"
-          }
-        }
-      }
-    },
-    "před %lld h" : {
-      "comment" : "Před kolika hodinami",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld h ago"
-          }
-        }
-      }
-    },
-    "před %lld min" : {
-      "comment" : "Před kolika minutami",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld min ago"
-          }
-        }
-      }
-    },
-    "přidáno %lld" : {
-      "comment" : "Počet předmětů přidaných ze STAGu (část věty, první písmeno se zvětší)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld added"
-          }
-        }
-      }
-    },
-    "stag-ws.skola.cz" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "stag-ws.school.cz"
-          }
-        }
-      }
-    },
-    "sudý" : {
-      "comment" : "Sudý týden (rozvrh)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "even"
-          }
-        }
-      }
-    },
-    "teď" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "now"
-          }
-        }
-      }
-    },
-    "už máš v aplikaci" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "already in the app"
-          }
-        }
-      }
-    },
-    "v %@" : {
-      "comment" : "Čas do věty, např. „v 10:00“ (anglicky „at 10:00“)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "at %@"
-          }
-        }
-      }
-    },
-    "v neděli %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Sunday %@"
-          }
-        }
-      }
-    },
-    "v pondělí %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Monday %@"
-          }
-        }
-      }
-    },
-    "v pátek %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Friday %@"
-          }
-        }
-      }
-    },
-    "v sobotu %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Saturday %@"
-          }
-        }
-      }
-    },
-    "v úterý %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Tuesday %@"
-          }
-        }
-      }
-    },
-    "ve %@" : {
-      "comment" : "Čas do věty, např. „ve 12:00“ (anglicky „at 12:00“)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "at %@"
-          }
-        }
-      }
-    },
-    "ve středu %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Wednesday %@"
-          }
-        }
-      }
-    },
-    "ve čtvrtek %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "on Thursday %@"
-          }
-        }
-      }
-    },
-    "volno" : {
-      "comment" : "Den bez výuky (VoiceOver)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "free"
-          }
-        }
-      }
-    },
-    "volno %lld" : {
-      "comment" : "Počet volných míst na termínu",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld free"
-          }
-        }
-      }
-    },
-    "volno %lld/%lld" : {
-      "comment" : "Volná místa / kapacita termínu",
-      "localizations" : {
-        "cs" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "volno %1$lld/%2$lld"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld/%2$lld free"
-          }
-        }
-      }
-    },
-    "vyučující %@" : {
-      "comment" : "VoiceOver: vyučující akce",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "teacher %@"
-          }
-        }
-      }
-    },
-    "z %lld míst" : {
-      "comment" : "Pod počtem zapsaných: z kolika míst",
-      "localizations" : {
-        "cs" : {
-          "variations" : {
-            "plural" : {
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "ze %lld míst"
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "z %lld míst"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "z %lld místa"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "z %lld míst"
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "of %lld seat"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "of %lld seats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "za" : {
-      "comment" : "Dynamic Island: krátký popisek nad odpočtem do začátku („za 12:00“)",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "in"
-          }
-        }
-      }
-    },
-    "za %@" : {
-      "comment" : "Za jak dlouho začne hodina",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "in %@"
-          }
-        }
-      }
-    },
-    "zapsaní" : {
-      "comment" : "Popisek pod počtem 2–4 zapsaných studentů",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "registered"
-          }
-        }
-      }
-    },
-    "zapsaný" : {
-      "comment" : "Popisek pod počtem 1 zapsaného studenta",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "registered"
-          }
-        }
-      }
-    },
-    "zapsaných" : {
-      "comment" : "Popisek pod počtem 0 nebo 5+ zapsaných studentů",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "registered"
-          }
-        }
-      }
-    },
-    "zítra" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tomorrow"
-          }
-        }
-      }
-    },
-    "zítra v %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tomorrow at %@"
-          }
-        }
-      }
-    },
-    "© 2026 %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "© 2026 %@"
-          }
-        }
-      }
-    },
-    "Údaje o předmětu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Subject details"
-          }
-        }
-      }
-    },
-    "Údaje o účtu, předměty, deadliny, rozvrh a termíny." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Account details, subjects, deadlines, timetable and exam dates."
-          }
-        }
-      }
-    },
-    "Údaje přímo v IS/STAG spravuje tvoje škola. Žádosti o jejich opravu, výmaz nebo odvolání souhlasu směřuj na ni." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data held directly in IS/STAG is managed by your school. Please direct any requests for its rectification or erasure, or for withdrawal of consent, to your school."
-          }
-        }
-      }
-    },
-    "Údaje, které zadáš sám" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data you enter yourself"
-          }
-        }
-      }
-    },
-    "Úkol" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Assignment"
-          }
-        }
-      }
-    },
-    "Úkol je splněný, připomínka je vypnutá." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The task is done, so the reminder is off."
-          }
-        }
-      }
-    },
-    "Úložiště aplikace" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App storage"
-          }
-        }
-      }
-    },
-    "Ústní zkouška" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oral exam"
-          }
-        }
-      }
-    },
-    "Út" : {
-      "comment" : "Zkratka dne v týdnu: úterý",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tue"
-          }
-        }
-      }
-    },
-    "Účet IS/STAG" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IS/STAG account"
-          }
-        }
-      }
-    },
-    "Účet STAG může zůstat přihlášený, nebo se můžeš rovnou odhlásit." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your STAG account can stay signed in, or you can sign out right away."
-          }
-        }
-      }
-    },
-    "Účet nemá v IS/STAG roli studenta." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This account doesn’t have a student role in IS/STAG."
-          }
-        }
-      }
-    },
-    "Účet zůstane připojený. Přístupový klíč je bezpečně uložený v Klíčence, platí až 90 dní a odhlášením se smaže. Heslo aplikace nevidí." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your account stays connected. The access token is stored securely in the Keychain, is valid for up to 90 days and is deleted when you sign out. The app never sees your password."
-          }
-        }
-      }
-    },
-    "Účinné od 7. října 2026" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Effective October 7, 2026"
-          }
-        }
-      }
-    },
-    "Čas" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time"
-          }
-        }
-      }
-    },
-    "Červená" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Red"
-          }
-        }
-      }
-    },
-    "Čt" : {
-      "comment" : "Zkratka dne v týdnu: čtvrtek",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Thu"
-          }
-        }
-      }
-    },
-    "Řekne nejbližší nesplněný termín – zkoušku, zápočet, projekt nebo úkol – a kolik zbývá času." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tells you your next pending deadline – exam, credit test, project or assignment – and how much time is left."
-          }
-        }
-      }
-    },
-    "Řekne, kdy a kde máš nejbližší hodinu podle rozvrhu ze STAGu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tells you when and where your next class is, based on your STAG timetable."
-          }
-        }
-      }
-    },
-    "Šedá" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gray"
-          }
-        }
-      }
-    },
-    "Škola" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "School"
-          }
-        }
-      }
-    },
-    "Živé aktivity se nepodařilo spustit. Zkontroluj, že je máš povolené v Nastavení iOS → Termínovník." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn’t start Live Activities. Make sure they’re enabled in iOS Settings → Termínovník."
-          }
-        }
-      }
-    },
-    "Žádná nadcházející zkouška." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming exams."
-          }
-        }
-      }
-    },
-    "Žádné nadcházející deadliny" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming deadlines"
-          }
-        }
-      }
-    },
-    "Žádné nadcházející deadliny. Užij si volno 🎉" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming deadlines. Enjoy your free time 🎉"
-          }
-        }
-      }
-    },
-    "Žádné předměty" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No subjects"
-          }
-        }
-      }
-    },
-    "Žádné úkoly" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No tasks"
-          }
-        }
-      }
-    },
-    "Žádný nadcházející projekt." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming projects."
-          }
-        }
-      }
-    },
-    "Žádný nadcházející termín – máš hotovo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming deadlines – you’re all done."
-          }
-        }
-      }
-    },
-    "Žádný nadcházející zápočet." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming credit tests."
-          }
-        }
-      }
-    },
-    "Žádný nadcházející úkol." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming assignments."
+            "value" : "Winter %@"
           }
         }
       }
