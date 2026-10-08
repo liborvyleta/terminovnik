@@ -448,7 +448,7 @@ Odůvodnění podle definice Applu: „collect“ znamená přenos dat ze zaří
 | K-01 | Opraveno | `PrivacyInfo.xcprivacy` v aplikaci (CA92.1, 1C8F.1) i ve widgetu (1C8F.1) |
 | K-02 | Částečně | Zásady jsou v aplikaci (Nastavení a přihlášení) a v `docs/ZASADY_OCHRANY_UDAJU.md`; **zbývá je zveřejnit na webu a vyplnit `AppInfo.privacyPolicyURL`** |
 | V-01 | Ruční krok | Testovací studentský účet / Review Notes pro Apple |
-| V-02 | Ruční rozhodnutí | Změna bundle ID, App Group a služby Klíčenky před prvním nahráním (vede ke ztrátě lokálních dat současné instalace) |
+| V-02 | Opraveno | Bundle ID `cz.liborvyleta.terminovnik` (widget `.widget`, testy `.tests`), App Group `group.cz.liborvyleta.terminovnik`, úloha na pozadí `cz.liborvyleta.terminovnik.refresh`, služba Klíčenky `cz.liborvyleta.terminovnik.stag` |
 | V-03 | Částečně | Prohlášení „neoficiální aplikace“ a © v Nastavení; svolení škol a metadata jsou ruční krok |
 | S-01 | Částečně | Odkazy na podporu se zobrazí po vyplnění `AppInfo.supportURL` / `supportEmail` |
 | S-02 | Opraveno | Ephemeral `URLSession` bez cache a cookies; při odhlášení se cache maže |

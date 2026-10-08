@@ -8,7 +8,7 @@ import SwiftData
 /// několikrát denně, nikoli v přesný čas. Okamžitá upozornění by vyžadovala vlastní server s push notifikacemi.
 enum BackgroundRefresh {
     /// Musí odpovídat položce BGTaskSchedulerPermittedIdentifiers v Info.plist
-    nonisolated static let taskIdentifier = "cz.utb.terminovnik.refresh"
+    nonisolated static let taskIdentifier = "cz.liborvyleta.terminovnik.refresh"
 
     /// Požádá iOS o další kontrolu nejdříve za 20 minut
     static func schedule() {

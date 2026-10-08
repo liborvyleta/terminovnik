@@ -135,7 +135,7 @@ Známky se načítají dvěma službami: `znamky/getZnamkyByStudent` (zápočet 
 
 ## Widget a App Group
 
-Widget nemá přístup k databázi aplikace. Aplikace proto po každé změně zapíše přehled nejbližších deadlinů do sdíleného úložiště App Group `group.devplaceholder.OXGLLP23.zkouskovnik` a widget ho jen čte. Na simulátoru funguje bez dalšího nastavení. Pro fyzický iPhone musí tvůj vývojářský tým povolit schopnost App Groups. Když změníš bundle ID aplikace, uprav i bundle ID widgetu tak, aby jím začínalo.
+Widget nemá přístup k databázi aplikace. Aplikace proto po každé změně zapíše přehled nejbližších deadlinů do sdíleného úložiště App Group `group.cz.liborvyleta.terminovnik` a widget ho jen čte. Na simulátoru funguje bez dalšího nastavení. Pro fyzický iPhone musí tvůj vývojářský tým povolit schopnost App Groups. Když změníš bundle ID aplikace, uprav i bundle ID widgetu tak, aby jím začínalo.
 
 ## Notifikace
 

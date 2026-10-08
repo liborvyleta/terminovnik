@@ -17,7 +17,7 @@ nonisolated struct KeychainError: Error, Equatable {
 /// aby přechodná nedostupnost Klíčenky nevedla ke smazání přihlášení.
 /// Položky jsou dostupné i na pozadí po prvním odemčení a jen na tomto zařízení (nejdou do záloh).
 nonisolated enum KeychainStore {
-    private static let service = "cz.utb.zkouskovnik.stag"
+    private static let service = "cz.liborvyleta.terminovnik.stag"
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Terminovnik", category: "keychain")
 
     private static func baseQuery(_ key: String) -> [String: Any] {

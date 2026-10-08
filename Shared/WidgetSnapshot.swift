@@ -2,7 +2,7 @@ import Foundation
 
 /// Sdílené úložiště aplikace a widgetu. Identifikátor musí odpovídat oběma souborům .entitlements.
 nonisolated enum AppGroup {
-    static let identifier = "group.devplaceholder.OXGLLP23.zkouskovnik"
+    static let identifier = "group.cz.liborvyleta.terminovnik"
 
     static var defaults: UserDefaults? { UserDefaults(suiteName: identifier) }
 }
