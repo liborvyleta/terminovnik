@@ -4,6 +4,22 @@
 Předměty, rozvrh i termíny zkoušek si načteš přímo z IS/STAG své školy a aplikace ti den před každým termínem pošle připomínku.
 Aplikace je v češtině a angličtině.
 
+> **Neoficiální aplikace.** Termínovník není produktem IS/STAG ani žádné univerzity. Názvy škol slouží jen k připojení k jejich veřejnému rozhraní IS/STAG.
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="200" alt="Přehled deadlinů">
+  <img src="docs/screenshots/timetable.png" width="200" alt="Rozvrh – den">
+  <img src="docs/screenshots/timetable-week.png" width="200" alt="Rozvrh – týden">
+  <img src="docs/screenshots/terms.png" width="200" alt="Termíny zkoušek">
+</p>
+<p align="center">
+  <img src="docs/screenshots/subjects.png" width="200" alt="Předměty">
+  <img src="docs/screenshots/settings.png" width="200" alt="Nastavení">
+  <img src="docs/screenshots/dashboard-dark.png" width="200" alt="Tmavý režim">
+</p>
+
+*Snímky jsou z demo režimu se smyšlenými daty.* Jak je aplikace postavená (MVVM, SwiftData, STAG API, widgety a hodinky), popisuje **[docs/ARCHITEKTURA.md](docs/ARCHITEKTURA.md)**.
+
 ## Funkce
 
 - **Přehled (Dashboard).** Nadcházející nesplněné deadliny seřazené od nejbližšího, rozdělené na *Po termínu*, *Dnes a zítra*, *Příštích 7 dní* a *Později*. Každá položka má barevný odpočet („Dnes“, „Zítra“, „Za 5 dní“), typ úkolu a štítek v barvě předmětu.
@@ -23,6 +39,12 @@ Aplikace je v češtině a angličtině.
 - **Widgety** na plochu a zamčenou obrazovku: *Nejbližší deadliny* s odpočtem a *Další hodina* z rozvrhu.
 - **Přidat do Kalendáře** ve formuláři i v nabídce po dlouhém stisku řádku. Systémový editor nepotřebuje přístup ke kalendáři.
 - **Nastavení:** připojený účet STAG s aktualizací předmětů jedním klepnutím, stav oznámení, návod k widgetu, smazání dat a informace o aplikaci.
+- **Zápis a odhlášení z termínu přímo v aplikaci**, včetně fronty čekatelů u plného termínu. Změna ve STAGu proběhne až po potvrzení v dialogu.
+- **Upozornění na změny v rozvrhu:** když STAG zruší nebo přesune hodinu v příštích dvou týdnech, přijde oznámení.
+- **Mapa budov:** v detailu hodiny i termínu mapa s budovou a tlačítko *Navigovat* do Apple Map.
+- **Interaktivní widget:** deadline se odškrtne kroužkem přímo na ploše.
+- **Apple Watch:** další hodina s odpočtem, dnešní rozvrh a nejbližší deadliny.
+- **Záloha a obnova do souboru** (třeba na iCloud Drive), slučování podle novější změny. Synchronizace přes iCloud je připravená, viz [docs/ICLOUD_SYNC.md](docs/ICLOUD_SYNC.md).
 - **Prázdné stavy**, úvodní obrazovka při prvním spuštění, plná podpora světlého i tmavého režimu a ikona ve třech variantách.
 
 ## Struktura projektu
@@ -61,8 +83,9 @@ ZavernyProjekt/
 └── Helpers/                          pomocné rozšíření pro modely
 Shared/                               kód sdílený aplikací a widgetem (barvy, odpočet, data pro widget)
 ZkouskovnikWidget/                    rozšíření s widgety (WidgetKit)
+TerminovnikWatch/                     aplikace pro Apple Watch (watchOS 10+)
 ZavernyProjektTests/                  unit testy (Swift Testing)
-docs/                                 bezpečnostní audit a zásady ochrany osobních údajů
+docs/                                 architektura, bezpečnostní audit, zásady ochrany údajů, iCloud, screenshoty
 Tools/RenderAppIcon.swift             generátor ikony z AppLogoView
 ```
 
@@ -147,6 +170,8 @@ Widget nemá přístup k databázi aplikace. Aplikace proto po každé změně z
 
 - Aplikace startuje s **prázdnou databází**. Úvodní obrazovka nabídne přihlášení do STAGu a import tvých zapsaných předmětů. Jde ji přeskočit a předměty přidat ručně.
 - Ukázková data (`SampleData`) slouží jen pro SwiftUI Previews. Pro ruční testování je lze vložit argumentem `-seedSampleData` v **Product → Scheme → Edit Scheme → Run → Arguments**. Ve schématu není nastavený, funguje jen v Debug buildu a jen nad prázdnou databází.
+- **Ukázkový režim** (i v Release, pro vyzkoušení bez školního účtu a pro App Review): tlačítko **„Vyzkoušet s ukázkovými daty“** na úvodní obrazovce nebo v Nastavení (když není přihlášený účet STAG). Aplikace se přepne za běhu bez restartu (`Services/DemoMode.swift` – `DemoController` vymění `ModelContainer` a znovu sestaví strom pohledů) na smyšlený účet, předměty, deadliny, rozvrh, termíny, známky a budovy (`Models/DemoData.swift`). Vše je jen v paměti: do skutečné databáze, App Group (widget, cache), Klíčenky ani do plánovaných připomínek se nic nezapisuje, síť se nevolá, zápis na termín je vypnutý a záloha také. Nahoře je pruh „Ukázkový režim – smyšlená data“ s tlačítkem **Ukončit** (také v Nastavení). Po ukončení se vrátí skutečná data, účet a připomínky. Příznak `demoModeActive` v UserDefaults přetrvá i po restartu aplikace.
+- Pro screenshoty lze ukázkový režim v Debug buildu zapnout i argumentem `-demo`, volitelně s `-tab dashboard|timetable|terms|subjects|settings` a `-timetableMode day|week`, např. `xcrun simctl launch booted cz.liborvyleta.terminovnik -demo -tab timetable`.
 - Pro opakování „prvního spuštění“ aplikaci ze simulátoru smaž. Tím se smaže i databáze a stav úvodní obrazovky.
 
 ## Siri a Zkratky

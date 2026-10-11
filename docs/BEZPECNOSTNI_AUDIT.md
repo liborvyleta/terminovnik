@@ -12,6 +12,8 @@
 
 ---
 
+> **Aktualizace 11. 10. 2026:** stav nálezů je v kapitolách „Stav oprav“, „Revize 2026-10-11“ a „Technické požadavky“ na konci dokumentu. Text kapitol 1–7 popisuje stav ke dni 7. 10. 2026. Kritické nálezy K-01 a V-02 jsou opravené.
+
 ## 1. Shrnutí
 
 **Aplikace zatím není připravená k odeslání do App Review.** Technicky je postavená dobře. Heslo nikdy nevidí, ticket je v Klíčence, komunikace jde jen přes HTTPS, aplikace nemá žádné SDK třetích stran ani sledování a o oprávnění žádá v kontextu. Chybí ale několik povinných náležitostí. Bez nich App Store Connect build nepřijme, nebo ho App Review zamítne.
@@ -465,3 +467,158 @@ Odůvodnění podle definice Applu: „collect“ znamená přenos dat ze zaří
 | N-02, N-05, N-10 | Ponecháno | Ticket v query `getStagUserListForLoginTicket` (dáno API STAGu); widgety na zamčené obrazovce záměrně bez `privacySensitive`; test na iPadu je ruční krok |
 
 Unit testy (123) navíc odhalily a opravily: posun hodin rozvrhu v den změny času, odmítnutí serveru začínajícího na „http“ a pád palety při záporném indexu.
+
+---
+
+## Revize 2026-10-11 – úplná kontrola podle App Store Review Guidelines
+
+Měřítko: aktuální znění https://developer.apple.com/app-store/review/guidelines/ (staženo 11. 10. 2026). Rozsah: aplikace, widget a Live Activity, App Intents, aplikace pro Apple Watch, záloha do souboru, iCloud za flagem `ICLOUD_SYNC` (v buildu vypnutý) a demo režim (jen DEBUG).
+
+### Souhrn
+
+| Stav | Počet |
+|---|---|
+| ✅ splněno | 27 |
+| ⚠️ částečně nebo riziko | 8 |
+| ❌ nesplněno | 3 |
+
+**Blokuje odeslání:**
+1. **R-01 (2.1, demo účet):** recenzent nemá školní účet STAG. **Stav: Řešeno – demo režim v Release.** Úvodní obrazovka i Nastavení nabízejí „Vyzkoušet s ukázkovými daty“ (`Services/DemoMode.swift`, `Models/DemoData.swift`). Režim se přepíná za běhu bez restartu, data jsou jen v paměti a do skutečné databáze, App Group, Klíčenky ani plánovaných oznámení se nic nezapisuje. Zbývá uvést režim v Review Notes (níže) a přiložit video přihlášení.
+
+   **Návrh Review Notes (česky, pro vlastní potřebu):**
+   > Plné funkce (import předmětů, rozvrh, termíny zkoušek, známky) vyžadují školní účet v IS/STAG, který recenzent nemá. Pro vyzkoušení klepněte na úvodní obrazovce na „Vyzkoušet s ukázkovými daty“ – aplikace ukáže všechny funkce se smyšlenými daty, bez sítě. Ukázkový režim se ukončí tlačítkem „Ukončit“ v horním pruhu nebo v Nastavení. Funkce bez přihlášení (předměty, deadliny, připomínky, widgety, záloha) fungují i bez účtu. Přikládáme video s průchodem skutečným přihlášením přes stránku STAGu.
+
+   **Review Notes (English, for App Review):**
+   > Full functionality (importing enrolled courses, timetable, exam dates and grades) requires a university IS/STAG student account, which cannot be shared. To try every feature without an account, tap "Try with sample data" (Czech: "Vyzkoušet s ukázkovými daty") on the welcome screen. The app then shows fictional sample data offline, without any network calls; exam registration is simulated and disabled. Exit sample mode with "Ukončit" (End) in the top banner or in Settings. Features that do not need an account (courses, deadlines, reminders, widgets, backup) work immediately via "Continue without signing in". An attached video shows the real sign-in flow on the university IS/STAG page.
+2. **R-02 (5.1.1(i)):** `AppInfo.privacyPolicyURL = nil` (`Models/AppInfo.swift:11`). Zásady nejsou zveřejněné na webu, takže chybí odkaz v aplikaci i Privacy Policy URL v App Store Connect.
+3. **T-01 (technické požadavky):** aplikace pro hodinky nemá ikonu. Viz kapitola Technické požadavky.
+
+Mimo kód blokuje i to, že **Personal Team neumí distribuovat do App Store**. Je potřeba placený Apple Developer Program.
+
+### Úvod a obecné podmínky
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| Úvod: aplikace má vlastní hodnotu, nejde o šablonu | ✅ | nativní SwiftUI, widgety, Live Activity, Siri, hodinky |
+| Developer Program, DSA status obchodníka (EU) | ❌ ruční | Personal Team nestačí; v ASC zvolit „non-trader“ (kapitola 7, bod 1) |
+
+### 1 Safety
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| 1.1 Nevhodný obsah | ✅ | žádný; obsah tvoří data uživatele a STAGu |
+| 1.2 Obsah od uživatelů (UGC) | ➖ | nic se nesdílí mezi uživateli |
+| 1.3 Kategorie Děti | ➖ | nezařazovat, věk 4+ |
+| 1.4 Fyzická újma | ➖ | |
+| 1.5 Informace o vývojáři | ⚠️ doporučené | `AppInfo.supportURL`/`supportEmail = nil` (`Models/AppInfo.swift:13-15`), takže se odkaz na podporu v aplikaci nezobrazí. Vyplnit spolu se Support URL v ASC. |
+| 1.6 Bezpečnost dat | ✅ | ticket i účet v Klíčence `ThisDeviceOnly`, ephemeral `URLSession` (`Services/StagService.swift:564`), jen HTTPS |
+| 1.7 Hlášení trestné činnosti | ➖ | |
+
+### 2 Performance
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| 2.1(a) Úplnost, žádné zástupné texty, pády | ⚠️ | `fatalError` je nahrazený záložním úložištěm (S-04). Prázdné `AppInfo` URL se skryjí. Před odesláním otestovat Release build přes TestFlight na iPhonu, iPadu a hodinkách. |
+| 2.1 Demo účet / přístup pro recenzenta (**R-01**) | ✅ řešeno (zbývá Review Notes + video) | **Řešeno: demo režim v Release** – „Vyzkoušet s ukázkovými daty“ v onboardingu a v Nastavení, viz R-01 výše včetně textu Review Notes. Původní návrh: (a) požádat UTB o testovací studentský účet a uvést ho v App Review Information (ideální); nebo (b) zpřístupnit demo režim i v Release jako viditelnou volbu „Vyzkoušet s ukázkovými daty“ v onboardingu. Podle 2.1 to vyžaduje **předchozí souhlas Applu** (Contact Us / Review Notes) a demo musí ukázat všechny funkce, včetně termínů a simulovaného zápisu bez síťového volání. Review Notes v obou případech popíšou, že funkce bez přihlášení (předměty, deadliny, známky, widgety, záloha) fungují hned, a připojí se video průchodu přihlášením. |
+| 2.1(b) Nákupy v aplikaci | ➖ | žádné IAP |
+| 2.2 Beta / demo verze | ✅ | build nesmí být „trial“. Demo režim musí být jen doplněk plné aplikace, ne její omezená verze. |
+| 2.3.1 Žádné skryté funkce | ⚠️ | iCloud za `ICLOUD_SYNC` je kompilačně vypnutý. Ukázkový režim je v Release viditelná volba (není skrytá) a je popsaný v Review Notes (R-01). |
+| 2.3.2–2.3.6 Metadata, screenshoty, náhledy, věk | ⚠️ ruční | screenshoty jen se smyšlenými daty (demo režim + `docs/screenshots/`), iPad 13" kvůli `TARGETED_DEVICE_FAMILY = "1,2"`, věk 4+ |
+| 2.3.7 Název a klíčová slova | ⚠️ ruční | Bez „UTB“, „STAG“ a názvů škol v názvu, podtitulu a klíčových slovech. V popisu může být věcné „podporuje IS/STAG“ s upozorněním, že jde o neoficiální aplikaci. |
+| 2.3.8 Metadata 4+ | ✅ | |
+| 2.3.10 Jen Apple platformy v metadatech | ✅ ruční | nezmiňovat Android |
+| 2.3.12 Release notes | ➖ | první verze |
+| 2.4.1 iPad | ⚠️ doporučené | univerzální aplikace (N-10). Otestovat na iPadu, nebo omezit na iPhone. |
+| 2.4.2 Spotřeba energie | ✅ | jen `BGAppRefreshTask`, žádné nekonečné smyčky ani těžba |
+| 2.4.5 | ➖ | Mac App Store |
+| 2.5.1 Jen veřejná API | ✅ | WidgetKit, ActivityKit, AppIntents, WatchConnectivity, BGTaskScheduler, EventKitUI |
+| 2.5.2 Žádné stahování kódu | ✅ | Záloha (`Services/BackupService.swift`) je jen JSON s daty a kontrolou verze (ř. 45, 197–198). |
+| 2.5.3 Malware | ✅ | |
+| 2.5.4 Režimy na pozadí | ✅ | jen `fetch` + `cz.liborvyleta.terminovnik.refresh` (`Info.plist`) k obnově termínů a rozvrhu |
+| 2.5.6 WebKit | ✅ | přihlášení přes `ASWebAuthenticationSession`, ne vlastní prohlížeč |
+| 2.5.9 Systémové přepínače a UI | ✅ | |
+| 2.5.11 Siri / App Intents | ✅ | Intenty odpovídají názvům. Přidání deadlinu vyžaduje odemčení (N-04). |
+| 2.5.13 Face ID | ➖ | |
+| 2.5.14 Záznam bez souhlasu | ➖ | |
+| 2.5.16 Widgety, rozšíření, hodinky | ✅ | Widgety a hodinky ukazují obsah aplikace a jsou funkční. Aplikace pro hodinky je doplněk (`WKCompanionAppBundleIdentifier`). |
+| 2.5.18 Reklama | ➖ | |
+
+### 3 Business
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| 3.1 Platby, IAP, předplatné | ➖ | zdarma, bez nákupů a reklam |
+| 3.2 Další obchodní otázky | ✅ | žádné nucené hodnocení ani odměny |
+
+### 4 Design
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| 4.1 Kopie aplikací | ✅ | vlastní koncept. Název ověřit v ASC. |
+| 4.2 Minimální funkčnost | ✅ | nejde o obal webu, aplikace funguje offline i bez přihlášení |
+| 4.3 Spam | ✅ | jedna aplikace, ne klon pro každou školu |
+| 4.4 Rozšíření | ✅ | widget ukazuje obsah, neobsahuje reklamu |
+| 4.5.4 Oznámení | ✅ | Jen lokální oznámení, aplikace funguje i bez nich. Žádost přichází v kontextu (N-08), bez marketingu. Obsah (předmět, místnost) se zobrazí podle systémového nastavení náhledů. Hesla ani tickety v oznámeních nejsou. |
+| 4.7 Mini aplikace a hry | ➖ | |
+| 4.8 Login Services | ➖ / ✅ | výjimka „education … app that requires users to sign in with an existing education account“; přihlášení navíc není povinné. Sign in with Apple netřeba. |
+| 4.9 Apple Pay | ➖ | |
+| 4.10 Zpeněžení vestavěných funkcí | ➖ | |
+
+### 5 Legal
+
+| Bod | Stav | Důkaz / poznámka |
+|---|---|---|
+| 5.1.1(i) Zásady ochrany údajů (**R-02**) | ❌ **blokuje** | Text je v aplikaci (`Views/Settings/PrivacyPolicyView.swift`) a v `docs/ZASADY_OCHRANY_UDAJU.md`, ale URL je `nil`. Zveřejnit zásady (např. GitHub Pages) a doplnit `AppInfo.privacyPolicyURL` + ASC. Do zásad doplnit novou zálohu do souboru, synchronizaci s hodinkami a iCloud, až se zapne. |
+| 5.1.1(ii) Souhlas, odvolání | ✅ | přihlášení je dobrovolné; odhlášení maže ticket, data, cache i Live Activity |
+| 5.1.1(iii) Minimalizace dat | ✅ | Žádná oprávnění kromě oznámení. Kalendář přes out-of-process editor. Polohu budovy otevírají Apple Mapy, aplikace nečte polohu uživatele. |
+| 5.1.1(iv) Respektování oprávnění | ✅ | |
+| 5.1.1(v) Smazání účtu | ➖ / ✅ | Aplikace účty nezakládá. Odhlášení a „Smazat vše“ existují. Uvést v Review Notes. |
+| 5.1.1(vi)–(viii) | ✅ | nic se neobchází ani nekompiluje do databáze osob (I-08) |
+| 5.1.1(ix) Regulované obory | ➖ | Vzdělávací plánovač není regulovaný obor. Aplikace ale vyžaduje školní přihlášení a provádí ostré akce (zápis na termín), takže hrozí dotaz, proč ji podává jednotlivec. Pomůže svolení univerzity (5.2.2) a jasné „neoficiální“. Riziko nízké. |
+| 5.1.2 Použití a sdílení dat | ✅ | „Data Not Collected“, bez trackingu, bez SDK. Záloha jde jen tam, kam ji uloží uživatel. Hodinky jdou přes WatchConnectivity bez serveru. |
+| 5.1.3–5.1.5 Zdraví, děti, poloha | ➖ | |
+| 5.2.1 Duševní vlastnictví, názvy univerzit | ⚠️ ruční | Prohlášení „neoficiální“ a © je v Nastavení (V-03). Aplikace nepoužívá loga. Názvy škol jsou v `Models/StagSchool.swift` jen jako text pro výběr serveru. |
+| 5.2.2 Služba třetí strany (IS/STAG) | ⚠️ **vysoké riziko** | Chybí písemné svolení správce IS/STAG nebo UTB, které „must be provided upon request“. Získat ho a přiložit k Review Notes, jinak omezit seznam škol. |
+| 5.2.3 Stahování obsahu | ➖ | |
+| 5.3–5.6 Hazard, VPN, MDM, kodex vývojáře | ➖ | |
+| Ostrá akce: zápis a odhlášení termínu | ✅ | potvrzovací dialog s popisem termínu, odhlášení jako `.destructive` (`Views/Terms/ExamTermRegistrationFlow.swift:47-60`) a výsledek v alertu |
+| Export compliance | ✅ | `ITSAppUsesNonExemptEncryption = false` (`ZavernyProjekt/Info.plist`) |
+
+### After You Submit
+
+| Bod | Stav | Poznámka |
+|---|---|---|
+| Timing, stav, urychlení, odvolání (App Review Board) | ✅ ruční | Review Notes v angličtině, kontakt dosažitelný. Při zamítnutí podle 2.1 nebo 5.2.2 odpovědět v Resolution Center a doložit svolení nebo demo. |
+| Bug fix submissions | ➖ | |
+
+### Netýká se (souhrnně)
+
+Hry, Game Center, kryptoměny, VPN, MDM, zdravotnictví a HealthKit, Kids, hazard, UGC a sociální sítě, IAP a předplatné, reklama, streamování her, mini aplikace, CarPlay, alternativní tržiště, Apple Pay, rozšířená realita.
+
+---
+
+## Technické požadavky (Apple Developer Documentation)
+
+| ID | Oblast | Stav | Důkaz | Návrh / priorita |
+|---|---|---|---|---|
+| T-01 | Ikona aplikace pro hodinky | ❌ **blokuje** | `TerminovnikWatch/` nemá `Assets.xcassets`; konfigurace hodinek v `project.pbxproj:700-754` nemá `ASSETCATALOG_COMPILER_APPICON_NAME` | V Xcode přidat do `TerminovnikWatch` Asset Catalog s `AppIcon` (jedna velikost 1024×1024, watchOS) a nastavit App Icon v target → General. Bez ikony App Store Connect build odmítne. (Nezměněno: vyžaduje úpravu `project.pbxproj`.) |
+| T-02 | Ikona iOS | ✅ | `ZavernyProjekt/Assets.xcassets/AppIcon.appiconset` (světlá, tmavá a tónovaná varianta) | |
+| T-03 | Privacy manifest aplikace | ✅ | `ZavernyProjekt/PrivacyInfo.xcprivacy`: UserDefaults `CA92.1` + `1C8F.1`, `NSPrivacyTracking=false`, prázdné `CollectedDataTypes` | |
+| T-04 | Privacy manifest widgetu | ✅ | `ZkouskovnikWidget/PrivacyInfo.xcprivacy`: `1C8F.1` (App Group, `Shared/WidgetSnapshot.swift:7`) | |
+| T-05 | Privacy manifest hodinek | ✅ **opraveno teď** | přidán `TerminovnikWatch/PrivacyInfo.xcprivacy`: UserDefaults `CA92.1`, protože `WatchStore.swift:37` používá `UserDefaults.standard` | Build ověřil, že se soubor zkopíruje do `TerminovnikWatch.app` (synchronizovaná složka). |
+| T-06 | Ostatní required-reason API | ✅ | Kód nepoužívá časová razítka souborů (`creationDate`, `modificationDate`, `attributesOfItem`), místo na disku, `systemUptime` ani `mach_absolute_time` (grep 11. 10.). Pokud `BackupService` začne číst atributy souborů, doplnit `DDA9.1`/`C617.1`. | |
+| T-07 | App Transport Security | ✅ | Žádné `NSAppTransportSecurity`/`NSAllowsArbitraryLoads` v Info.plist; žádné `http://` URL v kódu. Vlastní server je vynucený jako `https` (`Models/StagSchool.swift`, N-06). | |
+| T-08 | Usage descriptions | ✅ | Aplikace nežádá kameru, polohu, kalendář (out-of-process editor), fotky ani kontakty, takže popisky nejsou potřeba. Oznámení popisek nevyžadují. Při zapnutí iCloudu popisek také netřeba. | |
+| T-09 | Entitlements, App Groups | ✅ / ⚠️ | aplikace a widget: `group.cz.liborvyleta.terminovnik`. Hodinky entitlements nemají a nepotřebují (data jdou přes WatchConnectivity). | Personal Team: App Groups a iCloud vyžadují placený účet. iCloud kontejner doplnit až se zapnutím `ICLOUD_SYNC` (`docs/ICLOUD_SYNC.md`). Doporučené. |
+| T-10 | Background modes, BGTaskScheduler | ✅ | `UIBackgroundModes = [fetch]`, identifikátor `cz.liborvyleta.terminovnik.refresh` odpovídá `Services/BackgroundRefresh.swift` | |
+| T-11 | Live Activity | ✅ | `INFOPLIST_KEY_NSSupportsLiveActivities = YES` | |
+| T-12 | Launch screen | ✅ | `UILaunchScreen_Generation = YES` | |
+| T-13 | Minimální verze OS | ✅ | iOS 17.0, watchOS 10.0. Úroveň projektu má `*_DEPLOYMENT_TARGET = 27.0` pro ostatní platformy, na targety to nemá vliv. | Kosmetické. |
+| T-14 | Watch: companion | ✅ | `WKApplication = true`, `WKCompanionAppBundleIdentifier = cz.liborvyleta.terminovnik`, bundle ID `…terminovnik.watchkitapp` | |
+| T-15 | Orientace iPadu / multitasking | ✅ | všechny 4 orientace pro iPad, takže je splněný požadavek na Split View | |
+| T-16 | Typy dokumentů (záloha) | ✅ | `UTExportedTypeDeclarations` `cz.liborvyleta.terminovnik.backup`, `LSSupportsOpeningDocumentsInPlace = false` | |
+
+### Opravy provedené 11. 10. 2026
+
+- Přidán `TerminovnikWatch/PrivacyInfo.xcprivacy` (UserDefaults `CA92.1`, bez trackingu a sběru dat). Ověřeno Release buildem (`BUILD SUCCEEDED`): soubor je v `ZavernyProjekt.app/Watch/TerminovnikWatch.app/`.
+- Jiné změny kódu nebyly potřeba. Ostatní body vyžadují `project.pbxproj` (ikona hodinek) nebo ruční kroky.
