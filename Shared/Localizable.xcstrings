@@ -69,6 +69,38 @@
         }
       }
     },
+    "%@ (%@) má změněné týdny výuky" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@) má změněné týdny výuky"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@) has changed teaching weeks"
+          }
+        }
+      }
+    },
+    "%@ (%@) v jiné místnosti" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@) v jiné místnosti"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@) in a different room"
+          }
+        }
+      }
+    },
     "%@ (opravný)" : {
       "comment" : "Název události v Kalendáři u opravného termínu",
       "localizations" : {
@@ -198,6 +230,22 @@
         }
       }
     },
+    "%@ přesunuta z %@ na %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ přesunuta z %2$@ na %3$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ moved from %2$@ to %3$@"
+          }
+        }
+      }
+    },
     "%@ v %@" : {
       "comment" : "Zkratka dne v týdnu a čas: „čt v 13:00“",
       "localizations" : {
@@ -211,6 +259,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ at %2$@"
+          }
+        }
+      }
+    },
+    "%@ zrušena (%@)" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ zrušena (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ cancelled (%2$@)"
           }
         }
       }
@@ -861,6 +925,58 @@
         }
       }
     },
+    "%lld změn v rozvrhu" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld změny v rozvrhu"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld změny v rozvrhu"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld změna v rozvrhu"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld změn v rozvrhu"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld timetable change"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld timetable changes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld. pokus" : {
       "comment" : "Pořadí pokusu u zápočtu nebo zkoušky",
       "localizations" : {
@@ -906,6 +1022,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "© 2026 %@"
+          }
+        }
+      }
+    },
+    "a další (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "and %lld more"
           }
         }
       }
@@ -1214,6 +1340,17 @@
         }
       }
     },
+    "čt" : {
+      "comment" : "Zkratka čtvrtek",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu"
+          }
+        }
+      }
+    },
     "Čt" : {
       "comment" : "Zkratka dne v týdnu: čtvrtek",
       "localizations" : {
@@ -1288,6 +1425,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "We'll let you know as soon as your teacher enters a credit or an exam grade in STAG."
+          }
+        }
+      }
+    },
+    "Dáme vědět, když se ve STAGu zruší nebo přesune hodina v příštích dvou týdnech." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We will let you know when STAG cancels or moves a class in the next two weeks."
           }
         }
       }
@@ -2570,6 +2717,26 @@
         }
       }
     },
+    "Nahradit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace"
+          }
+        }
+      }
+    },
+    "Nahradit všechna data zálohou?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace all data with the backup?"
+          }
+        }
+      }
+    },
     "Naimportuj si předměty ze STAGu, nebo je přidej ručně. Ke každému pak můžeš zadávat zkoušky a úkoly." : {
       "localizations" : {
         "en" : {
@@ -2676,6 +2843,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subject name"
+          }
+        }
+      }
+    },
+    "ne" : {
+      "comment" : "Zkratka neděle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sun"
           }
         }
       }
@@ -2812,6 +2990,16 @@
         }
       }
     },
+    "Neoficiální aplikace – není produktem IS/STAG ani žádné univerzity." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unofficial app – not a product of IS/STAG or any university."
+          }
+        }
+      }
+    },
     "Neoficiální aplikace. Není produktem IS/STAG ani žádné univerzity; názvy škol slouží jen k připojení k jejich systému." : {
       "localizations" : {
         "en" : {
@@ -2873,12 +3061,38 @@
         }
       }
     },
+    "Nikdy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never"
+          }
+        }
+      }
+    },
     "Nikomu dalšímu. Aplikace nemá vlastní server a neobsahuje analytiku, reklamu, sledování ani knihovny (SDK) třetích stran. Vývojář k tvým datům nemá přístup." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No one else. The app has no server of its own and contains no analytics, advertising, tracking or third-party libraries (SDKs). The developer has no access to your data."
+          }
+        }
+      }
+    },
+    "Nová hodina: %@ %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nová hodina: %1$@ %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New class: %1$@ %2$@"
           }
         }
       }
@@ -2966,6 +3180,32 @@
         }
       }
     },
+    "Obnova zálohy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Backup"
+          }
+        }
+      }
+    },
+    "Obnoveno: přidáno %lld, aktualizováno %lld." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Obnoveno: přidáno %1$lld, aktualizováno %2$lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restored: %1$lld added, %2$lld updated."
+          }
+        }
+      }
+    },
     "Obnovit" : {
       "localizations" : {
         "en" : {
@@ -2996,12 +3236,52 @@
         }
       }
     },
+    "Obnovit zálohu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Backup"
+          }
+        }
+      }
+    },
+    "Obnovit ze zálohy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore from Backup"
+          }
+        }
+      }
+    },
     "Obnovit známky" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Refresh grades"
+          }
+        }
+      }
+    },
+    "Obnovu se nepodařilo dokončit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The restore could not be completed."
+          }
+        }
+      }
+    },
+    "Obsah zálohy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup Contents"
           }
         }
       }
@@ -3494,6 +3774,17 @@
         }
       }
     },
+    "pá" : {
+      "comment" : "Zkratka pátek",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fri"
+          }
+        }
+      }
+    },
     "Pá" : {
       "comment" : "Zkratka dne v týdnu: pátek",
       "localizations" : {
@@ -3557,6 +3848,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Home Screen"
+          }
+        }
+      }
+    },
+    "po" : {
+      "comment" : "Zkratka pondělí",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mon"
           }
         }
       }
@@ -3638,6 +3940,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continue Without Signing In"
+          }
+        }
+      }
+    },
+    "Poslední záloha" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last Backup"
           }
         }
       }
@@ -4864,6 +5176,26 @@
         }
       }
     },
+    "Sloučit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge"
+          }
+        }
+      }
+    },
+    "Sloučit: stávající data zůstanou, ze zálohy se přidá, co chybí, a shodné záznamy se přepíší, jen pokud jsou v záloze novější. Nahradit: současné předměty a deadliny se smažou a nahradí zálohou." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge: existing data stays, missing items are added from the backup, and matching records are overwritten only if the backup is newer. Replace: current subjects and deadlines are deleted and replaced with the backup."
+          }
+        }
+      }
+    },
     "Smazat" : {
       "localizations" : {
         "en" : {
@@ -5004,6 +5336,27 @@
         }
       }
     },
+    "Smyšlená data, bez připojení ke STAGu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sample data, not connected to STAG"
+          }
+        }
+      }
+    },
+    "so" : {
+      "comment" : "Zkratka sobota",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sat"
+          }
+        }
+      }
+    },
     "So" : {
       "comment" : "Zkratka dne v týdnu: sobota",
       "localizations" : {
@@ -5011,6 +5364,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sat"
+          }
+        }
+      }
+    },
+    "Soubor se nepodařilo přečíst. Není poškozený nebo to není záloha Termínovníku?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file could not be read. It may be damaged or not a Termínovník backup."
+          }
+        }
+      }
+    },
+    "Současné předměty a deadliny se smažou. Akci nelze vrátit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current subjects and deadlines will be deleted. This cannot be undone."
           }
         }
       }
@@ -5166,6 +5539,17 @@
         }
       }
     },
+    "st" : {
+      "comment" : "Zkratka středa",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wed"
+          }
+        }
+      }
+    },
     "St" : {
       "comment" : "Zkratka dne v týdnu: středa",
       "localizations" : {
@@ -5267,6 +5651,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Even week"
+          }
+        }
+      }
+    },
+    "Synchronizace přes iCloud" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud Sync"
           }
         }
       }
@@ -5727,6 +6121,26 @@
         }
       }
     },
+    "Ukázkový režim" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sample Mode"
+          }
+        }
+      }
+    },
+    "Ukázkový režim – smyšlená data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sample mode – fictional data"
+          }
+        }
+      }
+    },
     "Úkol" : {
       "localizations" : {
         "en" : {
@@ -5743,6 +6157,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The task is done, so the reminder is off."
+          }
+        }
+      }
+    },
+    "Ukončit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit"
+          }
+        }
+      }
+    },
+    "Ukončit ukázkový režim" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit Sample Mode"
           }
         }
       }
@@ -5807,6 +6241,16 @@
         }
       }
     },
+    "Upozornit na změny v rozvrhu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify About Timetable Changes"
+          }
+        }
+      }
+    },
     "Upozornit před hodinou" : {
       "localizations" : {
         "en" : {
@@ -5864,6 +6308,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oral exam"
+          }
+        }
+      }
+    },
+    "út" : {
+      "comment" : "Zkratka úterý",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tue"
           }
         }
       }
@@ -5990,6 +6445,26 @@
         }
       }
     },
+    "V ukázkovém režimu je záloha vypnutá – data jsou smyšlená a skutečná data zůstávají beze změny." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup is turned off in sample mode – the data is fictional and your real data stays unchanged."
+          }
+        }
+      }
+    },
+    "V ukázkovém režimu nelze obnovit zálohu. Nejdřív ukázkový režim ukonči." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A backup cannot be restored in sample mode. Exit sample mode first."
+          }
+        }
+      }
+    },
     "v úterý %@" : {
       "localizations" : {
         "en" : {
@@ -6069,6 +6544,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version"
+          }
+        }
+      }
+    },
+    "Verze aplikace" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Version"
           }
         }
       }
@@ -6334,6 +6819,16 @@
         }
       }
     },
+    "Vytvořeno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Created"
+          }
+        }
+      }
+    },
     "Vyučující" : {
       "localizations" : {
         "en" : {
@@ -6371,6 +6866,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Classes"
+          }
+        }
+      }
+    },
+    "Vyžaduje placený Apple Developer účet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires a paid Apple Developer account"
+          }
+        }
+      }
+    },
+    "Vyzkoušet s ukázkovými daty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try with Sample Data"
           }
         }
       }
@@ -6717,6 +7232,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Denied"
+          }
+        }
+      }
+    },
+    "Záloha a synchronizace" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup & Sync"
+          }
+        }
+      }
+    },
+    "Záloha obsahuje předměty a deadliny včetně poznámek. Ulož ji třeba na iCloud Drive. Přihlašovací údaje do STAGu se nezálohují." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup contains subjects and deadlines including notes. Save it to iCloud Drive, for example. STAG sign-in details are not backed up."
+          }
+        }
+      }
+    },
+    "Záloha pochází z novější verze aplikace (formát %lld). Aktualizuj Termínovník a zkus to znovu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup comes from a newer app version (format %lld). Update Termínovník and try again."
+          }
+        }
+      }
+    },
+    "Zálohovat do souboru" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back Up to File"
+          }
+        }
+      }
+    },
+    "Zálohu se nepodařilo uložit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup could not be saved."
+          }
+        }
+      }
+    },
+    "Zálohu se nepodařilo vytvořit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup could not be created."
           }
         }
       }
@@ -7346,6 +7921,16 @@
         }
       }
     },
+    "Změna v rozvrhu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timetable Change"
+          }
+        }
+      }
+    },
     "Změnit jazyk" : {
       "localizations" : {
         "en" : {
@@ -7362,6 +7947,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The change could not be made"
+          }
+        }
+      }
+    },
+    "Změny v ukázkovém režimu se neukládají. Tvoje skutečná data, účet i připomínky zůstávají beze změny." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes in sample mode are not saved. Your real data, account and reminders stay unchanged."
           }
         }
       }

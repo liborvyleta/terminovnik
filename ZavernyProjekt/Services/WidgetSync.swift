@@ -9,6 +9,8 @@ enum WidgetSync {
     static let limit = 12
 
     static func refresh(from context: ModelContext) {
+        // Ukázkový režim: widget i hodinky dál ukazují skutečná data
+        guard !DemoMode.isActive else { return }
         var descriptor = FetchDescriptor<ExamTask>(
             predicate: #Predicate { !$0.isCompleted },
             sortBy: [SortDescriptor(\.dueDate)]

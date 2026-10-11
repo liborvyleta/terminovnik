@@ -22,6 +22,15 @@ struct StagAccountSection: View {
     }
 
     var body: some View {
+        if DemoMode.isActive {
+            demoSection
+        } else {
+            accountSection
+        }
+    }
+
+    @ViewBuilder
+    private var accountSection: some View {
         // Hlavní sekce existuje v obou stavech, proto na její hlavičce visí sheet přihlášení:
         // po přihlášení se obsah přepne na „připojeno“, ale otevřený import se nezavře.
         Section {
@@ -168,6 +177,44 @@ struct StagAccountSection: View {
             showsLogin = true
         } label: {
             Label("Přihlásit se do IS/STAG", systemImage: "person.badge.key")
+        }
+
+        Button {
+            DemoController.shared.enter()
+        } label: {
+            Label("Vyzkoušet s ukázkovými daty", systemImage: "sparkles.rectangle.stack")
+        }
+    }
+
+    // MARK: - Ukázkový režim
+
+    private var demoSection: some View {
+        Section {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles.rectangle.stack.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.orange.gradient, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Ukázkový režim")
+                        .font(.headline)
+                    Text("Smyšlená data, bez připojení ke STAGu")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 2)
+
+            Button(role: .destructive) {
+                DemoController.shared.exit()
+            } label: {
+                Label("Ukončit ukázkový režim", systemImage: "xmark.circle")
+            }
+        } header: {
+            Text("Účet IS/STAG")
+        } footer: {
+            Text("Změny v ukázkovém režimu se neukládají. Tvoje skutečná data, účet i připomínky zůstávají beze změny.")
         }
     }
 

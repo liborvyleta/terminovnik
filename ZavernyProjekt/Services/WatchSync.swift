@@ -37,6 +37,9 @@ final class WatchSync: NSObject {
     /// Odložené odeslání po změně v UserDefaults (rozvrh se ukládá asynchronně po stažení ze STAGu)
     private var debounceTask: Task<Void, Never>?
     private var defaultsObserver: NSObjectProtocol?
+    /// Spárované hodinky s nainstalovanou aplikací. Zjišťuje se jen po aktivaci a při změně stavu –
+    /// dotaz na `isPaired` bez hodinek (simulátor) zahlcuje konzoli hláškou „WCSession is not paired“.
+    private var hasWatchApp = false
 
     private override init() {
         super.init()
@@ -48,25 +51,17 @@ final class WatchSync: NSObject {
         session.delegate = self
         session.activate()
 
-        // Rozvrh i deadliny se ukládají do App Group – po každé změně (uložení rozvrhu ze STAGu,
-        // smazání po odhlášení…) pošleme hodinkám aktuální stav. Odeslání je odložené a stejná
-        // data se neposílají znovu, takže časté změny jiných nastavení nevadí.
-        defaultsObserver = NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
-        ) { _ in
-            // Fronta .main → jsme na hlavním vlákně
-            MainActor.assumeIsolated { WatchSync.shared.schedulePush() }
-        }
     }
 
     /// Odešle hodinkám aktuální deadliny a rozvrh z App Group.
     /// - Parameter force: odeslat i tehdy, když se data od minula nezměnila
     func push(force: Bool = false) {
+        guard !DemoMode.isActive else { return }
         guard let session else { return }
         // Před dokončením aktivace neposíláme – po aktivaci se data odešlou automaticky
         guard session.activationState == .activated else { return }
         // Bez spárovaných hodinek s nainstalovanou aplikací nemá odesílání smysl
-        guard session.isPaired, session.isWatchAppInstalled else { return }
+        guard hasWatchApp else { return }
 
         let deadlines = WidgetSnapshot.load() ?? WidgetSnapshot(deadlines: [], generatedAt: .now)
         let timetable = TimetableSnapshot.load()
@@ -80,6 +75,26 @@ final class WatchSync: NSObject {
         } catch {
             // Selhání nevadí – podpis se neuložil, takže další push pošle aktuální stav
         }
+    }
+
+    /// Načte stav hodinek (jen z callbacků relace) a podle něj zapne nebo vypne sledování změn.
+    private func updateWatchState(_ session: WCSession) {
+        hasWatchApp = session.isPaired && session.isWatchAppInstalled
+        if hasWatchApp, defaultsObserver == nil {
+            // Rozvrh i deadliny se ukládají do App Group – po každé změně (uložení rozvrhu ze STAGu,
+            // smazání po odhlášení…) pošleme hodinkám aktuální stav. Odeslání je odložené a stejná
+            // data se neposílají znovu, takže časté změny jiných nastavení nevadí.
+            defaultsObserver = NotificationCenter.default.addObserver(
+                forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+            ) { _ in
+                MainActor.assumeIsolated { WatchSync.shared.schedulePush() }
+            }
+        } else if !hasWatchApp, let observer = defaultsObserver {
+            NotificationCenter.default.removeObserver(observer)
+            defaultsObserver = nil
+            debounceTask?.cancel()
+        }
+        push(force: true)
     }
 
     private func schedulePush() {
@@ -147,14 +162,14 @@ extension WatchSync: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         guard activationState == .activated else { return }
         Task { @MainActor in
-            // Po aktivaci pošleme vždy aktuální stav (hodinky mohly mezitím přijít o data)
-            self.push(force: true)
+            // Po aktivaci zjistíme stav hodinek a pošleme aktuální data (hodinky mohly přijít o data)
+            self.updateWatchState(session)
         }
     }
 
     /// Změna spárování / instalace aplikace na hodinkách → poslat data znovu
     nonisolated func sessionWatchStateDidChange(_ session: WCSession) {
-        Task { @MainActor in self.push(force: true) }
+        Task { @MainActor in self.updateWatchState(session) }
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}

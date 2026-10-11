@@ -35,7 +35,7 @@ struct SubjectCardView: View {
                 ProgressView(value: subject.progress)
                     .tint(subject.color)
                 HStack {
-                    Text("Splněno \(subject.completedCount) z \(subject.tasks.count)")
+                    Text("Splněno \(subject.completedCount) z \(subject.taskList.count)")
                     Spacer()
                     nextDeadline
                 }
@@ -67,7 +67,7 @@ struct SubjectCardView: View {
             Label("\(next.taskType.title): \(Countdown.text(for: next))", systemImage: urgency.symbol)
                 .foregroundStyle(urgency.color)
                 .fontWeight(.medium)
-        } else if !subject.tasks.isEmpty {
+        } else if !subject.taskList.isEmpty {
             Label("Vše splněno", systemImage: "checkmark.seal.fill")
                 .foregroundStyle(.green)
                 .fontWeight(.medium)

@@ -20,7 +20,7 @@ enum TaskService {
 
     /// Smaže předmět. Úkoly smaže SwiftData sama (cascade), notifikace zrušíme ručně.
     static func delete(_ subject: Subject, in context: ModelContext) {
-        for task in subject.tasks {
+        for task in subject.taskList {
             NotificationManager.shared.cancelReminder(for: task)
         }
         context.delete(subject)
@@ -30,11 +30,20 @@ enum TaskService {
     /// Explicitní uložení. SwiftData ukládá i automaticky, ale takhle máme jistotu okamžitého zápisu.
     /// Po uložení se aktualizuje i widget.
     static func save(_ context: ModelContext) {
+        stampChanges(in: context)
         do {
             try context.save()
         } catch {
             print("⚠️ Uložení dat selhalo: \(error.localizedDescription)")
         }
         WidgetSync.refresh(from: context)
+    }
+
+    /// Upravené záznamy dostanou aktuální `updatedAt` – podle něj se při obnově zálohy pozná novější verze.
+    static func stampChanges(in context: ModelContext, now: Date = .now) {
+        for model in context.changedModelsArray {
+            if let task = model as? ExamTask { task.updatedAt = now }
+            if let subject = model as? Subject { subject.updatedAt = now }
+        }
     }
 }

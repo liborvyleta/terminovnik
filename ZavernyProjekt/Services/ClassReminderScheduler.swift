@@ -49,6 +49,8 @@ final class ClassReminderScheduler {
 
     /// Zruší čekající připomínky výuky a podle nastavení a aktuálního rozvrhu je naplánuje znovu.
     func reschedule() {
+        // Ukázkový režim: skutečné připomínky hodin zůstanou, demo rozvrh se neplánuje
+        guard !DemoMode.isActive else { return }
         enqueue { scheduler in
             await scheduler.performReschedule()
         }
@@ -56,6 +58,7 @@ final class ClassReminderScheduler {
 
     /// Zruší všechny čekající připomínky výuky (např. po odhlášení ze STAGu).
     func cancelAll() {
+        guard !DemoMode.isActive else { return }
         enqueue { scheduler in
             _ = await scheduler.removePendingClassReminders()
         }

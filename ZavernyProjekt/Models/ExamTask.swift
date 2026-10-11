@@ -4,25 +4,32 @@ import SwiftData
 /// Jedna studijní povinnost s termínem: zkouška, zápočet, projekt nebo úkol.
 @Model
 final class ExamTask {
-    /// Jedinečný identifikátor – použije se i jako ID lokální notifikace
-    @Attribute(.unique) var id: UUID
+    // Kompatibilita s CloudKit: žádné `@Attribute(.unique)`, každá vlastnost má výchozí hodnotu
+    // nebo je volitelná. Výchozí hodnoty nemění schéma úložiště → lehká migrace projde bez ztráty dat.
+
+    /// Jedinečný identifikátor – použije se i jako ID lokální notifikace.
+    /// Jedinečnost hlídá aplikace (UUID), ne databázové omezení – to CloudKit nepodporuje.
+    var id: UUID = UUID()
     /// Název (např. „Zkouška – 1. termín“)
-    var title: String
+    var title: String = ""
     /// Typ povinnosti
-    var taskType: TaskType
+    var taskType: TaskType = TaskType.ukol
     /// Datum a čas termínu
-    var dueDate: Date
+    var dueDate: Date = Date.now
     /// Je povinnost splněná?
-    var isCompleted: Bool
+    var isCompleted: Bool = false
     /// Výsledek – body nebo známka (typicky se vyplní po splnění)
     var pointsOrGrade: String?
     /// Volitelná poznámka (místnost, pomůcky, požadavky…)
-    var note: String
+    var note: String = ""
     /// Předmět, ke kterému povinnost patří. Inverzní strana vazby je `Subject.tasks`.
     var subject: Subject?
     /// ID termínu ve STAGu (termIdno), pokud úkol vznikl ze zapsaného termínu zkoušky.
     /// Volitelná vlastnost – SwiftData databázi zmigruje automaticky.
     var stagTermID: String?
+    /// Čas poslední změny – při slučování zálohy (a synchronizaci) vyhrává novější verze.
+    /// Volitelné (nil u starších záznamů) → lehká migrace SwiftData. Nastavuje `TaskService.save`.
+    var updatedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -42,6 +49,7 @@ final class ExamTask {
         self.pointsOrGrade = pointsOrGrade
         self.note = note
         self.stagTermID = stagTermID
+        self.updatedAt = .now
     }
 }
 

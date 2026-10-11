@@ -68,7 +68,7 @@ nonisolated extension ExamTerm {
         func term(_ id: String, _ code: String, _ type: String, _ offset: Int, _ hour: Int, _ room: String,
                   _ occupied: Int, _ capacity: Int, registered: Bool, retake: Bool = false) -> ExamTerm {
             ExamTerm(id: id, subjectCode: code, department: "AUIUI", typeName: type, start: day(offset, hour),
-                     end: day(offset, hour + 2), room: room, teacher: "Ing. Jan Novák", occupied: occupied,
+                     end: day(offset, hour + 2), room: room, teacher: "doc. Ing. Petr Svoboda, Ph.D.", occupied: occupied,
                      capacity: capacity, isRegistered: registered, canChangeRegistration: true, blockReason: nil,
                      registrationOpens: day(-3, 8), registrationDeadline: day(offset - 2, 23),
                      unregisterDeadline: day(offset - 1, 12), isRetake: retake, note: nil, isCancelled: false)

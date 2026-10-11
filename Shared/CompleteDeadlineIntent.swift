@@ -46,6 +46,16 @@ struct CompleteDeadlineIntent: AppIntent, LiveActivityIntent {
         }
         WidgetCenter.shared.reloadAllTimelines()
         #else
+        // Ukázkový režim: widget ukazuje skutečné deadliny, ale aplikace běží nad demo daty →
+        // odškrtnutí se zařadí do fronty a zpracuje se nad skutečnou databází po ukončení dema.
+        if DemoMode.isActive {
+            PendingDeadlineCompletions.enqueue(taskID)
+            if let uuid = UUID(uuidString: taskID) {
+                WidgetSnapshot.removeDeadline(id: uuid)
+            }
+            WidgetCenter.shared.reloadAllTimelines()
+            return .result()
+        }
         let context = PersistenceController.shared.mainContext
         if Self.markCompleted(taskID: taskID, in: context) {
             TaskService.save(context) // uloží, přepíše přehled widgetu a zavolá reloadAllTimelines

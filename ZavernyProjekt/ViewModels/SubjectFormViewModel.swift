@@ -53,7 +53,7 @@ final class SubjectFormViewModel {
             subject.hexColor = hexColor
             subject.credits = credits
             // Název předmětu je v textu notifikací – přeplánujeme je s novým názvem.
-            subject.tasks.forEach(NotificationManager.shared.updateReminder)
+            subject.taskList.forEach(NotificationManager.shared.updateReminder)
         } else {
             subject = Subject(name: trimmedName, code: trimmedCode.uppercased(), hexColor: hexColor, credits: credits)
             context.insert(subject)

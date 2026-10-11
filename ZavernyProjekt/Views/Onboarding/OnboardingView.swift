@@ -6,6 +6,8 @@ struct OnboardingView: View {
 
     let onImportFromStag: () -> Void
     let onSkip: () -> Void
+    /// Ukázkový režim se smyšlenými daty (bez školního účtu)
+    var onTryDemo: () -> Void = {}
 
     var body: some View {
         ScrollView {
@@ -57,6 +59,19 @@ struct OnboardingView: View {
 
                 Button("Pokračovat bez přihlášení", action: onSkip)
                     .font(.subheadline.weight(.medium))
+
+                Button(action: onTryDemo) {
+                    Label("Vyzkoušet s ukázkovými daty", systemImage: "sparkles.rectangle.stack")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                // Upozornění pro uživatele i App Review (5.2.1) – aplikace není oficiální produkt školy
+                Text("Neoficiální aplikace – není produktem IS/STAG ani žádné univerzity.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
             .padding(.horizontal, 24)
             .padding(.top, 12)

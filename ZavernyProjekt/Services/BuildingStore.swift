@@ -50,6 +50,7 @@ final class BuildingStore {
 
     /// Načte budovy aktuální školy z cache, a pokud je starší než 7 dní (nebo chybí), ze STAGu.
     func loadIfNeeded() async {
+        if DemoMode.isActive { return }
         let school = currentSchool
         if self.school != school { restoreCache(for: school) }
 
@@ -189,4 +190,20 @@ nonisolated extension StagBuilding {
         latitude: 49.23057,
         longitude: 17.65715
     )
+}
+
+// Ukázkový režim – data jen v paměti, nic se neukládá
+extension BuildingStore {
+    func loadDemo(_ buildings: [StagBuilding]) {
+        self.buildings = buildings
+        fetchedAt = .now
+        school = currentSchool
+    }
+
+    /// Po ukončení dema zahodí ukázkové budovy – při dalším načtení se obnoví cache skutečné školy
+    func reloadAfterDemo() {
+        buildings = []
+        fetchedAt = nil
+        school = nil
+    }
 }

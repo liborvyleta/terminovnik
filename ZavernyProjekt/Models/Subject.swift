@@ -5,22 +5,29 @@ import SwiftData
 /// Předmět vlastní seznam svých úkolů – při jeho smazání se smažou i úkoly.
 @Model
 final class Subject {
-    /// Jedinečný identifikátor předmětu
-    @Attribute(.unique) var id: UUID
+    // Kompatibilita s CloudKit: žádné `@Attribute(.unique)`, výchozí hodnoty, volitelná vazba s inverzí.
+    // Nic z toho nemění strukturu úložiště nad rámec lehké migrace (data zůstanou).
+
+    /// Jedinečný identifikátor předmětu (jedinečnost hlídá aplikace)
+    var id: UUID = UUID()
     /// Celý název předmětu
-    var name: String
+    var name: String = ""
     /// Zkratka / kód předmětu (např. AP9PT)
-    var code: String
+    var code: String = ""
     /// Barva předmětu ve formátu „#RRGGBB“ (SwiftUI `Color` neumí SwiftData uložit přímo)
-    var hexColor: String
+    var hexColor: String = "#007AFF"
     /// Počet kreditů
-    var credits: Int
+    var credits: Int = 0
 
     /// Vazba 1:N na úkoly.
     /// `.cascade` = smazáním předmětu zmizí i všechny jeho úkoly.
     /// `inverse` propojuje vazbu s `ExamTask.subject`, SwiftData pak drží obě strany v souladu.
     @Relationship(deleteRule: .cascade, inverse: \ExamTask.subject)
-    var tasks: [ExamTask] = []
+    /// Volitelná kvůli CloudKitu; v kódu se používá `taskList`.
+    var tasks: [ExamTask]? = []
+
+    /// Čas poslední změny (viz `ExamTask.updatedAt`)
+    var updatedAt: Date?
 
     init(id: UUID = UUID(), name: String, code: String, hexColor: String, credits: Int = 0) {
         self.id = id
@@ -28,29 +35,36 @@ final class Subject {
         self.code = code
         self.hexColor = hexColor
         self.credits = credits
+        self.updatedAt = .now
     }
 }
 
 // MARK: - Odvozené vlastnosti (neukládají se do databáze)
 
 extension Subject {
+    /// Úkoly předmětu (prázdné pole místo nil)
+    var taskList: [ExamTask] {
+        get { tasks ?? [] }
+        set { tasks = newValue }
+    }
+
     /// Barva předmětu převedená z hex řetězce
     var color: Color { Color(hex: hexColor) }
 
     /// Počet splněných úkolů
-    var completedCount: Int { tasks.filter(\.isCompleted).count }
+    var completedCount: Int { taskList.filter(\.isCompleted).count }
 
     /// Počet nesplněných úkolů
-    var activeCount: Int { tasks.count - completedCount }
+    var activeCount: Int { taskList.count - completedCount }
 
     /// Podíl splněných úkolů v rozsahu 0…1 (pro progress bar a kroužek)
     var progress: Double {
-        tasks.isEmpty ? 0 : Double(completedCount) / Double(tasks.count)
+        taskList.isEmpty ? 0 : Double(completedCount) / Double(taskList.count)
     }
 
     /// Nejbližší nesplněný úkol
     var nextTask: ExamTask? {
-        tasks.filter { !$0.isCompleted }.min { $0.dueDate < $1.dueDate }
+        taskList.filter { !$0.isCompleted }.min { $0.dueDate < $1.dueDate }
     }
 
     /// Iniciály pro „avatar“ předmětu

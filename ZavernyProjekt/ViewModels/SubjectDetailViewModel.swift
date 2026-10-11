@@ -9,12 +9,12 @@ final class SubjectDetailViewModel {
 
     /// Nesplněné úkoly od nejbližšího termínu
     func activeTasks(of subject: Subject) -> [ExamTask] {
-        subject.tasks.filter { !$0.isCompleted }.sorted { $0.dueDate < $1.dueDate }
+        subject.taskList.filter { !$0.isCompleted }.sorted { $0.dueDate < $1.dueDate }
     }
 
     /// Splněné úkoly od nejnovějšího
     func completedTasks(of subject: Subject) -> [ExamTask] {
-        subject.tasks.filter(\.isCompleted).sorted { $0.dueDate > $1.dueDate }
+        subject.taskList.filter(\.isCompleted).sorted { $0.dueDate > $1.dueDate }
     }
 
     func toggleCompletion(_ task: ExamTask) {

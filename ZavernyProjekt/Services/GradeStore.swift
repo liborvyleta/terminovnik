@@ -34,6 +34,12 @@ final class GradeStore {
     }
 
     private init() {
+        restoreFromCache()
+    }
+
+    private func restoreFromCache() {
+        grades = []
+        fetchedAt = nil
         if let data = AppGroup.defaults?.data(forKey: Keys.snapshot),
            let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) {
             grades = snapshot.grades
@@ -62,6 +68,7 @@ final class GradeStore {
     /// Načte známky ze STAGu a upozorní na nové. Vrací počet nových známek.
     @discardableResult
     func refresh() async -> Int {
+        if DemoMode.isActive { return 0 }
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
             errorMessage = String(localized: "Pro načtení známek se přihlas do IS/STAG.")
@@ -107,6 +114,7 @@ final class GradeStore {
         grades = []
         fetchedAt = nil
         errorMessage = nil
+        guard !DemoMode.isActive else { return }
         AppGroup.defaults?.removeObject(forKey: Keys.snapshot)
         AppGroup.defaults?.removeObject(forKey: Keys.seen)
     }
@@ -183,7 +191,23 @@ final class GradeStore {
     }
 
     private func persist() {
+        guard !DemoMode.isActive else { return }
         guard let fetchedAt, let data = try? JSONEncoder().encode(Snapshot(grades: grades, fetchedAt: fetchedAt)) else { return }
         AppGroup.defaults?.set(data, forKey: Keys.snapshot)
+    }
+}
+
+// Ukázkový režim – data jen v paměti, nic se neukládá
+extension GradeStore {
+    func loadDemo(_ grades: [SubjectGrade]) {
+        self.grades = grades
+        fetchedAt = .now
+        errorMessage = nil
+    }
+
+    /// Po ukončení dema vrátí skutečné známky z App Group
+    func reloadAfterDemo() {
+        errorMessage = nil
+        restoreFromCache()
     }
 }

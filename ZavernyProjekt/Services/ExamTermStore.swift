@@ -50,6 +50,13 @@ final class ExamTermStore {
     }
 
     private init() {
+        restoreFromCache()
+    }
+
+    /// Načte uložené termíny z App Group
+    private func restoreFromCache() {
+        terms = []
+        fetchedAt = nil
         let defaults = AppGroup.defaults
         if let data = defaults?.data(forKey: Keys.snapshot),
            let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) {
@@ -85,6 +92,7 @@ final class ExamTermStore {
     /// - Returns: počet nově objevených termínů
     @discardableResult
     func refresh(context: ModelContext) async -> Int {
+        if DemoMode.isActive { return 0 }
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
             errorMessage = String(localized: "Pro načtení termínů se přihlas do IS/STAG.")
@@ -125,6 +133,7 @@ final class ExamTermStore {
     func markAllSeen() {
         guard !newTermIDs.isEmpty else { return }
         newTermIDs = []
+        guard !DemoMode.isActive else { return }
         AppGroup.defaults?.removeObject(forKey: Keys.new)
     }
 
@@ -135,6 +144,8 @@ final class ExamTermStore {
         newTermIDs = []
         queuedTermIDs = []
         errorMessage = nil
+        // V demu jen paměť – skutečná cache v App Group zůstane
+        guard !DemoMode.isActive else { return }
         let defaults = AppGroup.defaults
         defaults?.removeObject(forKey: Keys.snapshot)
         defaults?.removeObject(forKey: Keys.seen)
@@ -170,6 +181,7 @@ final class ExamTermStore {
     /// Provede změnu zápisu ve STAGu; po úspěchu obnoví termíny (zapsané se samy převedou na zkoušky s připomínkou).
     func changeRegistration(_ action: StagTermRegistrationAction, for term: ExamTerm,
                             context: ModelContext) async -> StagTermRegistrationResult {
+        if DemoMode.isActive { return .failure("V demo režimu se na termíny nezapisuje.") }
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
             return .failure(String(localized: "Pro zápis na termín se přihlas do IS/STAG."))
@@ -214,6 +226,7 @@ final class ExamTermStore {
     }
 
     private func persistQueued() {
+        guard !DemoMode.isActive else { return }
         AppGroup.defaults?.set(Array(queuedTermIDs), forKey: Keys.queued)
     }
 
@@ -314,7 +327,25 @@ final class ExamTermStore {
     }
 
     private func persist() {
+        guard !DemoMode.isActive else { return }
         guard let fetchedAt, let data = try? JSONEncoder().encode(Snapshot(terms: terms, fetchedAt: fetchedAt)) else { return }
         AppGroup.defaults?.set(data, forKey: Keys.snapshot)
+    }
+}
+
+// Ukázkový režim – data jen v paměti, nic se neukládá
+extension ExamTermStore {
+    func loadDemo(_ terms: [ExamTerm], newIDs: Set<String>) {
+        self.terms = terms
+        fetchedAt = .now
+        newTermIDs = newIDs
+        queuedTermIDs = []
+        errorMessage = nil
+    }
+
+    /// Po ukončení dema vrátí skutečné termíny z App Group
+    func reloadAfterDemo() {
+        errorMessage = nil
+        restoreFromCache()
     }
 }

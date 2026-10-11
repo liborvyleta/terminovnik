@@ -467,7 +467,7 @@ private struct TimetableDayTimelinePreview: View {
         snapshot.events.append(
             TimetableEvent(id: "p1", subjectCode: "AP9DM", department: "AUIUI", subjectName: "Datamining",
                            typeName: "Seminář", typeShort: "Se", weekday: 2, startTime: "11:00", endTime: "12:30",
-                           building: "53", room: "105", teacher: "Ing. Jan Novák", weekParity: "Každý",
+                           building: "53", room: "105", teacher: "Ing. Tomáš Kučera", weekParity: "Každý",
                            dateFrom: nil, dateTo: nil, singleDate: nil, hexColor: "#12A594")
         )
         occurrences = snapshot.occurrences(on: day, calendar: calendar)

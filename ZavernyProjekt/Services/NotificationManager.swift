@@ -14,6 +14,12 @@ final class NotificationManager {
     nonisolated static let markDoneActionID = "MARK_DONE"
     /// Klíč v `userInfo`, pod kterým je uložené UUID úkolu (jako String).
     nonisolated static let taskIDKey = "taskID"
+    /// Kategorie oznámení o změně rozvrhu
+    nonisolated static let timetableChangeCategoryID = "TIMETABLE_CHANGE"
+    /// Klíč v `userInfo` se záložkou, která se po klepnutí otevře (hodnota pro `@AppStorage("selectedTab")`)
+    nonisolated static let openTabKey = "openTab"
+    /// Otisk naposledy oznámených změn rozvrhu
+    private static let lastTimetableChangesKey = "timetableChanges.lastFingerprint"
 
     private let center = UNUserNotificationCenter.current()
     private let notificationDelegate = ForegroundNotificationDelegate()
@@ -44,7 +50,13 @@ final class NotificationManager {
             intentIdentifiers: [],
             options: []
         )
-        center.setNotificationCategories([category])
+        let timetableCategory = UNNotificationCategory(
+            identifier: Self.timetableChangeCategoryID,
+            actions: [],
+            intentIdentifiers: [],
+            options: []
+        )
+        center.setNotificationCategories([category, timetableCategory])
     }
 
     /// Požádá uživatele o povolení notifikací. Systémový dialog se ukáže jen poprvé,
@@ -76,6 +88,8 @@ final class NotificationManager {
     /// Naplánuje (nebo přeplánuje) připomínku pro úkol.
     /// Volá se po vytvoření, úpravě i odškrtnutí – vždy nejdřív zruší starou notifikaci.
     func updateReminder(for task: ExamTask) {
+        // Ukázkový režim: žádné skutečné připomínky se neplánují ani neruší
+        guard !DemoMode.isActive else { return }
         cancelReminder(for: task)
         scheduleRequest(for: task)
     }
@@ -84,6 +98,7 @@ final class NotificationManager {
     /// Díky tomu dostanou tlačítko „Splněno“ i připomínky naplánované starší verzí aplikace.
     /// Čekající požadavky se nahradí; už doručená oznámení v Centru oznámení zůstanou.
     func rescheduleAll(in context: ModelContext) {
+        guard !DemoMode.isActive else { return }
         let descriptor = FetchDescriptor<ExamTask>(predicate: #Predicate { !$0.isCompleted })
         let tasks = (try? context.fetch(descriptor)) ?? []
 
@@ -95,6 +110,7 @@ final class NotificationManager {
 
     /// Zruší čekající i již doručenou připomínku úkolu.
     func cancelReminder(for task: ExamTask) {
+        guard !DemoMode.isActive else { return }
         center.removePendingNotificationRequests(withIdentifiers: [task.notificationID])
         center.removeDeliveredNotifications(withIdentifiers: [task.notificationID])
     }
@@ -115,11 +131,34 @@ final class NotificationManager {
         TaskService.save(context) // uloží a zároveň aktualizuje widget
     }
 
+    /// Okamžitě oznámí změny rozvrhu (zrušené / přesunuté / nové hodiny).
+    /// Víc změn → jedno souhrnné oznámení. Stejnou sadu změn neoznamuje dvakrát.
+    func notifyTimetableChanges(_ changes: [TimetableChange]) async {
+        guard !DemoMode.isActive else { return }
+        let enabled = UserDefaults.standard.object(forKey: TimetableStore.changeAlertsEnabledKey) as? Bool ?? true
+        guard enabled, !changes.isEmpty else { return }
+        let fingerprint = TimetableChangeDetector.fingerprint(of: changes)
+        guard AppGroup.defaults?.string(forKey: Self.lastTimetableChangesKey) != fingerprint else { return }
+        AppGroup.defaults?.set(fingerprint, forKey: Self.lastTimetableChangesKey)
+
+        let text = TimetableChangeDetector.notificationText(for: changes)
+        let content = UNMutableNotificationContent()
+        content.title = text.title
+        content.body = text.body
+        content.sound = .default
+        content.categoryIdentifier = Self.timetableChangeCategoryID
+        content.threadIdentifier = "timetable-change"
+        content.userInfo = [Self.openTabKey: "timetable"]
+        let request = UNNotificationRequest(identifier: "timetable-change-\(UUID().uuidString)", content: content, trigger: nil)
+        try? await center.add(request)
+    }
+
     // MARK: - Soukromé
 
     /// Přidá požadavek na připomínku, pokud dává smysl (nesplněný úkol, čas v budoucnosti).
     /// Požadavek se stejným identifikátorem systém nahradí.
     private func scheduleRequest(for task: ExamTask) {
+        guard !DemoMode.isActive else { return }
         // Splněné úkoly a termíny, kde by připomínka byla v minulosti, přeskočíme.
         guard !task.isCompleted,
               let fireDate = Self.reminderDate(for: task.dueDate),
@@ -170,6 +209,15 @@ final class ForegroundNotificationDelegate: NSObject, UNUserNotificationCenterDe
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
+        // Klepnutí na oznámení, které chce otevřít konkrétní záložku (např. změna rozvrhu)
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
+           let tab = response.notification.request.content.userInfo[NotificationManager.openTabKey] as? String {
+            await MainActor.run {
+                UserDefaults.standard.set(tab, forKey: "selectedTab")
+            }
+            return
+        }
+
         guard response.actionIdentifier == NotificationManager.markDoneActionID,
               let taskID = response.notification.request.content
                   .userInfo[NotificationManager.taskIDKey] as? String

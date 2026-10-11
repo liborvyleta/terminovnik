@@ -70,6 +70,8 @@ final class LiveActivityManager {
     /// Spustí / aktualizuje aktivitu pro hodinu, která probíhá nebo začíná do 60 minut.
     /// Volá se po načtení rozvrhu a při návratu aplikace do popředí.
     func updateLessonActivity(now: Date = .now) {
+        // Ukázkový režim: žádné živé aktivity z demo rozvrhu
+        guard !DemoMode.isActive else { return }
         refreshTask?.cancel()
         refreshTask = nil
 
@@ -192,6 +194,7 @@ final class LiveActivityManager {
     /// Spustí novou aktivitu, nebo aktualizuje už běžící stejnou (žádné duplicity)
     @discardableResult
     private func startOrUpdate(_ request: ActivityRequest) -> Activity<StudyActivityAttributes>? {
+        guard !DemoMode.isActive else { return nil }
         let content = ActivityContent(state: request.state, staleDate: request.state.end)
 
         if let existing = runningActivities.first(where: { matches($0, request) }) {

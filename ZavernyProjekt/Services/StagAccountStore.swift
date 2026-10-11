@@ -66,17 +66,22 @@ final class StagAccountStore {
     @ObservationIgnored private var retryObservers: [NSObjectProtocol] = []
 
     private init() {
+        if DemoMode.isActive { account = DemoData.account; return }
         if !load() { scheduleRetry() }
     }
 
     var isConnected: Bool { account != nil }
 
     /// Přístupový ticket z Klíčenky (nil = chybí nebo je Klíčenka momentálně nedostupná)
-    var ticket: String? { KeychainStore.string(for: ticketKey) }
+    var ticket: String? {
+        if DemoMode.isActive { return nil }
+        return KeychainStore.string(for: ticketKey)
+    }
 
     /// Uloží účet po úspěšném přihlášení.
     /// - Throws: `StagAccountError.keychainWriteFailed`, pokud se ticket nebo účet nepodařilo uložit
     func connect(_ account: StagAccount, ticket: String) throws {
+        if DemoMode.isActive { self.account = account; return }
         guard KeychainStore.set(ticket, for: ticketKey) else {
             throw StagAccountError.keychainWriteFailed
         }
@@ -100,6 +105,8 @@ final class StagAccountStore {
     /// Odhlášení – smaže ticket, údaje o účtu, načtená data ze STAGu a vše, co by po účtu zůstalo
     /// (Live Activity, doručená oznámení, připomínky hodin, HTTP cache a cookies škol).
     func signOut() {
+        // V ukázkovém režimu odhlášení = ukončení dema (skutečný účet zůstane)
+        if DemoMode.isActive { DemoController.shared.exit(); return }
         let schoolHosts = Self.schoolHosts(including: account?.resolvedSchool)
 
         KeychainStore.remove(ticketKey)
@@ -217,10 +224,25 @@ final class StagAccountStore {
     }
 
     private func persist() {
+        if DemoMode.isActive { return }
         guard let account, let data = try? JSONEncoder().encode(account) else { return }
         if !KeychainStore.set(data, for: accountKey) {
             logger.error("Uložení účtu STAG do Klíčenky selhalo")
         }
+    }
+
+    // MARK: - Ukázkový režim
+
+    /// Fiktivní účet jen v paměti (Klíčenka se nedotkne)
+    func loadDemo(_ demoAccount: StagAccount) {
+        cancelRetry()
+        account = demoAccount
+    }
+
+    /// Po ukončení dema znovu načte skutečný účet z Klíčenky
+    func reloadAfterDemo() {
+        account = nil
+        if !load() { scheduleRetry() }
     }
 
     // MARK: - Cookies

@@ -149,10 +149,15 @@ final class SettingsViewModel {
         // Uloží změny a přepíše data widgetu (prázdný seznam deadlinů)
         TaskService.save(context)
 
-        // Data ze STAGu uložená v App Group (čte je i widget „Další hodina“)
+        // Data ze STAGu uložená v App Group (čte je i widget „Další hodina“).
+        // V ukázkovém režimu se mažou jen demo data v paměti.
         TimetableStore.shared.clear()
         ExamTermStore.shared.clear()
         GradeStore.shared.clear()
+        if DemoMode.isActive {
+            if signOut { StagAccountStore.shared.signOut() }
+            return
+        }
         ClassReminderScheduler.shared.cancelAll()
         LiveActivityManager.shared.endAll()
         // Doručená oznámení (deadliny, hodiny, nové termíny) by po smazání jen mátla

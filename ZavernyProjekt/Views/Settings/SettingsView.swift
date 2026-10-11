@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage(ExamTermStore.alertsEnabledKey) private var examTermAlertsEnabled = true
     /// Upozornění na nové známky – klíč čte GradeStore
     @AppStorage(GradeStore.alertsEnabledKey) private var gradeAlertsEnabled = true
+    @AppStorage(TimetableStore.changeAlertsEnabledKey) private var timetableChangeAlertsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,7 @@ struct SettingsView: View {
                 lessonsSection
                 widgetSection
                 languageSection
+                BackupSection()
                 dataSection
                 aboutSection
             }
@@ -138,6 +140,19 @@ struct SettingsView: View {
                     }
                 } icon: {
                     Image(systemName: "lock.iphone")
+                }
+            }
+
+            Toggle(isOn: $timetableChangeAlertsEnabled) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Upozornit na změny v rozvrhu")
+                        Text("Dáme vědět, když se ve STAGu zruší nebo přesune hodina v příštích dvou týdnech.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "calendar.badge.exclamationmark")
                 }
             }
 

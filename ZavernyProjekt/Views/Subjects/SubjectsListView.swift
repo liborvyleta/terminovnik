@@ -40,7 +40,7 @@ struct SubjectsListView: View {
                     withAnimation { viewModel.delete(subject, in: modelContext) }
                 }
             } message: { subject in
-                let count = subject.tasks.count
+                let count = subject.taskList.count
                 Text("Spolu s předmětem se smaže i \(count) úkolů. Akci nelze vrátit.")
             }
         }

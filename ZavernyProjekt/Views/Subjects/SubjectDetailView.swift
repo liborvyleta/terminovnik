@@ -35,7 +35,7 @@ struct SubjectDetailView: View {
                 gradeSection(grade)
             }
 
-            if subject.tasks.isEmpty {
+            if subject.taskList.isEmpty {
                 EmptyStateView(
                     symbol: "tray",
                     title: String(localized: "Žádné úkoly"),

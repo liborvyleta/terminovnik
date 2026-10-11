@@ -700,6 +700,8 @@ nonisolated struct StagService {
     // MARK: Síťová vrstva
 
     private func request(_ path: String, _ parameters: [String: String] = [:]) async throws -> Data {
+        // Demo režim nikdy nekomunikuje se STAGem
+        if DemoMode.isActive { throw URLError(.notConnectedToInternet) }
         var components = URLComponents(
             url: baseURL.appending(path: "services/rest2/\(path)"),
             resolvingAgainstBaseURL: false

@@ -153,7 +153,7 @@ nonisolated extension Array where Element == SubjectGrade {
 
 nonisolated extension SubjectGrade {
     static var samples: [SubjectGrade] {
-        func part(_ result: String, _ day: Int, _ month: Int, _ year: Int, examiner: String = "Ing. Jan Novák") -> GradePart {
+        func part(_ result: String, _ day: Int, _ month: Int, _ year: Int, examiner: String = "Ing. Martin Horák") -> GradePart {
             GradePart(result: result, date: Calendar(identifier: .gregorian).date(from: DateComponents(year: year, month: month, day: day)),
                       attempt: 1, examiner: examiner, points: nil)
         }

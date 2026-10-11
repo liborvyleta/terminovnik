@@ -185,7 +185,7 @@ nonisolated extension TimetableSnapshot {
                 event("s3", "AP9EV", "Evoluční výpočetní techniky", "Cvičení", "Cv", 1, "08:00", "10:00", "54", "304", "Ing. Martin Horák", "#B8860B"),
                 event("s4", "AP9EV", "Evoluční výpočetní techniky", "Přednáška", "Př", 2, "18:00", "20:00", "51", "219", "doc. Ing. Eva Dvořáková, Ph.D.", "#B8860B"),
                 event("s5", "AP9DM", "Datamining", "Přednáška", "Př", 3, "09:00", "11:00", "54", "211", "doc. Ing. Karel Procházka, Ph.D.", "#12A594"),
-                event("s6", "AP9DM", "Datamining", "Cvičení", "Cv", 4, "13:00", "15:00", "52", "104", "Ing. Jan Novák", "#12A594"),
+                event("s6", "AP9DM", "Datamining", "Cvičení", "Cv", 4, "13:00", "15:00", "52", "104", "Ing. Tomáš Kučera", "#12A594"),
                 event("s7", "AP9BI", "Bezpečnost informačních systémů", "Seminář", "Se", 5, "10:00", "12:00", "53", "309", "Ing. Petra Svobodová", "#E5484D")
             ],
             semester: "ZS",

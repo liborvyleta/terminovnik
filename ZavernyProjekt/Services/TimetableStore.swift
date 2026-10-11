@@ -18,6 +18,11 @@ final class TimetableStore {
     /// Jak starý rozvrh se při otevření aplikace automaticky obnoví
     private let maxAge: TimeInterval = 6 * 60 * 60
 
+    /// Účet (škola + osobní číslo), kterému patří uložený rozvrh
+    private static let ownerKey = "timetableSnapshot.owner"
+    /// Zapnutí oznámení o změnách rozvrhu (Nastavení)
+    nonisolated static let changeAlertsEnabledKey = "timetableChangeAlertsEnabled"
+
     private init() {
         snapshot = TimetableSnapshot.load()
     }
@@ -27,6 +32,7 @@ final class TimetableStore {
 
     /// Načte rozvrh ze STAGu (aktuální semestr). Bez přihlášení jen nastaví chybovou hlášku.
     func refresh(context: ModelContext) async {
+        if DemoMode.isActive { return }
         guard let account = StagAccountStore.shared.account,
               let service = StagAccountStore.shared.makeService() else {
             errorMessage = String(localized: "Pro načtení rozvrhu se přihlas do IS/STAG.")
@@ -54,8 +60,18 @@ final class TimetableStore {
                 academicYear: period.akademRok,
                 fetchedAt: .now
             )
+            // Změny proti předchozímu rozvrhu – jen u stejného účtu (semestr hlídá detektor)
+            let owner = "\(account.resolvedSchool.baseURL)|\(account.osCislo)"
+            let previousOwner = AppGroup.defaults?.string(forKey: Self.ownerKey)
+            let changes = previousOwner == owner
+                ? TimetableChangeDetector.diff(old: snapshot, new: fresh)
+                : []
             fresh.save()
+            AppGroup.defaults?.set(owner, forKey: Self.ownerKey)
             snapshot = fresh
+            if !changes.isEmpty {
+                await NotificationManager.shared.notifyTimetableChanges(changes)
+            }
             errorMessage = nil
             WidgetCenter.shared.reloadAllTimelines()
             // Nový rozvrh → přeplánovat připomínky hodin a obnovit Live Activity
@@ -78,7 +94,10 @@ final class TimetableStore {
 
     /// Smaže uložený rozvrh (např. po odhlášení ze STAGu)
     func clear() {
+        // V demu jen paměť – skutečný rozvrh v App Group a připomínky hodin zůstanou
+        if DemoMode.isActive { snapshot = nil; errorMessage = nil; return }
         TimetableSnapshot.clear()
+        AppGroup.defaults?.removeObject(forKey: Self.ownerKey)
         snapshot = nil
         errorMessage = nil
         WidgetCenter.shared.reloadAllTimelines()
@@ -90,5 +109,19 @@ final class TimetableStore {
     private func subjectColors(in context: ModelContext) -> [String: String] {
         let subjects = (try? context.fetch(FetchDescriptor<Subject>())) ?? []
         return Dictionary(subjects.map { ($0.code.uppercased(), $0.hexColor) }, uniquingKeysWith: { first, _ in first })
+    }
+}
+
+// Ukázkový režim – data jen v paměti, nic se neukládá
+extension TimetableStore {
+    func loadDemo(_ snapshot: TimetableSnapshot) {
+        self.snapshot = snapshot
+        errorMessage = nil
+    }
+
+    /// Po ukončení dema vrátí skutečný rozvrh z App Group
+    func reloadAfterDemo() {
+        snapshot = TimetableSnapshot.load()
+        errorMessage = nil
     }
 }

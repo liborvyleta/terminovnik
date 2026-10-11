@@ -14,6 +14,8 @@ enum WidgetActionQueue {
     }
 
     static func processPending(in context: ModelContext) {
+        // Ukázkový režim: fronta skutečných odškrtnutí počká na ukončení dema
+        guard !DemoMode.isActive else { return }
         let ids = PendingDeadlineCompletions.drain()
         guard !ids.isEmpty else { return }
 

@@ -24,7 +24,8 @@ enum BackgroundRefresh {
     /// Samotná práce na pozadí: termíny (s upozorněním na nové) a rozvrh
     static func run() async {
         schedule() // hned naplánujeme další běh
-        guard StagAccountStore.shared.isConnected else { return }
+        // Ukázkový režim: na pozadí se nic nenačítá ani neukládá
+        guard !DemoMode.isActive, StagAccountStore.shared.isConnected else { return }
         let context = PersistenceController.shared.mainContext
         await ExamTermStore.shared.refresh(context: context)
         await GradeStore.shared.refresh()

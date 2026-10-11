@@ -5,9 +5,10 @@ import SwiftData
 @main
 struct TerminovnikApp: App {
 
-    /// Sdílený ModelContainer = jediné úložiště SwiftData pro celou aplikaci.
+    /// Aktuální úložiště SwiftData (skutečné, nebo ukázkové v paměti) – lze přepnout za běhu.
     /// Schéma obsahuje oba modely; vazbu Subject ↔ ExamTask SwiftData odvodí z @Relationship.
-    let modelContainer: ModelContainer = PersistenceController.shared
+    @State private var dataController = DemoController.shared
+    private var modelContainer: ModelContainer { dataController.container }
 
     /// Fáze scény – při návratu do popředí obnovíme data widgetu.
     @Environment(\.scenePhase) private var scenePhase
@@ -19,7 +20,12 @@ struct TerminovnikApp: App {
 
         // Notifikace: banner i při otevřené aplikaci + akce „Splněno“ přímo z oznámení.
         // Musí proběhnout hned při startu, aby delegát zachytil akci i při spuštění na pozadí.
-        NotificationManager.shared.configure(modelContainer: modelContainer)
+        // Akce „Splněno“ patří vždy ke skutečné připomínce → skutečné úložiště (v demu se připomínky neplánují).
+        NotificationManager.shared.configure(modelContainer: PersistenceController.persistent)
+
+        // Ukázkový režim: smyšlená data jen v paměti, žádná síť ani Klíčenka
+        let modelContainer = DemoController.shared.container
+        DemoController.shared.prepareAtLaunch()
 
         #if DEBUG
         // Pomůcka pro testování: argument -seedSampleData naplní prázdnou databázi ukázkovými daty.
@@ -34,6 +40,10 @@ struct TerminovnikApp: App {
         WatchSync.shared.activate()
         // Deadliny odškrtnuté ve widgetu (záložní fronta) zpracujeme dřív, než se přehled přepíše.
         WidgetActionQueue.processPending(in: modelContainer.mainContext)
+        #if ICLOUD_SYNC
+        // Se synchronizací přes iCloud mohou STAG importy na dvou zařízeních vytvořit duplicity
+        if !DemoMode.isActive { _ = try? BackupService.removeStagDuplicates(in: modelContainer.mainContext) }
+        #endif
         // Widget dostane aktuální přehled hned po spuštění.
         WidgetSync.refresh(from: modelContainer.mainContext)
         // Připomínky hodin z uloženého rozvrhu (plánují se jen na pár dní dopředu).
@@ -47,9 +57,13 @@ struct TerminovnikApp: App {
                 .environment(\.locale, .czech)
                 // onChange(of: scenePhase) se při studeném startu nevyvolá – obnovu spustíme i tady
                 .task { appBecameActive() }
+                // Obnova zálohy: soubor .terminovnik otevřený z aplikace Soubory nebo z Nastavení
+                .backupRestoreHandler()
+                // Vloží kontejner do prostředí → všechna View mají přístup k @Query a modelContext.
+                // Po přepnutí ukázkového režimu se celý strom sestaví znovu nad novým úložištěm.
+                .modelContainer(modelContainer)
+                .id(dataController.generation)
         }
-        // Vloží kontejner do prostředí → všechna View mají přístup k @Query a modelContext.
-        .modelContainer(modelContainer)
         // Po návratu do popředí (např. po odškrtnutí z oznámení nebo změně dne) obnovíme widget.
         // Kontrola termínů na pozadí – iOS ji spouští podle svého uvážení
         .backgroundTask(.appRefresh(BackgroundRefresh.taskIdentifier)) {

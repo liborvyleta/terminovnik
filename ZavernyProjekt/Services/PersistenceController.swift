@@ -11,10 +11,41 @@ enum PersistenceController {
 
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Terminovnik", category: "persistence")
 
-    static let shared: ModelContainer = {
-        let schema = Schema([Subject.self, ExamTask.self])
+    static let schema = Schema([Subject.self, ExamTask.self])
+
+    /// Aktuální úložiště: v ukázkovém režimu demo kontejner v paměti, jinak skutečná databáze.
+    /// Díky tomu i App Intents (Siri, Zkratky, tlačítko ve widgetu) v demu pracují jen s demo daty
+    /// a skutečnou databázi nezmění.
+    static var shared: ModelContainer {
+        DemoMode.isActive ? demo : persistent
+    }
+
+    /// Demo úložiště v paměti – vzniká při prvním použití v demu, při vstupu/odchodu se zahodí
+    private static var demoStorage: ModelContainer?
+    private static var demo: ModelContainer {
+        if let demoStorage { return demoStorage }
+        let container = DemoData.makeContainer(schema: schema)
+        demoStorage = container
+        return container
+    }
+
+    /// Zahodí demo úložiště (další přístup v demu vytvoří nové, prázdné)
+    static func resetDemoContainer() {
+        demoStorage = nil
+    }
+
+    /// Skutečné trvalé úložiště. V demu se nepoužívá (jen NotificationManager pro akci „Splněno“
+    /// u skutečné připomínky, kterou uživatel výslovně potvrdí).
+    static let persistent: ModelContainer = {
         // isStoredInMemoryOnly: false → data se ukládají trvale do SQLite v kontejneru aplikace.
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        // Synchronizace přes iCloud jen s build flagem ICLOUD_SYNC (vyžaduje placený účet, viz docs/ICLOUD_SYNC.md).
+        // Umístění úložiště zůstává výchozí v obou případech.
+        #if ICLOUD_SYNC
+        let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .automatic
+        #else
+        let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .none
+        #endif
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: cloudKitDatabase)
 
         // Dva pokusy – první může selhat přechodně (např. soubor dočasně zamčený jiným procesem).
         for attempt in 1...2 {
@@ -30,7 +61,7 @@ enum PersistenceController {
         // Záloha: úložiště v paměti – aplikace nespadne, UI upozorní, že se data neukládají.
         // Původní soubor databáze zůstává nedotčený, při dalším spuštění se otevře znovu.
         isUsingFallbackStore = true
-        let memoryConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let memoryConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         do {
             return try ModelContainer(for: schema, configurations: [memoryConfiguration])
         } catch {
