@@ -147,7 +147,7 @@ enum DemoLaunch {
     }
 
     /// Ukázkový rozvrh, ve kterém se tři akce konají dnes: jedna už proběhla, další začíná
-    /// za 20–35 minut a třetí po krátké přestávce. Časy jsou zaokrouhlené na čtvrthodiny,
+    /// za 20–34 minut a třetí po krátké přestávce. Časy jsou zaokrouhlené na čtvrthodiny,
     /// aby obrazovky „Další hodina“ i „Dnes“ vypadaly jako skutečný rozvrh v kteroukoli denní dobu.
     static func timetable(now: Date = .now) -> TimetableSnapshot {
         let sample = TimetableSnapshot.sample

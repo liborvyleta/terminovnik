@@ -287,7 +287,7 @@ struct SettingsView: View {
         }
     }
 
-    /// Je co mazat? Kromě předmětů a deadlinů i rozvrh, termíny nebo přihlášený účet STAG.
+    /// Je co mazat? Kromě předmětů a deadlinů i rozvrh, termíny, známky nebo přihlášený účet STAG.
     private var hasAnyData: Bool {
         !subjects.isEmpty || !tasks.isEmpty
             || TimetableStore.shared.snapshot != nil

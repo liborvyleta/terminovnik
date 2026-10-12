@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import AuthenticationServices
 
-/// Import předmětů z IS/STAG UTB. Po přihlášení školním účtem načte jen předměty,
+/// Import předmětů z IS/STAG zvolené školy. Po přihlášení školním účtem načte jen předměty,
 /// které má student zapsané, a nechá ho vybrat, které si přidá do aplikace.
 /// Připojený účet si aplikace pamatuje, takže příště se předměty načtou rovnou.
 struct StagImportView: View {

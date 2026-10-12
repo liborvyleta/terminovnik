@@ -12,7 +12,7 @@ final class SubjectDetailViewModel {
         subject.taskList.filter { !$0.isCompleted }.sorted { $0.dueDate < $1.dueDate }
     }
 
-    /// Splněné úkoly od nejnovějšího
+    /// Splněné úkoly od nejpozdějšího termínu
     func completedTasks(of subject: Subject) -> [ExamTask] {
         subject.taskList.filter(\.isCompleted).sorted { $0.dueDate > $1.dueDate }
     }

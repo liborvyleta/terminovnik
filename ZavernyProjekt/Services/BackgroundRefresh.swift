@@ -21,7 +21,7 @@ enum BackgroundRefresh {
         }
     }
 
-    /// Samotná práce na pozadí: termíny (s upozorněním na nové) a rozvrh
+    /// Samotná práce na pozadí: termíny a známky (s upozorněním na nové) a rozvrh
     static func run() async {
         schedule() // hned naplánujeme další běh
         // Ukázkový režim: na pozadí se nic nenačítá ani neukládá

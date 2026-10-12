@@ -45,14 +45,14 @@ final class StagAccountViewModel {
 
     // MARK: - Akce
 
-    /// Aktualizuje předměty ze STAGu. Při vypršeném přihlášení se účet odhlásí
+    /// Aktualizuje předměty ze STAGu (a s nimi rozvrh, termíny a známky). Při vypršeném přihlášení se účet odhlásí
     /// a v sekci se zobrazí chyba s výzvou k novému přihlášení.
     func sync(context: ModelContext) async {
         guard !isSyncing else { return }
         state = .syncing
         do {
             let result = try await StagSubjectSync.sync(in: context, store: store)
-            // Spolu s předměty obnovíme i rozvrh
+            // Spolu s předměty obnovíme i rozvrh, termíny zkoušek a známky
             await TimetableStore.shared.refresh(context: context)
             await ExamTermStore.shared.refresh(context: context)
             await GradeStore.shared.refresh()
@@ -62,7 +62,8 @@ final class StagAccountViewModel {
         }
     }
 
-    /// Odhlášení ze STAGu – smaže ticket i údaje o účtu, předměty v aplikaci zůstanou.
+    /// Odhlášení ze STAGu – smaže ticket, údaje o účtu i data načtená ze STAGu (rozvrh, termíny, známky);
+    /// předměty a deadliny v aplikaci zůstanou. V ukázkovém režimu jen ukončí demo.
     func signOut() {
         #if DEBUG
         if isPreview {

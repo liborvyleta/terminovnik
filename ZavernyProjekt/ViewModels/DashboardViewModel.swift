@@ -59,7 +59,7 @@ final class DashboardViewModel {
     /// Vrátí sekce k zobrazení podle filtru a vyhledávání.
     func sections(from tasks: [ExamTask], now: Date = .now) -> [TaskSection] {
         let matching = tasks.filter(matchesSearch)
-        // Aktivní od nejbližšího termínu, splněné od nejnovějšího
+        // Aktivní od nejbližšího termínu, splněné od nejpozdějšího termínu
         let active = matching.filter { !$0.isCompleted }.sorted { $0.dueDate < $1.dueDate }
         let completed = matching.filter(\.isCompleted).sorted { $0.dueDate > $1.dueDate }
 

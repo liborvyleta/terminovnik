@@ -293,8 +293,8 @@ enum BackupService {
 
     /// Odstraní duplicity, které vzniknou, když STAG import proběhne na dvou zařízeních se synchronizací:
     /// předměty se shodným kódem (bez ohledu na velikost písmen) a úkoly se shodným `stagTermID`.
-    /// Ponechá nejstarší záznam (podle UUID kvůli determinismu na všech zařízeních), úkoly duplicitních
-    /// předmětů přesune k ponechanému. Vrací počet odstraněných záznamů.
+    /// Ponechá záznam s nejmenším UUID (deterministicky na všech zařízeních; u úkolů má přednost splněný),
+    /// úkoly duplicitních předmětů přesune k ponechanému. Vrací počet odstraněných záznamů.
     @discardableResult
     static func removeStagDuplicates(in context: ModelContext) throws -> Int {
         var removed = 0

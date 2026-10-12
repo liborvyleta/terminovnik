@@ -7,7 +7,7 @@ final class ExamTask {
     // Kompatibilita s CloudKit: žádné `@Attribute(.unique)`, každá vlastnost má výchozí hodnotu
     // nebo je volitelná. Výchozí hodnoty nemění schéma úložiště → lehká migrace projde bez ztráty dat.
 
-    /// Jedinečný identifikátor – použije se i jako ID lokální notifikace.
+    /// Jedinečný identifikátor – je i součástí ID lokální notifikace (`notificationID`).
     /// Jedinečnost hlídá aplikace (UUID), ne databázové omezení – to CloudKit nepodporuje.
     var id: UUID = UUID()
     /// Název (např. „Zkouška – 1. termín“)

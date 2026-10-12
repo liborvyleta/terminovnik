@@ -108,7 +108,7 @@ struct GradeTests {
     @Test("Slovní známky „dostatečně“ a „uspokojivě“ se rozpoznají")
     func missingVerbalGrades() {
         // Regrese: dříve numericValue znal jen „výborně / velmi dobře / dobře / nedostatečně“.
-        // ECTS slovní ekvivalenty E = „dostatečně“ (3) a D = „uspokojivě“ (2,5) chybí → .unknown a mimo průměr.
+        // ECTS slovní ekvivalenty E = „dostatečně“ (3) a D = „uspokojivě“ (2,5) chyběly → .unknown a mimo průměr.
                     #expect(SubjectGrade.numericValue("dostatečně") != nil)
         #expect(SubjectGrade.level("dostatečně") != .unknown)
         #expect(SubjectGrade.numericValue("uspokojivě") != nil)
