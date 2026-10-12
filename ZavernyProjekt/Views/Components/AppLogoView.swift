@@ -2,18 +2,24 @@ import SwiftUI
 
 /// Logo aplikace Termínovník: kalendář s promoční čepicí a fajfkou.
 ///
-/// Kreslí se čistě SwiftUI tvary (SF Symbols se v logu ani ikoně používat nesmějí).
-/// Stejný kód slouží v aplikaci i pro vygenerování ikony v Assets (1024 × 1024 px).
-/// Vykresluje celý čtverec – zaoblení rohů dodá systém (ikona) nebo `clipShape` (v aplikaci).
+/// Kreslí se čistě SwiftUI tvary v `Canvas` (SF Symbols se v logu ani ikoně používat nesmějí)
+/// a barvy bere z privátní struktury `Palette` podle zvolené varianty. Nemá žádná data ani akce.
+/// Stejný kód slouží v aplikaci (úvodní obrazovka, Nastavení) i pro vygenerování ikony v Assets
+/// (1024 × 1024 px, `RenderAppIcon`). Vykresluje celý čtverec – zaoblení rohů dodá systém (ikona)
+/// nebo `clipShape` (v aplikaci).
 struct AppLogoView: View {
+    /// Barevná varianta loga odpovídající variantám ikony aplikace.
     enum Variant {
         case light   // výchozí ikona
         case dark    // ikona pro tmavý režim (iOS 18+)
         case tinted  // šedotónová varianta, kterou systém obarví (iOS 18+)
     }
 
+    /// Varianta barev, ve které se logo vykreslí (výchozí světlá).
     var variant: Variant = .light
 
+    /// Čtvercový `Canvas` kreslený ve vrstvách: pozadí s přechodem, karta kalendáře se stínem,
+    /// barevná hlavička, fajfka, promoční čepice a střapec. Souřadnice jsou relativní k velikosti.
     var body: some View {
         Canvas { context, size in
             let s = min(size.width, size.height)
@@ -82,7 +88,9 @@ struct AppLogoView: View {
     }
 }
 
-/// Barvy jednotlivých variant loga
+/// Barvy jednotlivých variant loga.
+///
+/// Drží odstíny pozadí, karty, hlavičky, fajfky, čepice, střapce a stínu pro `AppLogoView`.
 private struct Palette {
     let background: [Color]
     let glow: Color
@@ -94,6 +102,8 @@ private struct Palette {
     let tassel: Color
     let shadow: Color
 
+    /// Vytvoří paletu pro danou variantu loga.
+    /// - Parameter variant: světlá, tmavá nebo šedotónová (tinted) varianta.
     init(_ variant: AppLogoView.Variant) {
         switch variant {
         case .light:

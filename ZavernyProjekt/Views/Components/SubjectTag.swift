@@ -1,7 +1,11 @@
 import SwiftUI
 
 /// Štítek s kódem předmětu v barvě předmětu.
+///
+/// Zobrazuje kód předmětu (bez kódu jeho název) v kapsli. Nemá akce; používá se v řádku deadlinu,
+/// v detailu předmětu a v rozvrhu.
 struct SubjectTag: View {
+    /// Předmět, jehož kód a barva se zobrazí.
     let subject: Subject
 
     var body: some View {

@@ -1,23 +1,41 @@
 import SwiftUI
 import SwiftData
 
-/// Detail termínu zkoušky (sheet): kdy, kde, kdo, obsazenost, přihlašování, zápis/odhlášení ve STAGu
-/// a přidání do Kalendáře.
+/// Detail termínu zkoušky zobrazený jako sheet.
+///
+/// Zobrazuje hlavičku se štítky stavu, sekce Kdy, Kde a kdo, mapu budovy, obsazenost,
+/// přihlašování, zápis/odhlášení ve STAGu, poznámku, údaje o předmětu a tlačítko
+/// pro přidání do Kalendáře. Aktuální podobu termínu bere z `ExamTermsViewModel`,
+/// zápis provádí přes `examTermRegistrationFlow` vždy až po potvrzení. Otevírá se
+/// z `ExamTermsView` klepnutím na kartu nebo řádek termínu.
 struct ExamTermDetailView: View {
-    /// Termín při otevření – aktuální podobu (po zápisu se mění) bere z ViewModelu
+    /// Termín při otevření – aktuální podobu (po zápisu se mění) bere z ViewModelu.
     private let initialTerm: ExamTerm
+    /// Název předmětu z rozvrhu; když chybí, zobrazí se kód předmětu.
     let subjectName: String?
+    /// Barva předmětu pro hlavičku a tlačítka.
     let tint: Color
+    /// Zda je termín nově vypsaný (zobrazí štítek „Nový“).
     var isNew: Bool
+    /// ViewModel termínů pro aktuální data a změny zápisu.
     let viewModel: ExamTermsViewModel
 
+    /// Akce pro zavření sheetu.
     @Environment(\.dismiss) private var dismiss
+    /// Zda je otevřený systémový editor události Kalendáře.
     @State private var isAddingToCalendar = false
-    /// Akce čekající na potvrzení v dialogu
+    /// Akce čekající na potvrzení v dialogu.
     @State private var registrationRequest: ExamTermRegistrationRequest?
-    /// Výsledek poslední akce (ukázaný v sekci zápisu)
+    /// Výsledek poslední akce (ukázaný v sekci zápisu).
     @State private var lastOutcome: ExamTermRegistrationOutcome?
 
+    /// Vytvoří detail termínu.
+    /// - Parameters:
+    ///   - term: Termín při otevření detailu.
+    ///   - subjectName: Název předmětu, nebo `nil`.
+    ///   - tint: Barva předmětu.
+    ///   - isNew: Zda je termín nově vypsaný.
+    ///   - viewModel: ViewModel termínů.
     init(term: ExamTerm, subjectName: String?, tint: Color, isNew: Bool = false, viewModel: ExamTermsViewModel) {
         initialTerm = term
         self.subjectName = subjectName
@@ -26,9 +44,11 @@ struct ExamTermDetailView: View {
         self.viewModel = viewModel
     }
 
-    /// Aktuální podoba termínu ze store / náhledu
+    /// Aktuální podoba termínu ze store / náhledu.
     private var term: ExamTerm { viewModel.latest(initialTerm) }
 
+    /// Seznam sekcí v `NavigationStack`, obnovovaný každou minutu přes `TimelineView`,
+    /// s tlačítkem Hotovo, tokem zápisu a sheetem editoru Kalendáře.
     var body: some View {
         NavigationStack {
             TimelineView(.everyMinute) { context in
@@ -99,6 +119,8 @@ struct ExamTermDetailView: View {
 
     // MARK: - Hlavička
 
+    /// Hlavička detailu: ikona typu termínu, název předmětu, kód a štítky stavu.
+    /// - Parameter now: Aktuální čas (hlavička ho zatím nevyužívá).
     private func header(now: Date) -> some View {
         HStack(alignment: .center, spacing: 14) {
             Image(systemName: ExamTermsViewModel.symbol(for: term))
@@ -123,6 +145,7 @@ struct ExamTermDetailView: View {
         }
     }
 
+    /// Štítky stavu termínu: zrušeno / zapsáno / plno, opravný a nový.
     @ViewBuilder
     private var statusChips: some View {
         if term.isCancelled {
@@ -142,6 +165,8 @@ struct ExamTermDetailView: View {
 
     // MARK: - Sekce
 
+    /// Sekce Kdy: datum, čas s délkou a odpočet u nadcházejícího termínu.
+    /// - Parameter now: Aktuální čas pro rozhodnutí, zda je termín nadcházející.
     private func whenSection(now: Date) -> some View {
         Section("Kdy") {
             LabeledContent("Datum", value: ExamTermsViewModel.longDayText(term.start))
@@ -157,6 +182,7 @@ struct ExamTermDetailView: View {
         }
     }
 
+    /// Sekce Kde a kdo s místností a zkoušejícím; skrytá, když chybí oba údaje.
     @ViewBuilder
     private var whereSection: some View {
         let room = term.room.flatMap { $0.isEmpty ? nil : $0 }
@@ -176,6 +202,7 @@ struct ExamTermDetailView: View {
         }
     }
 
+    /// Sekce Obsazenost: počet zapsaných, kapacita nebo volná místa a ukazatel zaplnění.
     @ViewBuilder
     private var occupancySection: some View {
         if ExamTermsViewModel.occupancyText(term) != nil {
@@ -214,6 +241,8 @@ struct ExamTermDetailView: View {
         }
     }
 
+    /// Sekce Přihlašování s daty otevření, uzávěrky přihlášení a odhlášení a důvodem blokace.
+    /// - Parameter now: Aktuální čas pro zvýraznění blížící se uzávěrky a text stavu v patičce.
     @ViewBuilder
     private func registrationSection(now: Date) -> some View {
         let hasDates = term.registrationOpens != nil || term.registrationDeadline != nil || term.unregisterDeadline != nil
@@ -248,7 +277,10 @@ struct ExamTermDetailView: View {
         }
     }
 
-    /// Zápis / odhlášení / fronta přímo ve STAGu (vždy přes potvrzovací dialog)
+    /// Zápis / odhlášení / fronta přímo ve STAGu (vždy přes potvrzovací dialog).
+    ///
+    /// Během probíhající změny ukazuje průběh, jinak tlačítko akce a pod ním výsledek poslední změny.
+    /// - Parameter now: Aktuální čas pro určení dostupné akce a textů v patičce.
     @ViewBuilder
     private func registrationActionSection(now: Date) -> some View {
         if let action = viewModel.registrationAction(for: term, now: now) {
@@ -295,7 +327,13 @@ struct ExamTermDetailView: View {
         }
     }
 
-    /// Proč akce nejde (důvod ze STAGu + termíny přihlašování/odhlašování), jinak upozornění na ostrou změnu
+    /// Patička sekce zápisu: proč akce nejde (důvod ze STAGu a termíny přihlašování/odhlašování),
+    /// jinak upozornění na ostrou změnu ve STAGu.
+    /// - Parameters:
+    ///   - action: Nabízená akce zápisu.
+    ///   - enabled: Zda STAG akci aktuálně dovoluje.
+    ///   - now: Aktuální čas pro texty termínů.
+    /// - Returns: Text s řádky patičky.
     private func registrationActionFooter(_ action: StagTermRegistrationAction, enabled: Bool, now: Date) -> some View {
         var lines: [String] = []
         if enabled {
@@ -309,6 +347,7 @@ struct ExamTermDetailView: View {
         return Text(lines.joined(separator: "\n"))
     }
 
+    /// Sekce s tlačítkem pro přidání termínu do systémového Kalendáře.
     private var calendarSection: some View {
         Section {
             Button {
@@ -333,7 +372,7 @@ struct ExamTermDetailView: View {
 
     // MARK: - Texty
 
-    /// „Zkouška AP9PT: Pokročilé mobilní technologie (opravný)“
+    /// Název události v Kalendáři, např. „Zkouška AP9PT: Pokročilé mobilní technologie (opravný)“.
     private var calendarTitle: String {
         var title = "\(term.typeName) \(term.subjectCode)"
         if let subjectName { title += ": \(subjectName)" }
@@ -341,7 +380,7 @@ struct ExamTermDetailView: View {
         return title
     }
 
-    /// Poznámka události v Kalendáři: místnost, zkoušející, poznámka, zdroj
+    /// Poznámka události v Kalendáři: místnost, zkoušející, poznámka a zdroj.
     private var calendarNotes: String {
         var lines: [String] = []
         if let room = term.room, !room.isEmpty { lines.append(String(localized: "Místnost: \(room)")) }
@@ -352,7 +391,10 @@ struct ExamTermDetailView: View {
     }
 
     /// Popisek pod velkým číslem, když kapacita není známá: „zapsaný“, „zapsaní“, „zapsaných“.
+    ///
     /// Číslo je zobrazené zvlášť, proto tvary bez čísla (v angličtině všechny „registered“).
+    /// - Parameter count: Počet zapsaných studentů.
+    /// - Returns: Lokalizovaný popisek ve správném tvaru.
     private static func registeredLabel(_ count: Int) -> String {
         switch count {
         case 1: String(localized: "zapsaný", comment: "Popisek pod počtem 1 zapsaného studenta")

@@ -1,20 +1,44 @@
 import SwiftUI
 
 /// Přívětivý prázdný stav: velký SF Symbol v barevných kruzích, nadpis, text a volitelná tlačítka.
+///
+/// Obsah dostává zvenku přes parametry; po zobrazení ikona jednou „poskočí“. Uživatel může klepnout
+/// na hlavní tlačítko (`action`) a volitelné vedlejší tlačítko (`secondaryAction`). Používá se
+/// na Přehledu, v Rozvrhu, Zkouškách, Známkách, seznamu a detailu předmětů.
 struct EmptyStateView: View {
+    /// Název SF Symbolu uprostřed kruhů.
     let symbol: String
+    /// Nadpis prázdného stavu.
     let title: String
+    /// Vysvětlující text pod nadpisem.
     let message: String
+    /// Barva ikony a kruhů.
     let tint: Color
+    /// Text hlavního tlačítka; `nil` = bez tlačítka.
     let actionTitle: String?
+    /// SF Symbol hlavního tlačítka.
     let actionSymbol: String
+    /// Akce hlavního tlačítka.
     let action: (() -> Void)?
+    /// Text vedlejšího tlačítka; `nil` = bez tlačítka.
     let secondaryActionTitle: String?
+    /// Akce vedlejšího tlačítka.
     let secondaryAction: (() -> Void)?
 
-    /// Spouští jednorázovou „bounce“ animaci ikony po zobrazení
+    /// Spouští jednorázovou „bounce“ animaci ikony po zobrazení.
     @State private var hasAppeared = false
 
+    /// Vytvoří prázdný stav.
+    /// - Parameters:
+    ///   - symbol: název SF Symbolu
+    ///   - title: nadpis
+    ///   - message: vysvětlující text
+    ///   - tint: barva ikony a kruhů
+    ///   - actionTitle: text hlavního tlačítka (tlačítko se ukáže jen spolu s `action`)
+    ///   - actionSymbol: SF Symbol hlavního tlačítka
+    ///   - action: akce hlavního tlačítka
+    ///   - secondaryActionTitle: text vedlejšího tlačítka (ukáže se jen spolu se `secondaryAction`)
+    ///   - secondaryAction: akce vedlejšího tlačítka
     init(
         symbol: String,
         title: String,
@@ -37,6 +61,7 @@ struct EmptyStateView: View {
         self.secondaryAction = secondaryAction
     }
 
+    /// Svislý sloupec: ikona v kruzích, nadpis s textem a volitelná tlačítka.
     var body: some View {
         VStack(spacing: 20) {
             ZStack {

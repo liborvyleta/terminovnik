@@ -1,9 +1,15 @@
 import SwiftUI
 
-/// Dnešní rozvrh – seznam hodin, skončené hodiny jsou potlačené.
+/// Stránka s dnešním rozvrhem.
+///
+/// Zobrazuje dnešní hodiny z rozvrhu, který ``WatchStore`` dekódoval z kontextu přijatého
+/// z iPhonu přes WatchConnectivity; seznam se přepočítává každou minutu a skončené hodiny
+/// jsou potlačené.
 struct TodayScheduleView: View {
+    /// Zdroj dat přijatých z iPhonu.
     let store: WatchStore
 
+    /// Seznam dnešních hodin, nebo prázdný stav „Dnes volno“.
     var body: some View {
         TimelineView(.everyMinute) { context in
             let lessons = store.todayLessons(now: context.date)
@@ -26,14 +32,22 @@ struct TodayScheduleView: View {
     }
 }
 
-/// Řádek hodiny: barevný proužek předmětu, čas, název, typ a místnost
+/// Řádek dnešního rozvrhu.
+///
+/// Zobrazuje barevný proužek předmětu, čas, název, typ a místnost. Probíhající hodina má
+/// zvýrazněný čas a ikonu, skončená hodina je zprůhledněná.
 struct LessonRow: View {
+    /// Zobrazovaný výskyt hodiny.
     let lesson: TimetableOccurrence
+    /// Aktuální čas, ke kterému se určuje stav hodiny.
     let now: Date
 
+    /// Udává, zda hodina už skončila.
     private var isFinished: Bool { lesson.end <= now }
+    /// Udává, zda hodina právě probíhá.
     private var isOngoing: Bool { lesson.start <= now && now < lesson.end }
 
+    /// Obsah řádku.
     var body: some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 2)

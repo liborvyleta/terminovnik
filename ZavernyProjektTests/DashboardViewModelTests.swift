@@ -3,7 +3,9 @@ import SwiftData
 import Testing
 @testable import ZavernyProjekt
 
-/// Přehled (Dashboard): sekce podle filtru, souhrnná čísla a vyhledávání.
+/// Testy view modelu přehledu (`DashboardViewModel`).
+///
+/// Ověřují sekce podle filtru, souhrnná čísla a vyhledávání.
 /// Data žijí jen v paměťové SwiftData databázi. Akce `toggleCompletion`/`delete` netestujeme –
 /// přes `TaskService` plánují notifikace a zapisují widget do App Group.
 @MainActor
@@ -44,12 +46,29 @@ struct DashboardViewModelTests {
         self.mobile = mobile
         self.datamining = datamining
 
+        /// Vytvoří úkol, vloží ho do kontextu a přiřadí k předmětu.
+        ///
+        /// - Parameters:
+        ///   - title: Název úkolu.
+        ///   - type: Typ úkolu.
+        ///   - due: Termín.
+        ///   - subject: Předmět, ke kterému úkol patří.
+        ///   - done: Zda je úkol splněný, výchozí `false`.
+        ///   - note: Poznámka, výchozí prázdná.
+        /// - Returns: Vložený úkol.
         func task(_ title: String, _ type: TaskType, _ due: Date, subject: Subject, done: Bool = false, note: String = "") -> ExamTask {
             let task = ExamTask(title: title, taskType: type, dueDate: due, isCompleted: done, note: note)
             context.insert(task)
             task.subject = subject
             return task
         }
+        /// Vytvoří datum v říjnu 2026 v kalendáři testu.
+        ///
+        /// - Parameters:
+        ///   - day: Den v měsíci.
+        ///   - hour: Hodina.
+        ///   - minute: Minuta, výchozí 0.
+        /// - Returns: Odpovídající datum.
         func day(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date { makeDate(2026, 10, day, hour, minute, calendar: calendar) }
 
         overdue = task("Domácí úkol 1", .ukol, day(6, 10), subject: mobile)
@@ -62,7 +81,15 @@ struct DashboardViewModelTests {
         doneRecent = task("Test z teorie", .zapocet, day(3, 10), subject: datamining, done: true)
     }
 
+    /// Vrátí identifikátory sekcí v pořadí.
+    ///
+    /// - Parameter sections: Sekce přehledu.
+    /// - Returns: Pole `id` jednotlivých sekcí.
     private func ids(_ sections: [TaskSection]) -> [String] { sections.map(\.id) }
+    /// Vrátí názvy úkolů v sekci.
+    ///
+    /// - Parameter section: Sekce přehledu, nebo `nil`.
+    /// - Returns: Názvy úkolů v pořadí; pro `nil` prázdné pole.
     private func titles(_ section: TaskSection?) -> [String] { section?.tasks.map(\.title) ?? [] }
 
     // MARK: - Filtry a sekce
@@ -121,6 +148,10 @@ struct DashboardViewModelTests {
     @Test("Hranice skupin: dnes/zítra, 2–7 dní, později; přesně teď není po termínu")
     func groupBoundaries() {
         let viewModel = DashboardViewModel()
+        /// Zjistí, do které sekce přehled zařadí úkol s daným termínem.
+        ///
+        /// - Parameter due: Termín zkušebního úkolu.
+        /// - Returns: `id` první sekce, nebo `nil`, pokud úkol do žádné nepatří.
         func group(_ due: Date) -> String? {
             let probe = ExamTask(title: "probe", taskType: .ukol, dueDate: due)
             context.insert(probe)
@@ -162,6 +193,12 @@ struct DashboardViewModelTests {
 
     // MARK: - Vyhledávání
 
+    /// Vyhledá úkoly ve všech testovacích datech.
+    ///
+    /// - Parameters:
+    ///   - query: Hledaný text.
+    ///   - filter: Filtr přehledu, výchozí `.all`.
+    /// - Returns: Množina názvů nalezených úkolů.
     private func search(_ query: String, filter: DashboardFilter = .all) -> Set<String> {
         let viewModel = DashboardViewModel()
         viewModel.filter = filter

@@ -2,12 +2,29 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Rozvrh: výpočty nad `TimetableEvent` a `TimetableSnapshot`.
+/// Testy výpočtů nad rozvrhem.
+///
+/// Pokrývají výpočty nad `TimetableEvent` a `TimetableSnapshot`.
 /// Kalendář Europe/Prague. Orientace: 5. 10. 2026 = pondělí (ISO týden 41, lichý), 12. 10. 2026 = pondělí (týden 42, sudý).
 @Suite("Rozvrh")
 struct TimetableTests {
     let calendar = TestCalendar.prague
 
+    /// Vytvoří rozvrhovou akci (cvičení) s nastavitelnými vlastnostmi.
+    ///
+    /// - Parameters:
+    ///   - id: Identifikátor akce.
+    ///   - code: Zkratka předmětu.
+    ///   - weekday: Den v týdnu, nebo `nil`.
+    ///   - start: Čas začátku.
+    ///   - end: Čas konce.
+    ///   - parity: Parita týdne.
+    ///   - from: Začátek platnosti.
+    ///   - to: Konec platnosti.
+    ///   - single: Datum jednorázové akce.
+    ///   - building: Budova.
+    ///   - room: Místnost.
+    /// - Returns: Nová rozvrhová akce.
     private func event(
         id: String = "1",
         code: String = "AP9PT",

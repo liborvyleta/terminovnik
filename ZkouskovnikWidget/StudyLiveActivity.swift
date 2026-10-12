@@ -3,8 +3,16 @@ import SwiftUI
 import WidgetKit
 
 /// Live Activity pro nadcházející / probíhající hodinu z rozvrhu nebo zkoušku (deadline).
+///
 /// Spouští ji aplikace (`Activity<StudyActivityAttributes>.request`), widget ji jen kreslí.
+/// Na zamčené obrazovce a v banneru ukáže štítek předmětu, typ, název, místnost, velký živý
+/// odpočet a u probíhající hodiny průběh. V Dynamic Island ukáže v rozbaleném stavu štítek
+/// a typ, odpočet, název a místnost s časem; v kompaktním typ s kódem a krátký odpočet;
+/// v minimálním kroužek v barvě předmětu s ikonou.
 struct StudyLiveActivity: Widget {
+    /// Konfigurace Live Activity pro zamčenou obrazovku a všechny stavy Dynamic Island.
+    ///
+    /// - Returns: `ActivityConfiguration` pro `StudyActivityAttributes`.
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: StudyActivityAttributes.self) { context in
             StudyActivityLockScreenContainer(attributes: context.attributes, state: context.state)
@@ -36,14 +44,21 @@ struct StudyLiveActivity: Widget {
     }
 }
 
-/// Obal zamčené obrazovky: jemně tónované pozadí podle barvy předmětu a režimu
-/// a barva systémových tlačítek. Samotný obsah je `StudyActivityLockScreenView`.
+/// Obal Live Activity na zamčené obrazovce.
+///
+/// Nastaví jemně tónované pozadí podle barvy předmětu a režimu a barvu systémových
+/// tlačítek. Samotný obsah je `StudyActivityLockScreenView`.
 struct StudyActivityLockScreenContainer: View {
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Neměnné údaje aktivity (předmět, typ, barva).
     let attributes: StudyActivityAttributes
+    /// Proměnný stav aktivity (čas a místnost).
     let state: StudyActivityAttributes.ContentState
 
+    /// Obsah zamčené obrazovky s tónovaným pozadím.
+    ///
+    /// - Returns: `StudyActivityLockScreenView` s modifikátory Live Activity.
     var body: some View {
         StudyActivityLockScreenView(attributes: attributes, state: state)
             .activityBackgroundTint(StudyActivityStyle.background(attributes.hexColor, scheme: colorScheme))
@@ -54,7 +69,7 @@ struct StudyActivityLockScreenContainer: View {
 // MARK: - Ukázková data (#Preview, snímky obrazovky)
 
 extension StudyActivityAttributes {
-    /// AP9PT – cvičení v 52/202
+    /// Ukázkové cvičení AP9PT pro náhledy a snímky obrazovky.
     static let previewLesson = StudyActivityAttributes(
         kind: .lesson,
         subjectCode: "AP9PT",
@@ -63,7 +78,7 @@ extension StudyActivityAttributes {
         hexColor: "#3E63DD"
     )
 
-    /// AP9DM – zkouška (deadline bez délky)
+    /// Ukázková zkouška AP9DM (deadline bez délky) pro náhledy a snímky obrazovky.
     static let previewExam = StudyActivityAttributes(
         kind: .exam,
         subjectCode: "AP9DM",
@@ -74,19 +89,25 @@ extension StudyActivityAttributes {
 }
 
 extension StudyActivityAttributes.ContentState {
-    /// Cvičení začíná za 12 minut (10:00–12:00 posunuto k aktuálnímu času)
+    /// Cvičení začínající za 12 minut, délka 110 minut, místnost 52/202.
+    ///
+    /// - Returns: Stav posunutý k aktuálnímu času.
     static var previewUpcoming: Self {
         let start = Date.now.addingTimeInterval(12 * 60)
         return Self(start: start, end: start.addingTimeInterval(110 * 60), location: "52/202")
     }
 
-    /// Cvičení probíhá 35 minut
+    /// Cvičení probíhající 35 minut, délka 110 minut, místnost 52/202.
+    ///
+    /// - Returns: Stav posunutý k aktuálnímu času.
     static var previewOngoing: Self {
         let start = Date.now.addingTimeInterval(-35 * 60)
         return Self(start: start, end: start.addingTimeInterval(110 * 60), location: "52/202")
     }
 
-    /// Zkouška za 2 h 15 min, end == start
+    /// Zkouška za 2 h 15 min v místnosti 54/110, `end == start`.
+    ///
+    /// - Returns: Stav posunutý k aktuálnímu času.
     static var previewExam: Self {
         let start = Date.now.addingTimeInterval(135 * 60)
         return Self(start: start, end: start, location: "54/110")

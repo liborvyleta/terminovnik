@@ -1,7 +1,12 @@
 import Foundation
 
 /// Jedna změna rozvrhu zjištěná porovnáním dvou snapshotů.
+///
+/// Vytváří ji ``TimetableChangeDetector/diff(old:new:now:calendar:horizonDays:)``;
+/// ``NotificationManager/notifyTimetableChanges(_:)`` z ní skládá text oznámení
+/// a podle ``fingerprint`` brání opakovanému oznámení stejné změny.
 nonisolated struct TimetableChange: Hashable {
+    /// Druh změny rozvrhu.
     enum Kind: String, Hashable {
         /// Akce zmizela, nebo zmizel některý její nejbližší výskyt
         case cancelled
@@ -11,6 +16,7 @@ nonisolated struct TimetableChange: Hashable {
         case added
     }
 
+    /// Druh změny.
     let kind: Kind
     /// Akce před změnou (nil u nové hodiny)
     let old: TimetableEvent?
@@ -19,9 +25,11 @@ nonisolated struct TimetableChange: Hashable {
     /// Nejbližší dotčený výskyt (u zrušeného výskytu jeho začátek)
     let date: Date?
 
+    /// Dotčená akce – nová podoba, nebo u zrušené akce ta původní.
+    /// - Important: Předpokládá, že alespoň jedno z ``old`` a ``new`` je vyplněné.
     var event: TimetableEvent { (new ?? old)! }
 
-    /// Stabilní otisk změny – podle něj se nepošle stejné oznámení dvakrát
+    /// Stabilní otisk změny – podle něj se nepošle stejné oznámení dvakrát.
     var fingerprint: String {
         func describe(_ e: TimetableEvent?) -> String {
             guard let e else { return "-" }
@@ -32,13 +40,26 @@ nonisolated struct TimetableChange: Hashable {
 }
 
 /// Porovnání rozvrhů bez vedlejších efektů + formátování textu oznámení.
+///
+/// Porovnává uložený a nově stažený `TimetableSnapshot` (``TimetableStore``) v horizontu
+/// ``horizonDays`` dní a výsledné ``TimetableChange`` převádí na česky lokalizované texty
+/// pro ``NotificationManager``. Nic neukládá.
 nonisolated enum TimetableChangeDetector {
-    /// Kolik dní dopředu nás změny zajímají
+    /// Kolik dní dopředu nás změny zajímají.
     static let horizonDays = 14
 
     /// Rozdíl mezi starým a novým rozvrhem.
     /// Bez starého snapshotu nebo při jiném semestru / akademickém roce vrátí prázdné pole.
     /// Ignoruje akce, které už proběhly (nemají žádný budoucí výskyt v horizontu).
+    /// Akce se párují podle `id`; změna jen ubytých výskytů ve stejném slotu je zrušení,
+    /// jen přibylých výskytů nová hodina, jinak přesun.
+    /// - Parameters:
+    ///   - old: Předchozí snapshot rozvrhu (nil = zatím žádný).
+    ///   - new: Nově načtený snapshot.
+    ///   - now: Aktuální okamžik, od kterého se hledají budoucí výskyty.
+    ///   - calendar: Kalendář pro výpočet dnů a výskytů.
+    ///   - horizonDays: Kolik dní dopředu se změny sledují.
+    /// - Returns: Změny seřazené podle druhu (zrušené, přesunuté, nové), pak podle data a `id` akce.
     static func diff(
         old: TimetableSnapshot?,
         new: TimetableSnapshot,
@@ -104,29 +125,44 @@ nonisolated enum TimetableChangeDetector {
         }
     }
 
-    /// Otisk sady změn (seřazený, aby nezáleželo na pořadí)
+    /// Otisk sady změn (seřazený, aby nezáleželo na pořadí).
+    /// - Parameter changes: Změny k otisknutí.
+    /// - Returns: Otisky jednotlivých změn spojené novým řádkem.
     static func fingerprint(of changes: [TimetableChange]) -> String {
         changes.map(\.fingerprint).sorted().joined(separator: "\n")
     }
 
     // MARK: - Porovnání
 
-    /// Podstatná pole akce – změna jinde (vyučující, název, barva…) se neoznamuje
+    /// Podstatná pole akce – změna jinde (vyučující, název, barva…) se neoznamuje.
+    /// - Parameter e: Akce rozvrhu.
+    /// - Returns: Klíč ze slotu, parity týdne a dnů platnosti.
     static func relevantKey(of e: TimetableEvent) -> String {
         let days = [e.dateFrom, e.dateTo, e.singleDate].map { $0.map { String(Int($0.timeIntervalSince1970 / 86_400)) } ?? "-" }
         return "\(slotKey(of: e))|\(normalized(e.weekParity))|\(days.joined(separator: ","))"
     }
 
-    /// Den, čas a místo
+    /// Klíč ze dne, času a místa akce.
+    /// - Parameter e: Akce rozvrhu.
+    /// - Returns: Den v týdnu, začátek, konec, budova a místnost oddělené `|`.
     private static func slotKey(of e: TimetableEvent) -> String {
         "\(e.weekday.map(String.init) ?? "-")|\(e.startMinutes ?? -1)|\(e.endMinutes ?? -1)|\(normalized(e.building))|\(normalized(e.room))"
     }
 
+    /// Normalizuje text pro porovnání (bez okrajových mezer, malými písmeny).
+    /// - Parameter s: Vstupní text (nil = prázdný).
+    /// - Returns: Normalizovaný text.
     private static func normalized(_ s: String?) -> String {
         (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    /// Začátky budoucích výskytů (konec po `now`) v příštích `horizonDays` dnech
+    /// Začátky budoucích výskytů (konec po `now`) v příštích `horizonDays` dnech.
+    /// - Parameters:
+    ///   - event: Akce rozvrhu.
+    ///   - now: Aktuální okamžik.
+    ///   - calendar: Kalendář pro výpočet dnů.
+    ///   - horizonDays: Počet dní dopředu (včetně dneška).
+    /// - Returns: Začátky výskytů chronologicky.
     static func upcomingStarts(of event: TimetableEvent, now: Date, calendar: Calendar, horizonDays: Int) -> [Date] {
         let today = calendar.startOfDay(for: now)
         return (0...horizonDays).compactMap { offset in
@@ -140,7 +176,11 @@ nonisolated enum TimetableChangeDetector {
 
     // MARK: - Text oznámení
 
-    /// Nadpis a tělo oznámení. Jedna změna → konkrétní věta, víc změn → souhrn s výpisem.
+    /// Nadpis a tělo oznámení. Jedna změna → konkrétní věta, víc změn → souhrn s výpisem (nejvýš 6 položek).
+    /// - Parameters:
+    ///   - changes: Změny k oznámení.
+    ///   - calendar: Kalendář pro formátování dat.
+    /// - Returns: Dvojice nadpisu a těla oznámení.
     static func notificationText(for changes: [TimetableChange], calendar: Calendar = .current) -> (title: String, body: String) {
         if changes.count == 1, let change = changes.first {
             return (String(localized: "Změna v rozvrhu"), describe(change, calendar: calendar))
@@ -150,7 +190,11 @@ nonisolated enum TimetableChangeDetector {
         return (String(localized: "\(changes.count) změn v rozvrhu"), body + more)
     }
 
-    /// Např. „AP9PT přednáška přesunuta z út 9:45 na st 11:30, místnost 52/204“
+    /// Popis jedné změny, např. „AP9PT přednáška přesunuta z út 9:45 na st 11:30, místnost 52/204“.
+    /// - Parameters:
+    ///   - change: Popisovaná změna.
+    ///   - calendar: Kalendář pro formátování dat.
+    /// - Returns: Lokalizovaná věta pro oznámení.
     static func describe(_ change: TimetableChange, calendar: Calendar = .current) -> String {
         let e = change.event
         let name = "\(e.subjectCode) \(e.typeName.lowercased())"
@@ -182,7 +226,9 @@ nonisolated enum TimetableChangeDetector {
         }
     }
 
-    /// „út 9:45“, u jednorázové akce „út 13. 10. 9:45“
+    /// Den a čas akce: „út 9:45“, u jednorázové akce „13. 10. 9:45“.
+    /// - Parameter e: Akce rozvrhu.
+    /// - Returns: Text dne a času (chybějící části se vynechají).
     static func slotText(_ e: TimetableEvent) -> String {
         let time = e.startTime.map(trimmedTime) ?? ""
         let day: String
@@ -194,18 +240,28 @@ nonisolated enum TimetableChangeDetector {
         return [day, time].filter { !$0.isEmpty }.joined(separator: " ")
     }
 
-    /// „út 13. 10. 9:45“
+    /// Datum s dnem a časem: „út 13. 10. 9:45“.
+    /// - Parameters:
+    ///   - date: Formátovaný okamžik.
+    ///   - calendar: Kalendář pro rozklad data.
+    /// - Returns: Text data.
     static func dateText(_ date: Date, calendar: Calendar = .current) -> String {
         let weekday = weekdayShort(TimetableEvent.weekday(of: date, calendar: calendar))
         let c = calendar.dateComponents([.day, .month, .hour, .minute], from: date)
         return "\(weekday) \(c.day ?? 0). \(c.month ?? 0). \(c.hour ?? 0):\(String(format: "%02d", c.minute ?? 0))"
     }
 
+    /// Jen den a měsíc: „13. 10.“.
+    /// - Parameter date: Formátované datum.
+    /// - Returns: Text data.
     private static func dateOnlyText(_ date: Date) -> String {
         let c = Calendar.current.dateComponents([.day, .month], from: date)
         return "\(c.day ?? 0). \(c.month ?? 0)."
     }
 
+    /// Lokalizovaná zkratka dne v týdnu.
+    /// - Parameter weekday: Den v týdnu 1 = pondělí … 6 = sobota, cokoli jiného = neděle.
+    /// - Returns: Zkratka dne („po“, „út“ …).
     static func weekdayShort(_ weekday: Int) -> String {
         switch weekday {
         case 1: String(localized: "po", comment: "Zkratka pondělí")
@@ -218,7 +274,9 @@ nonisolated enum TimetableChangeDetector {
         }
     }
 
-    /// „09:45“ → „9:45“
+    /// Odstraní úvodní nulu z času: „09:45“ → „9:45“.
+    /// - Parameter time: Čas ve formátu HH:mm.
+    /// - Returns: Čas bez úvodní nuly.
     private static func trimmedTime(_ time: String) -> String {
         time.hasPrefix("0") && time.count == 5 ? String(time.dropFirst()) : time
     }

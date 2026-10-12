@@ -1,7 +1,11 @@
 import SwiftUI
 
-/// Barevný štítek s odpočtem („Dnes“, „Zítra“, „Za 5 dní“). Barva odpovídá naléhavosti.
+/// Barevný štítek s odpočtem do termínu.
+///
+/// Zobrazuje text z `Countdown.text(for:)` („Dnes“, „Zítra“, „Za 5 dní“) se symbolem a barvou
+/// podle `DeadlineUrgency`. Nemá akce; používá se v řádku deadlinu (`TaskRowView`) a v detailu předmětu.
 struct CountdownBadge: View {
+    /// Deadline, ke kterému se odpočet počítá.
     let task: ExamTask
 
     var body: some View {

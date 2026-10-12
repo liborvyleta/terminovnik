@@ -2,21 +2,28 @@ import SwiftUI
 import SwiftData
 
 /// Kořenový pohled s pěti záložkami: Přehled deadlinů, Rozvrh, Zkoušky, Předměty a Nastavení.
+///
 /// Zvolená záložka je v `@AppStorage("selectedTab")` – jiné obrazovky na ni mohou přepnout
-/// (např. Přehled nastaví „terms“ a otevře Zkoušky).
-/// Při prvním spuštění (a dokud uživatel nemá žádný předmět) ukáže úvodní obrazovku.
+/// (např. Přehled nastaví „terms“ a otevře Zkoušky). Štítek Zkoušek ukazuje počet nových termínů
+/// z `ExamTermStore`. Při prvním spuštění (a dokud uživatel nemá žádný předmět a neběží demo)
+/// ukáže úvodní obrazovku s importem ze STAGu, přeskočením a ukázkovým režimem. V ukázkovém
+/// režimu zobrazí pruh `DemoBanner`. Je kořenem okna aplikace.
 struct ContentView: View {
+    /// Příznak, že uživatel prošel úvodní obrazovkou.
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    /// Značka zvolené záložky: „dashboard“, „timetable“, „terms“, „subjects“, „settings“
+    /// Značka zvolené záložky: „dashboard“, „timetable“, „terms“, „subjects“, „settings“.
     @AppStorage("selectedTab") private var selectedTab = "dashboard"
+    /// Předměty – bez nich se ukazuje úvodní obrazovka.
     @Query private var subjects: [Subject]
+    /// Zobrazení importu ze STAGu nad úvodní obrazovkou.
     @State private var isShowingStagImport = false
 
-    /// Počet nově vypsaných termínů pro štítek na záložce Zkoušky
+    /// Počet nově vypsaných termínů pro štítek na záložce Zkoušky.
     private var newTermsCount: Int {
         ExamTermStore.shared.hasNewTerms ? ExamTermStore.shared.newTermIDs.count : 0
     }
 
+    /// `TabView` s pěti záložkami, pruhem ukázkového režimu a úvodní obrazovkou přes celou obrazovku.
     var body: some View {
         TabView(selection: $selectedTab) {
             DashboardView()
@@ -54,7 +61,7 @@ struct ContentView: View {
         }
     }
 
-    /// Úvodní obrazovka se ukáže, dokud ji uživatel neprojde a nemá žádné předměty
+    /// Úvodní obrazovka se ukáže, dokud ji uživatel neprojde, nemá žádné předměty a neběží demo.
     private var isShowingOnboarding: Binding<Bool> {
         Binding(
             // V ukázkovém režimu se úvodní obrazovka neukazuje (příznak dokončení se nemění,
@@ -65,10 +72,12 @@ struct ContentView: View {
     }
 }
 
-/// Pruh „Ukázkový režim“ s tlačítkem pro ukončení
+/// Pruh „Ukázkový režim“ s tlačítkem pro ukončení.
 private extension View {
-    /// Na iOS 26 pruh nad lištou záložek (systémové místo, nic nepřekryje),
+    /// Přidá pruh ukázkového režimu. Na iOS 26 nad lištou záložek (systémové místo, nic nepřekryje),
     /// na starších verzích nahoře nad obsahem.
+    /// - Parameter isActive: zda se má pruh zobrazit.
+    /// - Returns: pohled s pruhem, nebo beze změny.
     @ViewBuilder
     func demoBanner(isActive: Bool) -> some View {
         if !isActive {
@@ -81,8 +90,12 @@ private extension View {
     }
 }
 
+/// Pruh „Ukázkový režim – smyšlená data“ s tlačítkem „Ukončit“.
+///
+/// Klepnutím na „Ukončit“ uživatel opustí ukázkový režim (`DemoController.shared.exit()`).
+/// Používá se v `ContentView` přes modifikátor `demoBanner(isActive:)`.
 struct DemoBanner: View {
-    /// Vlastní pozadí jen mimo lištu záložek (ta má na iOS 26 své sklo)
+    /// Vlastní pozadí jen mimo lištu záložek (ta má na iOS 26 své sklo).
     var usesBar = true
 
     var body: some View {

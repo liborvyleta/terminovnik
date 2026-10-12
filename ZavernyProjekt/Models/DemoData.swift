@@ -1,9 +1,13 @@
 import Foundation
 import SwiftData
 
-/// Smyšlená data ukázkového režimu (viz `DemoMode`). Žádné skutečné osoby – jména jsou vymyšlená.
+/// Smyšlená data ukázkového režimu.
+///
+/// Ukázkový režim (viz `DemoMode`) běží nad úložištěm SwiftData jen v paměti a naplní
+/// i úložiště dat ze STAGu (účet, rozvrh, termíny, známky, budovy). Žádné skutečné osoby –
+/// jména jsou vymyšlená.
 enum DemoData {
-    /// Fiktivní přihlášený student
+    /// Fiktivní přihlášený student (účet UTB, fakulta FAI).
     static let account = StagAccount(
         fullName: "Jan Novák",
         osCislo: "A00000",
@@ -14,7 +18,12 @@ enum DemoData {
         school: .utb
     )
 
-    /// In-memory úložiště pro demo režim (skutečná databáze se vůbec neotevírá pro zápis)
+    /// Vytvoří úložiště SwiftData jen v paměti pro ukázkový režim.
+    ///
+    /// Skutečná databáze se pro zápis vůbec neotevírá; synchronizace přes CloudKit je vypnutá.
+    /// Pokud kontejner nejde vytvořit, aplikace skončí přes `fatalError`.
+    /// - Parameter schema: Schéma modelů aplikace.
+    /// - Returns: Kontejner uložený výhradně v paměti.
     static func makeContainer(schema: Schema) -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         do {
@@ -24,7 +33,10 @@ enum DemoData {
         }
     }
 
-    /// Naplní demo úložiště a všechna STAG úložiště ukázkovými daty (vše jen v paměti).
+    /// Naplní ukázkové úložiště a všechna úložiště dat ze STAGu ukázkovými daty (vše jen v paměti).
+    ///
+    /// V režimu DEBUG nejdřív zpracuje argumenty spuštění pro snímky obrazovky.
+    /// - Parameter container: Kontejner ukázkového režimu, do kterého se vloží předměty a úkoly.
     static func prepare(container: ModelContainer) {
         #if DEBUG
         applyLaunchArguments()
@@ -38,7 +50,10 @@ enum DemoData {
     }
 
     #if DEBUG
-    /// Screenshoty: `-tab dashboard|timetable|terms|subjects|grades|settings`, `-timetableMode day|week`
+    /// Zpracuje argumenty spuštění pro snímky obrazovky a uloží je do `UserDefaults`.
+    ///
+    /// Podporuje `-tab dashboard|timetable|terms|subjects|grades|settings` (hodnota `grades`
+    /// se mapuje na záložku Předměty) a `-timetableMode day|week`. Neplatné hodnoty ignoruje.
     private static func applyLaunchArguments() {
         let defaults = UserDefaults.standard
         if let tab = DemoMode.argument(after: "-tab") {
@@ -55,6 +70,11 @@ enum DemoData {
 
     // MARK: - Předměty a deadliny
 
+    /// Vloží šest ukázkových předmětů a k nim deset deadlinů a uloží kontext.
+    ///
+    /// Termíny se počítají relativně k dnešku (`SampleData.date(daysFromNow:hour:minute:)`),
+    /// jeden úkol je už splněný a jeden po termínu.
+    /// - Parameter context: Kontext, do kterého se data vloží.
     static func insertSubjects(into context: ModelContext) {
         let mobile = Subject(name: "Pokročilé mobilní technologie", code: "AP9PT", hexColor: "#3E63DD", credits: 4)
         let evolution = Subject(name: "Evoluční výpočetní techniky", code: "AP9EV", hexColor: "#B8860B", credits: 5)
@@ -89,6 +109,7 @@ enum DemoData {
 
     // MARK: - Budovy UTB (souřadnice přibližné, kromě U52)
 
+    /// Ukázkové budovy UTB pro mapu; souřadnice jsou přibližné (kromě U52 z `StagBuilding.sample`).
     static let buildings: [StagBuilding] = [
         StagBuilding.sample,
         StagBuilding(code: "51", street: "U51 - (Severní pavilon A) Nad stráněmi", streetNumber: "4511", city: "Zlín",

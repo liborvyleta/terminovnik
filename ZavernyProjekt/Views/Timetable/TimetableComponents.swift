@@ -5,9 +5,15 @@ import SwiftUI
 
 // MARK: - Štítek kódu
 
-/// Štítek s kódem předmětu v barvě předmětu (jako `SubjectTag`, jen bez modelu `Subject`)
+/// Štítek s kódem předmětu v barvě předmětu.
+///
+/// Funguje jako `SubjectTag`, jen nepotřebuje model `Subject` – stačí kód a barva.
+/// Zobrazuje kód bílým písmem v kapsli s gradientem. Používá se v řádcích akcí
+/// rozvrhu (`TimetableEventDetails`) a v detailu akce.
 struct TimetableCodeTag: View {
+    /// Kód předmětu, který se zobrazí.
     let code: String
+    /// Barva pozadí štítku.
     let tint: Color
 
     var body: some View {
@@ -24,17 +30,27 @@ struct TimetableCodeTag: View {
 // MARK: - Výběr dne
 
 /// Vodorovný výběr dne aktuálního týdne se šipkami na předchozí / další týden.
-/// Vodorovným tahem přes pás se také přepíná týden.
+///
+/// Zobrazuje název a rozsah týdne, šipky pro přepnutí týdne a (pokud `showsDays`)
+/// dlaždice dnů s tečkami v barvách předmětů. Data čte z `TimetableViewModel`.
+/// Uživatel může klepnout na den, šipkou nebo vodorovným tahem přes pás přepnout týden.
+/// Používá se v záhlaví záložky Rozvrh (`TimetableView`).
 struct TimetableWeekStrip: View {
+    /// View model rozvrhu s vybraným dnem, týdnem a výskyty akcí.
     let viewModel: TimetableViewModel
+    /// Aktuální čas pro zvýraznění dnešního dne.
     let now: Date
+    /// V týdenním režimu dny ukazuje přímo mřížka – dlaždice dnů skryjeme.
     /// V týdenním režimu dny ukazuje přímo mřížka – dlaždice dnů skryjeme
     var showsDays: Bool = true
+    /// Barvy předmětů pro tečky pod dnem.
     /// Barvy předmětů pro tečky pod dnem
     let tint: (TimetableEvent) -> Color
 
+    /// Jmenný prostor pro animaci zvýraznění vybraného dne (`matchedGeometryEffect`).
     @Namespace private var selectionNamespace
 
+    /// Svislé uspořádání záhlaví týdne a řady dlaždic dnů; vodorovný tah přepíná týden.
     var body: some View {
         VStack(spacing: 10) {
             header
@@ -67,6 +83,7 @@ struct TimetableWeekStrip: View {
         )
     }
 
+    /// Záhlaví s šipkami pro přepnutí týdne a názvem a rozsahem zobrazeného týdne.
     private var header: some View {
         HStack {
             weekButton(symbol: "chevron.left", label: "Předchozí týden") { viewModel.showPreviousWeek() }
@@ -85,6 +102,12 @@ struct TimetableWeekStrip: View {
         }
     }
 
+    /// Kulaté tlačítko se šipkou, které animovaně spustí zadanou akci.
+    /// - Parameters:
+    ///   - symbol: Název SF Symbolu ikony.
+    ///   - label: Popisek pro VoiceOver.
+    ///   - action: Akce spuštěná po klepnutí (např. přepnutí týdne).
+    /// - Returns: Tlačítko pro přepnutí týdne.
     private func weekButton(symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button {
             withAnimation(.snappy) { action() }
@@ -99,6 +122,11 @@ struct TimetableWeekStrip: View {
         .accessibilityLabel(label)
     }
 
+    /// Dlaždice jednoho dne se zkratkou dne, číslem a tečkami předmětů.
+    ///
+    /// Vybraný den má gradientové pozadí, dnešní den zvýrazněný obrys. Klepnutí den vybere.
+    /// - Parameter day: Den týdne, který dlaždice zobrazuje.
+    /// - Returns: Tlačítko pro výběr dne.
     private func dayButton(_ day: TimetableDay) -> some View {
         let isSelected = viewModel.isSelected(day.date)
         let isToday = viewModel.isToday(day.date, now: now)
@@ -152,7 +180,9 @@ struct TimetableWeekStrip: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    /// Nejvýš tři různé barvy předmětů daného dne
+    /// Vrátí nejvýš tři různé barvy předmětů daného dne.
+    /// - Parameter occurrences: Výskyty akcí ve dni.
+    /// - Returns: Pole nejvýše tří barev, každý předmět nejvýš jednou.
     private func uniqueColors(of occurrences: [TimetableOccurrence]) -> [Color] {
         var seen = Set<String>()
         var colors: [Color] = []
@@ -163,6 +193,12 @@ struct TimetableWeekStrip: View {
         return colors
     }
 
+    /// Sestaví popisek dne pro VoiceOver.
+    /// - Parameters:
+    ///   - day: Datum dne.
+    ///   - isToday: Zda jde o dnešní den (přidá „Dnes“).
+    ///   - count: Počet akcí ve dni (0 znamená volno).
+    /// - Returns: Text s datem a počtem akcí.
     private func accessibilityLabel(for day: Date, isToday: Bool, count: Int) -> String {
         let date = day.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.czech))
         let lessons = count == 0
@@ -176,15 +212,26 @@ struct TimetableWeekStrip: View {
 
 // MARK: - Karta „Teď probíhá / Další hodina“
 
-/// Výrazná karta s probíhající nebo nejbližší hodinou a odpočtem
+/// Výrazná karta s probíhající nebo nejbližší hodinou a odpočtem.
+///
+/// Zobrazuje stav („Teď probíhá“ / „Další hodina“), odpočet, název, kód a typ
+/// předmětu, čas, místnost a u probíhající hodiny ukazatel průběhu. Data přebírá
+/// z předaného výskytu a statických pomocníků `TimetableViewModel`. Používá se
+/// nahoře v denním přehledu záložky Rozvrh; klepnutí řeší rodičovský pohled (detail hodiny).
 struct TimetableNowCard: View {
+    /// Zobrazovaný výskyt hodiny.
     let occurrence: TimetableOccurrence
+    /// Aktuální čas pro odpočet a průběh.
     let now: Date
+    /// Barva předmětu pro pozadí karty.
     let tint: Color
 
+    /// Akce rozvrhu, ke které výskyt patří.
     private var event: TimetableEvent { occurrence.event }
+    /// Zda hodina už začala (jinak jde o nejbližší budoucí hodinu).
     private var isOngoing: Bool { occurrence.start <= now }
 
+    /// Karta s řádkem stavu a odpočtu, názvem předmětu, časem a místem a případným průběhem.
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
@@ -266,16 +313,26 @@ struct TimetableNowCard: View {
 
 // MARK: - Řádek akce
 
-/// Řádek výskytu akce: čas, barevný proužek, předmět, typ, místnost a vyučující
+/// Řádek výskytu akce: čas, barevný proužek, předmět, typ, místnost a vyučující.
+///
+/// Proběhlé akce jsou zprůhledněné, probíhající mají štítek „Probíhá“.
+/// Používá se v seznamu akcí dne v záložce Rozvrh.
 struct TimetableOccurrenceRow: View {
+    /// Zobrazovaný výskyt akce.
     let occurrence: TimetableOccurrence
+    /// Aktuální čas pro určení stavu akce.
     let now: Date
+    /// Barva předmětu.
     let tint: Color
 
+    /// Akce rozvrhu, ke které výskyt patří.
     private var event: TimetableEvent { occurrence.event }
+    /// Zda akce právě probíhá.
     private var isOngoing: Bool { occurrence.start <= now && now < occurrence.end }
+    /// Zda akce už skončila.
     private var isPast: Bool { occurrence.end <= now }
 
+    /// Vodorovně: sloupec času začátku a konce, barevný proužek a podrobnosti akce.
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .trailing, spacing: 2) {
@@ -302,9 +359,14 @@ struct TimetableOccurrenceRow: View {
     }
 }
 
-/// Řádek akce bez pevného termínu
+/// Řádek akce bez pevného termínu.
+///
+/// Místo času zobrazuje ikonu otazníku u hodin, jinak stejné podrobnosti jako
+/// `TimetableOccurrenceRow`. Používá se v sekci akcí bez termínu v záložce Rozvrh.
 struct TimetableUnscheduledRow: View {
+    /// Zobrazovaná akce.
     let event: TimetableEvent
+    /// Barva předmětu.
     let tint: Color
 
     var body: some View {
@@ -328,12 +390,19 @@ struct TimetableUnscheduledRow: View {
     }
 }
 
-/// Společný obsah řádků: název, štítky, místnost, vyučující
+/// Společný obsah řádků: název, štítky, místnost, vyučující.
+///
+/// Zobrazuje název předmětu (s případným štítkem „Probíhá“), kód, typ, paritu týdne,
+/// místnost a vyučujícího. Používají ho `TimetableOccurrenceRow` a `TimetableUnscheduledRow`.
 private struct TimetableEventDetails: View {
+    /// Zobrazovaná akce.
     let event: TimetableEvent
+    /// Barva předmětu.
     let tint: Color
+    /// Zda zobrazit štítek „Probíhá“.
     let isOngoing: Bool
 
+    /// Svislý sloupec: název se štítkem, řádek štítků a volitelně místnost a vyučující.
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -379,8 +448,11 @@ private struct TimetableEventDetails: View {
     }
 }
 
-/// Štítek „Probíhá“ s pulzující tečkou
+/// Štítek „Probíhá“ s pulzující tečkou.
+///
+/// Bílý text v kapsli s barvou předmětu. Používá se u právě probíhajících akcí.
 struct TimetableLiveBadge: View {
+    /// Barva pozadí štítku.
     let tint: Color
 
     var body: some View {
@@ -400,12 +472,17 @@ struct TimetableLiveBadge: View {
 
 // MARK: - Volný den
 
-/// Den bez výuky
+/// Den bez výuky.
+///
+/// Zobrazuje ilustraci (slunce, o víkendu slunečník), text „Volno“ a případně
+/// nejbližší den s výukou. Používá se v záložce Rozvrh, když vybraný den nemá žádné akce.
 struct TimetableFreeDayView: View {
+    /// Zda jde o víkendový den (mění ikonu).
     let isWeekend: Bool
-    /// Popis nejbližšího dne s výukou, např. „čtvrtek 8. října“
+    /// Popis nejbližšího dne s výukou, např. „čtvrtek 8. října“.
     let nextLessonText: String?
 
+    /// Ikona v kruhu nad nadpisem, textem a odkazem na další výuku.
     var body: some View {
         VStack(spacing: 14) {
             ZStack {

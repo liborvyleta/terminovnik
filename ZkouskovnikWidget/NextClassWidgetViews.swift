@@ -4,16 +4,24 @@ import WidgetKit
 // Pohledy jednotlivých rodin widgetu „Další hodina“. Žádný z nich nečte `widgetFamily` –
 // výběr dělá jen `NextClassWidgetView`, takže je lze vykreslit i samostatně (snímky mimo WidgetKit).
 
-/// Kořenový pohled widgetu – podle rodiny vybere konkrétní rozvržení.
+/// Kořenový pohled widgetu „Další hodina“.
+///
+/// Podle aktuální rodiny (`widgetFamily`) vybere konkrétní rozvržení a doplní pozadí
+/// kontejneru; neznámé rodiny používají malé rozvržení.
 struct NextClassWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    /// Záznam časové osy, který se má zobrazit.
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassWidgetView` sestavený z jeho vstupních hodnot.
     var body: some View {
         content
             .containerBackground(for: .widget) { background }
     }
 
+    /// Rozvržení odpovídající aktuální rodině widgetu.
+    ///
+    /// - Returns: Pohled pro danou rodinu.
     @ViewBuilder
     private var content: some View {
         switch family {
@@ -26,6 +34,9 @@ struct NextClassWidgetView: View {
         }
     }
 
+    /// Pozadí kontejneru widgetu: průhledné pro widgety zamčené obrazovky, jinak systémové pozadí.
+    ///
+    /// - Returns: Pohled pozadí pro `containerBackground(for:)`.
     @ViewBuilder
     private var background: some View {
         switch family {
@@ -40,10 +51,14 @@ struct NextClassWidgetView: View {
 
 // MARK: - Plocha: malý
 
-/// Malý widget: nejbližší hodina – štítek, typ, název, velký čas, místnost a živý stav.
+/// Malý widget s nejbližší hodinou dnes nebo zítra.
+///
+/// Ukáže štítek, typ, název předmětu, velký čas od–do, místnost a živý stav s průběhem.
+/// Bez hodin ukáže prázdný stav.
 struct NextClassSmallView: View {
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassSmallView` sestavený z jeho vstupních hodnot.
     var body: some View {
         Group {
             if let occurrence = entry.soon.first {
@@ -56,6 +71,10 @@ struct NextClassSmallView: View {
         .environment(\.locale, .app)
     }
 
+    /// Sestaví obsah widgetu pro jeden výskyt.
+    ///
+    /// - Parameter occurrence: Zobrazovaný výskyt výuky.
+    /// - Returns: Svislé rozvržení s detaily hodiny.
     private func content(for occurrence: TimetableOccurrence) -> some View {
         let event = occurrence.event
 
@@ -102,10 +121,13 @@ struct NextClassSmallView: View {
 
 // MARK: - Plocha: střední
 
-/// Střední widget: hlavička s dnem a živým stavem + další 3 hodiny (dnes, případně zítra).
+/// Střední widget s hlavičkou a dalšími 3 hodinami (dnes, případně zítra).
+///
+/// Řádky zítřejších hodin nesou štítek „Zítra“, jen pokud seznam začíná dneškem.
 struct NextClassMediumView: View {
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassMediumView` sestavený z jeho vstupních hodnot.
     var body: some View {
         let items = Array(entry.soon.prefix(3))
         // Štítek „Zítra“ u řádků má smysl, jen když seznam začíná dneškem.
@@ -135,11 +157,15 @@ struct NextClassMediumView: View {
     }
 }
 
-/// Hlavička: „Dnes · po 5. 10.“ vlevo, živý stav nejbližší hodiny vpravo.
+/// Hlavička středního widgetu.
+///
+/// Vlevo „Dnes“ nebo „Zítra“ s datem, vpravo živý stav nejbližší hodiny.
 struct NextClassHeader: View {
     @Environment(\.colorScheme) private var colorScheme
+    /// Záznam, z něhož se určí den a stav nejbližší hodiny.
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassHeader` sestavený z jeho vstupních hodnot.
     var body: some View {
         let brand = WidgetBrand.color(for: colorScheme)
         let first = entry.soon.first
@@ -182,12 +208,19 @@ struct NextClassHeader: View {
     }
 }
 
-/// Řádek: čas od–do, proužek v barvě předmětu, název, „kód · typ“ a místnost vpravo.
+/// Řádek seznamu hodin.
+///
+/// Obsahuje čas od–do, proužek v barvě předmětu, název, „kód · typ“ a vpravo místnost
+/// se štítkem „TEĎ“ nebo „Zítra“.
 struct NextClassRow: View {
+    /// Zobrazovaný výskyt výuky.
     let occurrence: TimetableOccurrence
+    /// Zda hodina právě probíhá (zobrazí štítek „TEĎ“).
     let isOngoing: Bool
+    /// Zda zobrazit štítek „Zítra“.
     let showsTomorrow: Bool
 
+    /// Obsah pohledu `NextClassRow` sestavený z jeho vstupních hodnot.
     var body: some View {
         let event = occurrence.event
         let color = NextClassFormat.color(for: occurrence)
@@ -253,10 +286,14 @@ struct NextClassRow: View {
 
 // MARK: - Zamčená obrazovka
 
-/// Obdélníkový widget: „10:00 · AP9PT · 52/202“ tučně, název předmětu a stav.
+/// Obdélníkový widget zamčené obrazovky.
+///
+/// Ukáže „10:00 · AP9PT · 52/202“ tučně, název předmětu a stav; jinak stav volna
+/// s nápovědou „Příště…“, nebo výzvu k přihlášení do STAGu.
 struct NextClassRectangularView: View {
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassRectangularView` sestavený z jeho vstupních hodnot.
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let occurrence = entry.soon.first {
@@ -313,10 +350,13 @@ struct NextClassRectangularView: View {
     }
 }
 
-/// Řádkový widget, např. „10:00 AP9PT · 52/202“.
+/// Řádkový widget zamčené obrazovky, např. „10:00 AP9PT · 52/202“.
+///
+/// Bez hodin zobrazí „Volno 🎉“, bez rozvrhu výzvu k přihlášení do STAGu.
 struct NextClassInlineView: View {
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassInlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         if let occurrence = entry.soon.first {
             Label(title(for: occurrence), systemImage: entry.isOngoing(occurrence) ? "play.circle.fill" : "clock")
@@ -327,6 +367,10 @@ struct NextClassInlineView: View {
         }
     }
 
+    /// Sestaví text řádku pro výskyt podle jeho stavu.
+    ///
+    /// - Parameter occurrence: Zobrazovaný výskyt.
+    /// - Returns: „Teď …“ u probíhající, „čas …“ u dnešní a „Zítra čas …“ u zítřejší hodiny.
     private func title(for occurrence: TimetableOccurrence) -> String {
         let place = NextClassFormat.codeAndRoom(occurrence)
         if entry.isOngoing(occurrence) { return String(localized: "Teď \(place)") }
@@ -335,10 +379,13 @@ struct NextClassInlineView: View {
     }
 }
 
-/// Kruhový widget: kód předmětu, čas začátku (nebo „teď“) a místnost.
+/// Kruhový widget zamčené obrazovky.
+///
+/// Ukáže kód předmětu, čas začátku (nebo „teď“) a pod ním místnost, konec hodiny či „zítra“.
 struct NextClassCircularView: View {
     let entry: NextClassEntry
 
+    /// Obsah pohledu `NextClassCircularView` sestavený z jeho vstupních hodnot.
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
@@ -348,6 +395,9 @@ struct NextClassCircularView: View {
         }
     }
 
+    /// Obsah kruhu podle stavu nejbližší hodiny a dostupnosti rozvrhu.
+    ///
+    /// - Returns: Pohled s detaily hodiny, stav volna, nebo upozornění na chybějící rozvrh.
     @ViewBuilder
     private var content: some View {
         if let occurrence = entry.soon.first {
@@ -395,12 +445,18 @@ struct NextClassCircularView: View {
 
 // MARK: - Sdílené prvky
 
-/// Živý stav hodiny: „za 25 min“ (odpočet se hýbe sám), „Probíhá“ s průběhem, nebo „Zítra“.
+/// Živý stav hodiny.
+///
+/// „za 25 min“ (odpočet se hýbe sám), „Probíhá“ volitelně s průběhem, nebo „Zítra“.
 struct NextClassStatusLine: View {
+    /// Výskyt, jehož stav se zobrazuje.
     let occurrence: TimetableOccurrence
+    /// Záznam, vůči jehož okamžiku se stav určuje.
     let entry: NextClassEntry
+    /// Zda u probíhající hodiny zobrazit ukazatel průběhu; výchozí je `false`.
     var showsProgress = false
 
+    /// Obsah pohledu `NextClassStatusLine` sestavený z jeho vstupních hodnot.
     var body: some View {
         let color = NextClassFormat.color(for: occurrence)
 
@@ -442,12 +498,17 @@ struct NextClassStatusLine: View {
     }
 }
 
-/// Prázdný stav: rozvrh nenačtený, nebo dnes a zítra volno (s nápovědou „Příště…“).
+/// Prázdný stav widgetu „Další hodina“.
+///
+/// Buď rozvrh nenačtený (výzva k přihlášení), nebo dnes a zítra volno s nápovědou „Příště…“.
 struct NextClassEmptyState: View {
     @Environment(\.colorScheme) private var colorScheme
+    /// Záznam určující variantu prázdného stavu.
     let entry: NextClassEntry
+    /// Zda použít menší variantu.
     let compact: Bool
 
+    /// Obsah pohledu `NextClassEmptyState` sestavený z jeho vstupních hodnot.
     var body: some View {
         if entry.hasTimetable {
             free
@@ -456,6 +517,9 @@ struct NextClassEmptyState: View {
         }
     }
 
+    /// Varianta „Volno“ s nápovědou na nejbližší hodinu.
+    ///
+    /// - Returns: Pohled stavu volna.
     private var free: some View {
         VStack(spacing: compact ? 3 : 6) {
             Image(systemName: "sun.max.fill")
@@ -482,6 +546,9 @@ struct NextClassEmptyState: View {
         .environment(\.locale, .app)
     }
 
+    /// Varianta „Rozvrh nenačten“ s výzvou k přihlášení do STAGu.
+    ///
+    /// - Returns: Pohled chybějícího rozvrhu.
     private var missing: some View {
         VStack(spacing: compact ? 4 : 8) {
             Image(systemName: "calendar.badge.exclamationmark")
@@ -499,23 +566,38 @@ struct NextClassEmptyState: View {
     }
 }
 
-/// Formátování pro widget „Další hodina“ v jazyce aplikace (česky bez úvodní nuly: „8:00“).
+/// Formátování pro widget „Další hodina“.
+///
+/// Používá jazyk aplikace (česky bez úvodní nuly: „8:00“).
 enum NextClassFormat {
+    /// Naformátuje čas na hodiny a minuty.
+    ///
+    /// - Parameter date: Formátované datum.
+    /// - Returns: Čas, např. „8:00“.
     static func time(_ date: Date) -> String {
         date.formatted(.dateTime.hour().minute().locale(.app))
     }
 
-    /// „10:00–12:00“
+    /// Naformátuje rozsah hodiny, např. „10:00–12:00“.
+    ///
+    /// - Parameter occurrence: Výskyt se začátkem a koncem.
+    /// - Returns: Text rozsahu.
     static func timeRange(_ occurrence: TimetableOccurrence) -> String {
         "\(time(occurrence.start))–\(time(occurrence.end))"
     }
 
-    /// „po 5. 10.“
+    /// Naformátuje den, např. „po 5. 10.“.
+    ///
+    /// - Parameter date: Formátované datum.
+    /// - Returns: Zkrácený den v týdnu, den a měsíc.
     static func dayText(_ date: Date) -> String {
         date.formatted(.dateTime.weekday(.abbreviated).day().month(.defaultDigits).locale(.app))
     }
 
-    /// „AP9PT · 52/202“ (bez místnosti jen kód)
+    /// Spojí kód předmětu a místnost, např. „AP9PT · 52/202“ (bez místnosti jen kód).
+    ///
+    /// - Parameter occurrence: Výskyt výuky.
+    /// - Returns: Text s kódem a případně místností.
     static func codeAndRoom(_ occurrence: TimetableOccurrence) -> String {
         [occurrence.event.subjectCode, occurrence.event.locationText]
             .compactMap { $0 }
@@ -523,12 +605,19 @@ enum NextClassFormat {
     }
 
     /// Barva předmětu z aplikace; když chybí, stabilní barva z palety podle kódu.
+    ///
+    /// - Parameter occurrence: Výskyt výuky.
+    /// - Returns: Barva v hexadecimálním zápisu.
     static func hex(for occurrence: TimetableOccurrence) -> String {
         if let hex = occurrence.event.hexColor, !hex.isEmpty { return hex }
         let seed = occurrence.event.subjectCode.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         return SubjectPalette.hex(seed)
     }
 
+    /// Barva předmětu jako `Color`.
+    ///
+    /// - Parameter occurrence: Výskyt výuky.
+    /// - Returns: Barva odvozená z `hex(for:)`.
     static func color(for occurrence: TimetableOccurrence) -> Color {
         Color(hex: hex(for: occurrence))
     }

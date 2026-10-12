@@ -1,9 +1,15 @@
 import SwiftUI
 
 /// Kruhový ukazatel postupu s procenty uprostřed.
+///
+/// Zobrazuje podíl splněných deadlinů jako animovaný kruh s textem „hotovo“; hodnotu dostává
+/// zvenku. Nemá akce; používá se v detailu předmětu (`SubjectDetailView`).
 struct ProgressRingView: View {
+    /// Postup v rozsahu 0…1.
     let progress: Double
+    /// Barva kruhu.
     let color: Color
+    /// Tloušťka čáry kruhu.
     var lineWidth: CGFloat = 10
 
     var body: some View {

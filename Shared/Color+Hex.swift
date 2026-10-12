@@ -2,7 +2,9 @@ import SwiftUI
 
 extension Color {
     /// Vytvoří barvu z hex řetězce ve tvaru „#RRGGBB“ nebo „RRGGBB“.
-    /// Při neplatném vstupu vrátí šedou, aby aplikace nikdy nespadla.
+    ///
+    /// Okolní bílé znaky se ignorují. Při neplatném vstupu vrátí šedou, aby aplikace nikdy nespadla.
+    /// - Parameter hex: Barva v hexadecimálním zápisu (prostor sRGB, plná neprůhlednost).
     init(hex: String) {
         var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         if cleaned.hasPrefix("#") { cleaned.removeFirst() }
@@ -22,16 +24,22 @@ extension Color {
     }
 }
 
-/// Paleta barev pro předměty. Všechny odstíny mají dostatečný kontrast s bílým textem
-/// a dobře vypadají ve světlém i tmavém režimu.
+/// Paleta barev pro předměty.
+///
+/// Všechny odstíny mají dostatečný kontrast s bílým textem a dobře vypadají ve světlém i tmavém režimu.
+/// Soubor se kompiluje do aplikace, widgetu i hodinek.
 enum SubjectPalette {
+    /// Jedna barva palety.
     struct Entry: Identifiable {
+        /// Barva ve formátu „#RRGGBB“.
         let hex: String
         /// Název barvy pro VoiceOver (lokalizovaný)
         let name: String
+        /// Identifikátor – hex zápis barvy.
         var id: String { hex }
     }
 
+    /// Dvanáct barev palety v pořadí zobrazení ve výběru.
     static let entries: [Entry] = [
         Entry(hex: "#E5484D", name: String(localized: "Červená")),
         Entry(hex: "#F76B15", name: String(localized: "Oranžová")),
@@ -47,10 +55,12 @@ enum SubjectPalette {
         Entry(hex: "#687076", name: String(localized: "Šedá"))
     ]
 
-    /// Náhodná barva pro nový předmět
+    /// Náhodná barva pro nový předmět („#RRGGBB“).
     static var randomHex: String { entries.randomElement()?.hex ?? "#3E63DD" }
 
-    /// Hex barvy podle indexu v paletě (pro ukázková data)
+    /// Vrátí hex barvy podle indexu v paletě (pro ukázková data).
+    /// - Parameter index: Libovolné celé číslo; bere se cyklicky (modulo počet barev, i záporné).
+    /// - Returns: Barva ve formátu „#RRGGBB“.
     static func hex(_ index: Int) -> String {
         let count = entries.count
         return entries[((index % count) + count) % count].hex

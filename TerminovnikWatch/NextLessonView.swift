@@ -1,9 +1,14 @@
 import SwiftUI
 
-/// Karta „Další hodina“: probíhající nebo nejbližší hodina s odpočtem.
+/// Stránka „Další hodina“ s probíhající nebo nejbližší hodinou a odpočtem.
+///
+/// Hodinu vybírá z rozvrhu, který ``WatchStore`` dekódoval z kontextu přijatého z iPhonu
+/// přes WatchConnectivity; výběr se přepočítává každou minutu.
 struct NextLessonView: View {
+    /// Zdroj dat přijatých z iPhonu.
     let store: WatchStore
 
+    /// Obsah stránky obnovovaný každou minutu.
     var body: some View {
         // Každou minutu přepočítáme, která hodina je „další“ (odpočet samotný běží plynule)
         TimelineView(.everyMinute) { context in
@@ -11,6 +16,10 @@ struct NextLessonView: View {
         }
     }
 
+    /// Sestaví obsah stránky pro daný okamžik.
+    ///
+    /// - Parameter now: Aktuální čas, ke kterému se hledá další hodina.
+    /// - Returns: Kartu hodiny, nebo prázdný stav, když rozvrh chybí nebo žádná hodina nenásleduje.
     @ViewBuilder
     private func content(now: Date) -> some View {
         if store.timetable == nil {
@@ -32,13 +41,19 @@ struct NextLessonView: View {
     }
 }
 
-/// Obsah karty jedné hodiny
+/// Karta jedné hodiny.
+///
+/// Zobrazuje název předmětu, typ, den a čas, místnost a odpočet do začátku nebo do konce hodiny.
 private struct LessonCard: View {
+    /// Zobrazovaný výskyt hodiny.
     let lesson: TimetableOccurrence
+    /// Aktuální čas, ke kterému se počítá odpočet.
     let now: Date
 
+    /// Udává, zda hodina právě probíhá.
     private var isOngoing: Bool { lesson.start <= now && now < lesson.end }
 
+    /// Obsah karty.
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 6) {
@@ -80,7 +95,9 @@ private struct LessonCard: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Odpočet do začátku (nebo do konce probíhající hodiny)
+    /// Odpočet do začátku hodiny, nebo do konce probíhající hodiny.
+    ///
+    /// Během poslední hodiny před začátkem a během výuky běží po sekundách, jinak je relativní.
     @ViewBuilder
     private var countdown: some View {
         if isOngoing {
@@ -97,16 +114,21 @@ private struct LessonCard: View {
 // MARK: - Pomocné texty
 
 extension TimetableOccurrence {
-    /// Barva předmětu z aplikace (šedá, pokud předmět v aplikaci není)
+    /// Barva předmětu z aplikace, nebo šedá, pokud předmět barvu nemá.
     var color: Color { Color(hex: event.hexColor ?? "#687076") }
 
-    /// „10:00–12:00“
+    /// Časový rozsah hodiny ve formátu „10:00–12:00“.
     var timeRangeText: String {
         let style = Date.FormatStyle.dateTime.hour().minute().locale(.app)
         return "\(start.formatted(style))–\(end.formatted(style))"
     }
 
-    /// „Dnes“ / „Zítra“ / „Čtvrtek“
+    /// Vrátí označení dne, kdy hodina začíná: „Dnes“, „Zítra“, nebo název dne v týdnu („Čtvrtek“).
+    ///
+    /// - Parameters:
+    ///   - now: Aktuální čas, vůči kterému se počítá rozdíl dnů.
+    ///   - calendar: Kalendář pro výpočet; výchozí hodnota je aktuální kalendář.
+    /// - Returns: Lokalizované označení dne.
     func dayText(now: Date, calendar: Calendar = .current) -> String {
         switch start.calendarDays(from: now, calendar: calendar) {
         case 0: String(localized: "Dnes", comment: "Odpočet: termín je dnes")

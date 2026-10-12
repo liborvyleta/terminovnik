@@ -3,24 +3,34 @@ import SwiftData
 
 /// Sekce „Účet IS/STAG“ pro obrazovku Nastavení – vkládá se přímo do `Form`.
 ///
-/// Připojeno: údaje o studentovi, aktualizace předmětů ze STAGu (bez nového přihlášení)
-/// a odhlášení. Nepřipojeno: krátké vysvětlení a přihlášení přes `StagImportView`.
+/// Připojeno: údaje o studentovi, aktualizace předmětů ze STAGu (bez nového
+/// přihlášení) a odhlášení. Nepřipojeno: krátké vysvětlení, přihlášení přes
+/// `StagImportView` a vstup do ukázkového režimu. V ukázkovém režimu zobrazí
+/// jen informaci a tlačítko pro jeho ukončení. Stav drží `StagAccountViewModel`.
+/// Používá se v `SettingsView`.
 struct StagAccountSection: View {
+    /// SwiftData kontext pro aktualizaci předmětů.
     @Environment(\.modelContext) private var modelContext
 
+    /// ViewModel s účtem STAG a stavem synchronizace.
     @State private var viewModel: StagAccountViewModel
+    /// Zda je zobrazen sheet přihlášení (`StagImportView`).
     @State private var showsLogin = false
+    /// Zda je zobrazen potvrzovací dialog odhlášení.
     @State private var confirmsSignOut = false
 
+    /// Vytvoří sekci s výchozím `StagAccountViewModel`.
     init() {
         _viewModel = State(initialValue: StagAccountViewModel())
     }
 
-    /// Pro náhledy s připraveným stavem
+    /// Vytvoří sekci s připraveným stavem (pro náhledy).
+    /// - Parameter viewModel: ViewModel s předpřipraveným stavem.
     init(viewModel: StagAccountViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
+    /// Podle ukázkového režimu zobrazí sekci ukázkového režimu, nebo sekci účtu.
     var body: some View {
         if DemoMode.isActive {
             demoSection
@@ -29,6 +39,7 @@ struct StagAccountSection: View {
         }
     }
 
+    /// Sekce účtu (připojený / nepřipojený stav) a při připojení i sekce akcí.
     @ViewBuilder
     private var accountSection: some View {
         // Hlavní sekce existuje v obou stavech, proto na její hlavičce visí sheet přihlášení:
@@ -59,6 +70,11 @@ struct StagAccountSection: View {
 
     // MARK: - Připojený účet
 
+    /// Řádky s údaji o připojeném účtu.
+    ///
+    /// Zobrazuje jméno, školu, osobní číslo, fakultu, datum připojení
+    /// a průběžně překreslovaný čas poslední aktualizace.
+    /// - Parameter account: Připojený účet STAG.
     @ViewBuilder
     private func accountRows(_ account: StagAccount) -> some View {
         HStack(spacing: 12) {
@@ -97,6 +113,7 @@ struct StagAccountSection: View {
         }
     }
 
+    /// Sekce s aktualizací předmětů, stavem poslední aktualizace a odhlášením.
     private var actionsSection: some View {
         Section {
             Button {
@@ -131,7 +148,7 @@ struct StagAccountSection: View {
         }
     }
 
-    /// Výsledek poslední aktualizace nebo chyba
+    /// Výsledek poslední aktualizace nebo chyba.
     @ViewBuilder
     private var statusRow: some View {
         switch viewModel.state {
@@ -149,6 +166,7 @@ struct StagAccountSection: View {
 
     // MARK: - Nepřipojeno
 
+    /// Řádky nepřipojeného stavu: vysvětlení, případná chyba, přihlášení a ukázková data.
     @ViewBuilder
     private var disconnectedRows: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -188,6 +206,7 @@ struct StagAccountSection: View {
 
     // MARK: - Ukázkový režim
 
+    /// Sekce zobrazená v ukázkovém režimu s tlačítkem pro jeho ukončení.
     private var demoSection: some View {
         Section {
             HStack(spacing: 12) {
@@ -220,6 +239,8 @@ struct StagAccountSection: View {
 
     // MARK: - Pomocné
 
+    /// Řádek s červenou chybovou zprávou.
+    /// - Parameter message: Text chyby.
     private func errorRow(_ message: String) -> some View {
         Label(message, systemImage: "exclamationmark.triangle.fill")
             .labelStyle(.compact(spacing: 6))
@@ -227,7 +248,14 @@ struct StagAccountSection: View {
             .foregroundStyle(.red)
     }
 
-    /// „před 5 minutami“, „včera“… nebo „Zatím nikdy“
+    /// Relativní text času poslední aktualizace.
+    ///
+    /// Vrací „Zatím nikdy“, „právě teď“ (do 60 s) nebo relativní čas,
+    /// např. „před 5 minutami“ či „včera“.
+    /// - Parameters:
+    ///   - date: Čas poslední aktualizace, nebo `nil`.
+    ///   - now: Aktuální čas, vůči kterému se počítá.
+    /// - Returns: Lokalizovaný text pro zobrazení.
     private func lastSyncText(_ date: Date?, now: Date) -> String {
         guard let date else { return String(localized: "Zatím nikdy") }
         if now.timeIntervalSince(date) < 60 { return String(localized: "právě teď") }

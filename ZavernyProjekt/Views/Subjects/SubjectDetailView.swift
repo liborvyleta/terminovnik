@@ -1,21 +1,34 @@
 import SwiftUI
 import SwiftData
 
-/// Detail předmětu: kroužek s postupem, souhrn a seznam všech úkolů předmětu.
+/// Detail předmětu.
+///
+/// Zobrazuje hlavičku s kroužkem postupu, hodnocení ze STAGu (`GradeStore`),
+/// aktivní a splněné úkoly, termíny zkoušek ze STAGu (`ExamTermStore`)
+/// s odkazem na záložku Zkoušky. Umožňuje přidat deadline, upravit předmět
+/// a u úkolů je splnit, upravit, smazat nebo přidat do Kalendáře. Logiku
+/// deleguje na `SubjectDetailViewModel`. Otevírá se ze `SubjectsListView`.
 struct SubjectDetailView: View {
+    /// SwiftData kontext pro mazání úkolů.
     @Environment(\.modelContext) private var modelContext
 
+    /// Zobrazovaný předmět.
     let subject: Subject
 
+    /// ViewModel s tříděním úkolů, jejich plněním a mazáním.
     @State private var viewModel = SubjectDetailViewModel()
+    /// Zda je otevřený formulář nového deadlinu.
     @State private var isAddingTask = false
+    /// Zda je otevřený formulář úpravy předmětu.
     @State private var isEditingSubject = false
+    /// Úkol otevřený v editačním formuláři.
     @State private var taskToEdit: ExamTask?
-    /// Úkol, pro který je otevřený editor události v Kalendáři
+    /// Úkol, pro který je otevřený editor události v Kalendáři.
     @State private var taskForCalendar: ExamTask?
-    /// Vybraná záložka – odkaz „Všechny termíny“ přepne na Zkoušky
+    /// Vybraná záložka – odkaz „Všechny termíny“ přepne na Zkoušky.
     @AppStorage("selectedTab") private var selectedTab = "dashboard"
 
+    /// Seznam s hlavičkou, hodnocením, prázdným stavem, aktivními úkoly, termíny a splněnými úkoly.
     var body: some View {
         let active = viewModel.activeTasks(of: subject)
         let completed = viewModel.completedTasks(of: subject)
@@ -92,7 +105,9 @@ struct SubjectDetailView: View {
         .sensoryFeedback(.success, trigger: viewModel.completionFeedback)
     }
 
-    /// Sekce „Hodnocení“: velká známka, zápočet a zkouška (jen části, které STAG uvádí)
+    /// Sekce „Hodnocení“: velká známka, zápočet a zkouška (jen části, které STAG uvádí).
+    /// - Parameter grade: Hodnocení předmětu ze STAGu.
+    /// - Returns: Sekce s hodnocením.
     private func gradeSection(_ grade: SubjectGrade) -> some View {
         Section {
             SubjectGradeSummaryRow(grade: grade)
@@ -107,7 +122,12 @@ struct SubjectDetailView: View {
         }
     }
 
-    /// Řádek s gesty: klepnutí = úprava, swipe doleva = smazat, dlouhé podržení = kontextové menu
+    /// Řádek úkolu s gesty.
+    ///
+    /// Klepnutí = úprava, swipe doleva = smazat, dlouhé podržení = kontextové
+    /// menu (splnit/obnovit, upravit, přidat do Kalendáře, smazat).
+    /// - Parameter task: Zobrazovaný úkol.
+    /// - Returns: Řádek úkolu s připojenými akcemi.
     private func row(for task: ExamTask) -> some View {
         TaskRowView(task: task, showsSubject: false) { toggle(task) }
         .contentShape(Rectangle())
@@ -147,20 +167,29 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Animovaně přepne stav splnění úkolu.
+    /// - Parameter task: Úkol, jehož stav se přepíná.
     private func toggle(_ task: ExamTask) {
         withAnimation(.snappy) { viewModel.toggleCompletion(task) }
     }
 }
 
-/// Řádek termínu zkoušky ze STAGu: datum a čas, typ, místnost, obsazenost a stav zápisu.
+/// Řádek termínu zkoušky ze STAGu.
+///
+/// Zobrazuje datum a čas, typ, příznak opravného termínu, místnost,
+/// obsazenost a stav zápisu (zapsáno / zrušeno). Používá se
+/// v sekci termínů `SubjectDetailView`.
 private struct ExamTermRow: View {
+    /// Zobrazovaný termín zkoušky.
     let term: ExamTerm
 
+    /// Začátek termínu, případně doplněný o čas konce.
     private var timeText: String {
         guard let end = term.end else { return term.start.deadlineFormatted }
         return "\(term.start.deadlineFormatted)–\(end.formatted(.dateTime.hour().minute().locale(.czech)))"
     }
 
+    /// Řádek s časem a stavem, pod ním typ, místnost a obsazenost.
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline) {
@@ -207,10 +236,16 @@ private struct ExamTermRow: View {
     }
 }
 
-/// Hlavička detailu: kroužek postupu, název, kredity a nejbližší deadline.
+/// Hlavička detailu předmětu.
+///
+/// Zobrazuje kroužek postupu, štítek, název, kredity, počty aktivních
+/// a splněných úkolů a nejbližší deadline s odpočtem. Používá se
+/// jako první sekce `SubjectDetailView`.
 private struct SubjectHeaderView: View {
+    /// Zobrazovaný předmět.
     let subject: Subject
 
+    /// Karta s kroužkem a názvem, počty úkolů a případně nejbližším deadlinem.
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 18) {

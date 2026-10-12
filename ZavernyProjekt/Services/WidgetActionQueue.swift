@@ -9,10 +9,16 @@ import SwiftData
 /// Volat při spuštění aplikace a při návratu do popředí, PŘED `WidgetSync.refresh`
 /// (jinak by obnova přehledu vrátila do widgetu deadline, který uživatel už odškrtl).
 enum WidgetActionQueue {
+    /// Zpracuje frontu nad hlavním kontextem ``PersistenceController/shared``.
     static func processPending() {
         processPending(in: PersistenceController.shared.mainContext)
     }
 
+    /// Vyprázdní frontu ID z App Group a označí odpovídající úkoly jako splněné.
+    ///
+    /// Při aspoň jedné změně uloží přes ``TaskService/save(_:)`` (to obnoví i widget).
+    /// - Parameter context: kontext SwiftData, ve kterém se úkoly hledají
+    /// - Note: V ukázkovém režimu se fronta nezpracovává – počká na skutečná data.
     static func processPending(in context: ModelContext) {
         // Ukázkový režim: fronta skutečných odškrtnutí počká na ukončení dema
         guard !DemoMode.isActive else { return }

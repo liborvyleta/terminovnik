@@ -6,8 +6,12 @@ import SwiftData
 /// Načte předměty zapsané v aktuálním semestru: nové přidá, u existujících
 /// (shoda kódu bez ohledu na velikost písmen) aktualizuje název a kredity.
 /// Nic nemaže – předměty, které uživatel přidal ručně, zůstanou beze změny.
+/// Data stahuje přes `StagService` z ``StagAccountStore`` a zapisuje do SwiftData přes ``TaskService/save(_:)``;
+/// volá ji obrazovka předmětů po přihlášení nebo při ruční aktualizaci.
 enum StagSubjectSync {
-    /// Výsledek jedné aktualizace
+    /// Výsledek jedné aktualizace.
+    ///
+    /// Vrací ho ``StagSubjectSync/sync(in:)``; UI z něj zobrazí ``summary``.
     struct SyncResult: Equatable {
         /// Počet nově přidaných předmětů
         var added: Int
@@ -16,9 +20,12 @@ enum StagSubjectSync {
         /// Kolik předmětů má student ve STAGu zapsaných
         var total: Int
 
+        /// Přidal se nebo změnil aspoň jeden předmět.
         var hasChanges: Bool { added > 0 || updated > 0 }
 
-        /// Text pro uživatele, např. „Přidáno 2, aktualizováno 1“ nebo „Vše je aktuální“
+        /// Text pro uživatele, např. „Přidáno 2, aktualizováno 1“ nebo „Vše je aktuální“.
+        ///
+        /// Při nulovém ``total`` vrátí hlášku, že v semestru nejsou zapsané žádné předměty.
         var summary: String {
             guard total > 0 else { return String(localized: "V aktuálním semestru nemáš ve STAGu zapsané žádné předměty.") }
             guard hasChanges else { return String(localized: "Vše je aktuální") }
@@ -30,9 +37,14 @@ enum StagSubjectSync {
         }
     }
 
-    /// Chyby aktualizace, které nepocházejí přímo ze STAGu
+    /// Chyby aktualizace, které nepocházejí přímo ze STAGu.
+    ///
+    /// Chyby komunikace se STAGem se předávají jako `StagError`.
     nonisolated enum SyncError: LocalizedError {
+        /// Chybí uložený účet nebo osobní číslo – uživatel není přihlášen
         case notConnected
+
+        /// Lokalizovaný popis chyby pro uživatele.
 
         var errorDescription: String? {
             switch self {
@@ -43,11 +55,27 @@ enum StagSubjectSync {
 
     /// Stáhne zapsané předměty aktuálního semestru a promítne je do databáze.
     /// Při vypršeném přihlášení (`StagError.unauthorized`) účet odhlásí a chybu předá dál.
+    ///
+    /// Asynchronní operace nad sdíleným ``StagAccountStore/shared``.
+    /// - Parameter context: kontext SwiftData, do kterého se předměty zapíší
+    /// - Returns: Počty přidaných, aktualizovaných a zapsaných předmětů.
+    /// - Throws: ``SyncError/notConnected`` bez přihlášení, `StagError` při chybě STAGu
+    ///   (u `unauthorized` po odhlášení účtu) a chyby SwiftData při načtení předmětů.
     static func sync(in context: ModelContext) async throws -> SyncResult {
         try await sync(in: context, store: .shared)
     }
 
-    /// Varianta s konkrétním úložištěm účtu
+    /// Varianta s konkrétním úložištěm účtu.
+    ///
+    /// Asynchronně zjistí aktuální období, stáhne zapsané předměty, chybějící název či kredity doplní
+    /// z `getPredmetInfo`, nové předměty vloží s další barvou palety a při změnách uloží.
+    /// Po úspěchu zavolá `markSynced()` na úložišti účtu.
+    /// - Parameters:
+    ///   - context: kontext SwiftData, do kterého se předměty zapíší
+    ///   - store: úložiště účtu, ze kterého se vytvoří služba STAG
+    /// - Returns: Počty přidaných, aktualizovaných a zapsaných předmětů.
+    /// - Throws: ``SyncError/notConnected``, když účet chybí; `StagError` ze služby STAG
+    ///   (při `unauthorized` se účet nejdřív odhlásí); chyby `context.fetch`.
     static func sync(in context: ModelContext, store: StagAccountStore) async throws -> SyncResult {
         guard let service = store.makeService(), let osCislo = store.account?.osCislo else {
             throw SyncError.notConnected

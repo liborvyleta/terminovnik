@@ -2,9 +2,17 @@ import SwiftUI
 import WidgetKit
 
 /// Widget „Nejbližší deadliny“ pro plochu i zamčenou obrazovku.
+///
+/// Podporuje rodiny `.systemSmall`, `.systemMedium`, `.systemLarge`, `.accessoryRectangular`,
+/// `.accessoryCircular` a `.accessoryInline`. Data dodává `DeadlineProvider` z přehledu
+/// uloženého aplikací v App Group; časová osa se plánuje na 7 dní dopředu s politikou `.atEnd`.
 struct DeadlineWidget: Widget {
+    /// Identifikátor widgetu, podle kterého aplikace obnovuje jeho časovou osu.
     static let kind = "DeadlineWidget"
 
+    /// Statická konfigurace widgetu s poskytovatelem, názvem, popisem a podporovanými rodinami.
+    ///
+    /// - Returns: Konfigurace vykreslující `DeadlineWidgetView`.
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: DeadlineProvider()) { entry in
             DeadlineWidgetView(entry: entry)

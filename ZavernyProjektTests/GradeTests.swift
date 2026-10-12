@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Známky a studijní výsledky: výklad známek, souhrny, semestry, dekódování odpovědí STAGu
+/// Testy známek a studijních výsledků.
+///
+/// Pokrývají výklad známek, souhrny, semestry, dekódování odpovědí STAGu
 /// a spojení obou služeb (`GradeStore.merge`). Jen čistá logika – žádné `GradeStore.shared`,
 /// App Group, Klíčenka ani síť.
 @Suite("Známky a studijní výsledky")
@@ -10,10 +12,29 @@ struct GradeTests {
 
     // MARK: - Pomůcky
 
+    /// Vytvoří dílčí hodnocení jen s výsledkem.
+    ///
+    /// - Parameter result: Výsledek (známka nebo zápočet).
+    /// - Returns: Dílčí hodnocení bez data, pokusu, zkoušejícího a bodů.
     private func part(_ result: String) -> GradePart {
         GradePart(result: result, date: nil, attempt: nil, examiner: nil, points: nil)
     }
 
+    /// Vytvoří hodnocení předmětu s nastavitelnými vlastnostmi.
+    ///
+    /// - Parameters:
+    ///   - code: Zkratka předmětu.
+    ///   - department: Katedra.
+    ///   - year: Akademický rok.
+    ///   - semester: Semestr.
+    ///   - name: Název předmětu.
+    ///   - credits: Počet kreditů.
+    ///   - finalGrade: Výsledná známka.
+    ///   - exam: Výsledek zkoušky.
+    ///   - creditTest: Výsledek zápočtu.
+    ///   - isPassed: Zda je předmět absolvován.
+    ///   - isRecognized: Zda je předmět uznán.
+    /// - Returns: Nové hodnocení předmětu.
     private func grade(
         _ code: String,
         department: String = "AUIUI",
@@ -35,15 +56,31 @@ struct GradeTests {
         )
     }
 
+    /// Porovná volitelné číslo s očekávanou hodnotou s tolerancí 1e-9.
+    ///
+    /// - Parameters:
+    ///   - value: Porovnávaná hodnota, nebo `nil`.
+    ///   - expected: Očekávaná hodnota.
+    /// - Returns: `true`, pokud hodnota existuje a liší se méně než o toleranci.
     private func isApprox(_ value: Double?, _ expected: Double) -> Bool {
         guard let value else { return false }
         return abs(value - expected) < 1e-9
     }
 
+    /// Dekóduje pole známek ze STAGu.
+    ///
+    /// - Parameter json: JSON v textové podobě.
+    /// - Returns: Dekódované záznamy známek.
+    /// - Throws: `DecodingError`, pokud JSON neodpovídá formátu.
     private func records(_ json: String) throws -> [StagGradeRecord] {
         try decodeJSON([StagGradeRecord].self, json)
     }
 
+    /// Dekóduje pole absolvovaných předmětů ze STAGu.
+    ///
+    /// - Parameter json: JSON v textové podobě.
+    /// - Returns: Dekódované předměty.
+    /// - Throws: `DecodingError`, pokud JSON neodpovídá formátu.
     private func passed(_ json: String) throws -> [StagPassedSubject] {
         try decodeJSON([StagPassedSubject].self, json)
     }
@@ -412,6 +449,11 @@ struct GradeTests {
 
     @Test("StagFlexible.text: ořez, prázdné → nil, čísla, obal {\"value\"}")
     func flexibleText() throws {
+        /// Dekóduje hodnotu klíče „value“ jako text.
+        ///
+        /// - Parameter raw: JSON hodnota v textové podobě.
+        /// - Returns: Výsledek `StagFlexible.text`.
+        /// - Throws: `DecodingError`, pokud JSON nelze dekódovat.
         func text(_ raw: String) throws -> String? { try decodeJSON(FlexibleProbe.self, #"{"value":"# + raw + "}").text }
         #expect(try text(#""  abc  ""#) == "abc")
         #expect(try text(#""""#) == nil)
@@ -428,6 +470,11 @@ struct GradeTests {
 
     @Test("StagFlexible.number: číslo, text, text s mezerami, obal, nesmysl")
     func flexibleNumber() throws {
+        /// Dekóduje hodnotu klíče „value“ jako číslo.
+        ///
+        /// - Parameter raw: JSON hodnota v textové podobě.
+        /// - Returns: Výsledek `StagFlexible.number`.
+        /// - Throws: `DecodingError`, pokud JSON nelze dekódovat.
         func number(_ raw: String) throws -> Int? { try decodeJSON(FlexibleProbe.self, #"{"value":"# + raw + "}").number }
         #expect(try number("5") == 5)
         #expect(try number(#""5""#) == 5)
@@ -525,6 +572,13 @@ struct GradeTests {
 
     @Test("stavAbsolvovani „A“ / „S“ → isPassed i bez přehledu předmětů; „N“ absolvování nezruší")
     func mergePassedState() throws {
+        /// Spojí jeden záznam známky s daným stavem absolvování a volitelným přehledem předmětů.
+        ///
+        /// - Parameters:
+        ///   - state: Hodnota `stavAbsolvovani`.
+        ///   - passedFlag: Hodnota `absolvoval` v přehledu předmětů; `nil` znamená prázdný přehled.
+        /// - Returns: První spojené hodnocení, nebo `nil`.
+        /// - Throws: `DecodingError`, pokud fixture nelze dekódovat.
         func merged(_ state: String, passedFlag: String?) throws -> SubjectGrade? {
             let passedJSON = passedFlag.map {
                 #"[{"katedra":"AUIUI","zkratka":"AP7SI","rok":"2025","semestr":"ZS","absolvoval":"\#($0)"}]"#
@@ -651,7 +705,9 @@ struct GradeTests {
     }
 }
 
-/// Testovací obal pro `StagFlexible` – čte jediný klíč „value“ všemi třemi způsoby.
+/// Testovací obal pro `StagFlexible`.
+///
+/// Čte jediný klíč „value“ všemi třemi způsoby – jako text, číslo a příznak.
 private nonisolated struct FlexibleProbe: Decodable {
     let text: String?
     let number: Int?

@@ -2,11 +2,23 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Odvozené vlastnosti termínu zkoušky (`ExamTerm`).
+/// Testy odvozených vlastností termínu zkoušky.
+///
+/// Pokrývají vlastnosti modelu `ExamTerm`, například počet volných míst.
 @Suite("Termíny zkoušek")
 struct ExamTermTests {
     private let start = makeDate(2027, 1, 14, 9, 0)
 
+    /// Vytvoří termín zkoušky z předmětu AP9PT s nastavitelnými vlastnostmi.
+    ///
+    /// - Parameters:
+    ///   - id: Identifikátor termínu.
+    ///   - typeName: Název typu termínu.
+    ///   - start: Začátek; `nil` znamená výchozí `start` testu.
+    ///   - occupied: Počet obsazených míst.
+    ///   - capacity: Kapacita termínu.
+    ///   - isRetake: Zda jde o opravný termín.
+    /// - Returns: Nový termín zkoušky.
     private func term(
         id: String = "t1",
         typeName: String = "Zkouška",

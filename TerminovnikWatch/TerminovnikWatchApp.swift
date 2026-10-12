@@ -1,13 +1,18 @@
 import SwiftUI
 
-/// Termínovník pro Apple Watch – další hodina, dnešní rozvrh a nejbližší deadliny.
-/// Data posílá aplikace na iPhonu přes WatchConnectivity (`WatchStore`).
+/// Vstupní bod aplikace Termínovník pro Apple Watch.
+///
+/// Zobrazuje další hodinu, dnešní rozvrh a nejbližší deadliny. Data posílá aplikace
+/// na iPhonu přes WatchConnectivity; přijímá je sdílený ``WatchStore``, jehož relaci
+/// aplikace aktivuje při startu.
 @main
 struct TerminovnikWatchApp: App {
+    /// Vytvoří aplikaci a aktivuje WatchConnectivity sdíleného ``WatchStore``.
     init() {
         WatchStore.shared.activate()
     }
 
+    /// Scéna s kořenovou obrazovkou ``WatchRootView`` v jazyce aplikace.
     var body: some Scene {
         WindowGroup {
             WatchRootView(store: .shared)
@@ -16,12 +21,20 @@ struct TerminovnikWatchApp: App {
     }
 }
 
-/// Kořenová obrazovka: svislé stránky (watchOS 10), nebo výzva k otevření aplikace na iPhonu.
+/// Kořenová obrazovka aplikace pro Apple Watch.
+///
+/// Pokud ``WatchStore`` nemá žádná data přijatá z iPhonu, zobrazí výzvu k otevření
+/// aplikace na iPhonu. Jinak zobrazí tři stránky přepínané swipem doleva a doprava:
+/// další hodinu, dnešní rozvrh a deadliny.
 struct WatchRootView: View {
+    /// Zdroj dat přijatých z iPhonu.
     let store: WatchStore
+    /// Index aktuálně zobrazené stránky.
     @State private var page = Self.initialPage
 
-    /// Výchozí stránka; v Debug ji lze zvolit argumentem `-page next|today|deadlines`
+    /// Index výchozí stránky (0 = další hodina, 1 = dnes, 2 = deadliny).
+    ///
+    /// V konfiguraci Debug ji lze zvolit argumentem `-page next|today|deadlines`, jinak je to 0.
     private static var initialPage: Int {
         #if DEBUG
         switch DemoLaunch.page {
@@ -34,6 +47,7 @@ struct WatchRootView: View {
         #endif
     }
 
+    /// Obsah obrazovky: výzva k otevření iPhonu, nebo stránkovaný `TabView`.
     var body: some View {
         NavigationStack {
             if store.isEmpty {

@@ -5,23 +5,30 @@ import SwiftData
 ///
 /// Otevírá se z karty v záložce Předměty (uvnitř jejího `NavigationStack`, proto vlastní stack nemá).
 /// Řádek předmětu, který je i v aplikaci, vede na jeho detail.
+///
+/// Data bere z `GradesViewModel` (ostře z `GradeStore.shared`), barvy předmětů z `@Query`
+/// nad `Subject`. Uživatel může známky obnovit a přihlásit se do STAGu.
 struct GradesView: View {
-    /// Předměty – kvůli barvám a odkazu na detail (změna barvy předmětu se hned projeví)
+    /// Předměty – kvůli barvám a odkazu na detail (změna barvy předmětu se hned projeví).
     @Query private var subjects: [Subject]
 
+    /// ViewModel se stavem obrazovky, souhrnem a známkami po semestrech.
     @State private var viewModel: GradesViewModel
+    /// Zda je otevřený sheet přihlášení do STAGu.
     @State private var isShowingLogin = false
 
-    /// Ostrý režim – data z `GradeStore.shared`
+    /// Vytvoří obrazovku v ostrém režimu s daty z `GradeStore.shared`.
     init() {
         _viewModel = State(initialValue: GradesViewModel())
     }
 
-    /// Vstříknutý ViewModel – pro náhledy a snímky obrazovky (`GradesViewModel(previewGrades:)`)
+    /// Vytvoří obrazovku se vstříknutým ViewModelem – pro náhledy a snímky obrazovky.
+    /// - Parameter viewModel: ViewModel, např. `GradesViewModel(previewGrades:)`.
     init(viewModel: GradesViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
+    /// Obsah podle stavu s toolbarem, přihlášením do STAGu a obnovením při otevření nebo po přihlášení.
     var body: some View {
         content
             .background(Color(.systemGroupedBackground))
@@ -37,6 +44,7 @@ struct GradesView: View {
 
     // MARK: - Stavy
 
+    /// Obsah podle stavu obrazovky: nepřihlášeno, načítání, chyba, prázdno nebo seznam známek.
     @ViewBuilder
     private var content: some View {
         switch viewModel.screenState {
@@ -94,7 +102,9 @@ struct GradesView: View {
         }
     }
 
-    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení)
+    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení).
+    /// - Parameter content: Obsah zobrazený uprostřed.
+    /// - Returns: Scrollovatelný pohled s obsahem na výšku plochy.
     private func centered(@ViewBuilder _ content: () -> some View) -> some View {
         ScrollView {
             content()
@@ -105,6 +115,7 @@ struct GradesView: View {
 
     // MARK: - Seznam
 
+    /// Seznam s chybovým bannerem, kartou průměru, sekcemi semestrů a patičkou s časem aktualizace.
     private var gradesList: some View {
         List {
             if let errorMessage = viewModel.errorMessage {
@@ -149,7 +160,8 @@ struct GradesView: View {
         .refreshable { await viewModel.refresh() }
     }
 
-    /// Předmět, který je i v aplikaci, otevře svůj detail
+    /// Řádek předmětu; předmět, který je i v aplikaci, otevře svůj detail.
+    /// - Parameter grade: Hodnocení předmětu.
     @ViewBuilder
     private func row(for grade: SubjectGrade) -> some View {
         let gradeRow = GradeRow(
@@ -164,7 +176,9 @@ struct GradesView: View {
         }
     }
 
-    /// „ZS 2026/2027 ……… Ø 1,50 · 11 kreditů“
+    /// Hlavička semestru s průměrem a kredity, např. „ZS 2026/2027 ……… Ø 1,50 · 11 kreditů“.
+    /// - Parameter semester: Semestr se známkami.
+    /// - Returns: Pohled hlavičky sekce.
     private func semesterHeader(_ semester: GradeSemester) -> some View {
         let summary = semester.summary
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -189,7 +203,9 @@ struct GradesView: View {
 
     // MARK: - Pomocné pohledy
 
-    /// Chyba při obnovení – starší známky zůstávají zobrazené
+    /// Chyba při obnovení – starší známky zůstávají zobrazené.
+    /// - Parameter message: Text chyby.
+    /// - Returns: Banner s tlačítkem pro opakování.
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -212,6 +228,7 @@ struct GradesView: View {
 
     // MARK: - Toolbar
 
+    /// Tlačítko obnovení v toolbaru (jen po přihlášení); během načítání indikátor průběhu.
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         if viewModel.isConnected {
@@ -225,6 +242,7 @@ struct GradesView: View {
         }
     }
 
+    /// Asynchronně obnoví známky ze STAGu.
     private func refresh() {
         Task { await viewModel.refresh() }
     }

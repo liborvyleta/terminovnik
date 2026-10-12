@@ -7,8 +7,10 @@ import UserNotifications
 /// a část z nich patří připomínkám deadlinů). Proto se plán obnovuje po každém načtení
 /// rozvrhu, při návratu aplikace do popředí a při změně nastavení.
 /// Oznámení mají identifikátory `class-…`, takže se nepletou s připomínkami deadlinů (`deadline-…`).
+/// Data bere z ``TimetableStore/snapshot``, nastavení z `UserDefaults.standard` (sdílené s Nastavením).
 @MainActor
 final class ClassReminderScheduler {
+    /// Sdílená instance používaná aplikací
     static let shared = ClassReminderScheduler()
 
     // MARK: - Nastavení (klíče v UserDefaults sdílené s Nastavením)
@@ -17,6 +19,7 @@ final class ClassReminderScheduler {
     nonisolated static let enabledKey = "classRemindersEnabled"
     /// Předstih připomínky v minutách (výchozí 15)
     nonisolated static let leadMinutesKey = "classReminderLeadMinutes"
+    /// Výchozí předstih v minutách, pokud uživatel nic nenastavil
     nonisolated static let defaultLeadMinutes = 15
     /// Nabízené předstihy v Nastavení
     nonisolated static let leadMinuteOptions = [5, 10, 15, 30]
@@ -30,16 +33,20 @@ final class ClassReminderScheduler {
     /// Kolik dní dopředu plánujeme
     private let daysAhead = 7
 
+    /// Systémové centrum oznámení
     private let center = UNUserNotificationCenter.current()
     /// Poslední naplánovaná práce – volání jdou za sebou, aby se plány nepřekrývaly
     private var currentWork: Task<Void, Never>?
 
+    /// Soukromý inicializátor – používá se jen ``shared``.
     private init() {}
 
+    /// Jsou připomínky výuky zapnuté (výchozí `true`, pokud klíč v UserDefaults chybí).
     static var isEnabled: Bool {
         UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true
     }
 
+    /// Nastavený předstih připomínky v minutách; při chybějící nebo nekladné hodnotě ``defaultLeadMinutes``.
     static var leadMinutes: Int {
         let value = UserDefaults.standard.integer(forKey: leadMinutesKey)
         return value > 0 ? value : defaultLeadMinutes
@@ -48,6 +55,9 @@ final class ClassReminderScheduler {
     // MARK: - Veřejné API
 
     /// Zruší čekající připomínky výuky a podle nastavení a aktuálního rozvrhu je naplánuje znovu.
+    ///
+    /// Práce běží asynchronně ve frontě (viz ``enqueue(_:)``), předchozí rozběhnuté plánování se zruší.
+    /// - Note: V ukázkovém režimu se nic nemění – skutečné připomínky zůstanou, demo rozvrh se neplánuje.
     func reschedule() {
         // Ukázkový režim: skutečné připomínky hodin zůstanou, demo rozvrh se neplánuje
         guard !DemoMode.isActive else { return }
@@ -57,6 +67,8 @@ final class ClassReminderScheduler {
     }
 
     /// Zruší všechny čekající připomínky výuky (např. po odhlášení ze STAGu).
+    ///
+    /// - Note: V ukázkovém režimu se nic neruší.
     func cancelAll() {
         guard !DemoMode.isActive else { return }
         enqueue { scheduler in
@@ -67,6 +79,7 @@ final class ClassReminderScheduler {
     // MARK: - Plánování
 
     /// Předchozí rozběhnutou práci zruší, počká na její doběhnutí a pak spustí novou.
+    /// - Parameter work: asynchronní práce, která dostane tento plánovač
     private func enqueue(_ work: @escaping @MainActor (ClassReminderScheduler) async -> Void) {
         let previous = currentWork
         previous?.cancel()
@@ -76,6 +89,11 @@ final class ClassReminderScheduler {
         }
     }
 
+    /// Asynchronně odstraní staré připomínky výuky a naplánuje nové na příštích ``daysAhead`` dní.
+    ///
+    /// Nic neplánuje, když jsou připomínky vypnuté, chybí povolení oznámení nebo rozvrh.
+    /// Počet nových oznámení omezí ``maxReminders`` a volné místo do systémového limitu 64.
+    /// Při zrušení úlohy (`Task.isCancelled`) skončí předčasně.
     private func performReschedule() async {
         let otherPendingCount = await removePendingClassReminders()
         guard !Task.isCancelled, Self.isEnabled else { return }
@@ -116,6 +134,9 @@ final class ClassReminderScheduler {
     }
 
     /// Odstraní čekající oznámení s prefixem `class-` a vrátí počet ostatních čekajících oznámení.
+    ///
+    /// Asynchronně načte čekající požadavky z centra oznámení.
+    /// - Returns: Počet čekajících oznámení, která nejsou připomínkami výuky (např. deadliny).
     @discardableResult
     private func removePendingClassReminders() async -> Int {
         let pending = await center.pendingNotificationRequests()
@@ -126,6 +147,12 @@ final class ClassReminderScheduler {
         return pending.count - classIDs.count
     }
 
+    /// Sestaví požadavek na oznámení pro jednu hodinu výuky.
+    /// - Parameters:
+    ///   - occurrence: konkrétní výskyt rozvrhové akce
+    ///   - fireDate: okamžik doručení oznámení
+    ///   - leadMinutes: předstih v minutách zobrazený v titulku
+    /// - Returns: Jednorázový požadavek s kalendářovým spouštěčem a identifikátorem `class-<id výskytu>`.
     private func makeRequest(for occurrence: TimetableOccurrence, fireDate: Date, leadMinutes: Int) -> UNNotificationRequest {
         let event = occurrence.event
 

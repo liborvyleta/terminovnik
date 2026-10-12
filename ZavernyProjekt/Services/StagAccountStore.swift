@@ -5,6 +5,9 @@ import UserNotifications
 import os
 
 /// Připojený účet IS/STAG (bez ticketu – ten je v Klíčence zvlášť).
+///
+/// Vzniká po úspěšném přihlášení, ``StagAccountStore`` ho ukládá jako JSON do Klíčenky
+/// a z jeho údajů (`stagUser`, škola) sestavuje ``StagService`` pro dotazy na STAG.
 nonisolated struct StagAccount: Codable, Equatable {
     /// Jméno a příjmení studenta
     var fullName: String
@@ -21,15 +24,19 @@ nonisolated struct StagAccount: Codable, Equatable {
     /// Škola, ke které účet patří (nil = účet z doby před výběrem školy → UTB)
     var school: StagSchool?
 
-    /// Škola účtu – starší uložené účty patří UTB
+    /// Škola účtu – starší uložené účty bez vyplněné školy patří UTB.
     var resolvedSchool: StagSchool { school ?? .utb }
 }
 
-/// Chyba při ukládání přihlášení
+/// Chyba při ukládání přihlášení.
+///
+/// Vyhazuje ji ``StagAccountStore/connect(_:ticket:)``, když se ticket nebo účet
+/// nepodaří zapsat do Klíčenky; přihlašovací obrazovka zobrazí `errorDescription`.
 nonisolated enum StagAccountError: LocalizedError {
     /// Ticket nebo účet se nepodařilo zapsat do Klíčenky
     case keychainWriteFailed
 
+    /// Lokalizovaný popis chyby pro zobrazení uživateli.
     var errorDescription: String? {
         switch self {
         case .keychainWriteFailed:
@@ -49,37 +56,54 @@ nonisolated enum StagAccountError: LocalizedError {
 /// proto rozliší první spuštění po (pře)instalaci, kdy se staré přihlášení zahodí.
 @Observable
 final class StagAccountStore {
+    /// Sdílená instance používaná celou aplikací.
     static let shared = StagAccountStore()
 
+    /// Aktuálně připojený účet (nil = uživatel není přihlášený).
     private(set) var account: StagAccount?
 
     /// Starší umístění účtu (UserDefaults) – při startu se přesune do Klíčenky
     private let legacyDefaultsKey = "stagAccount.v1"
     /// Značka, že aplikace na tomto zařízení už běžela (po přeinstalaci chybí)
     private let installMarkerKey = "installMarker.v1"
-    /// Položky v Klíčence
+    /// Položka v Klíčence s přístupovým ticketem.
     private let ticketKey = "stagTicket"
+    /// Položka v Klíčence s JSON údaji o účtu.
     private let accountKey = "stagAccount"
 
+    /// Logger pro chyby a stavy Klíčenky.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Terminovnik", category: "stag-account")
     /// Pozorovatelé pro opakované načtení po odemčení (jen po přechodné chybě Klíčenky)
     @ObservationIgnored private var retryObservers: [NSObjectProtocol] = []
 
+    /// Vytvoří úložiště a načte uložený účet.
+    ///
+    /// V ukázkovém režimu použije fiktivní účet z `DemoData`; při přechodné nedostupnosti
+    /// Klíčenky naplánuje opakované načtení přes ``scheduleRetry()``.
     private init() {
         if DemoMode.isActive { account = DemoData.account; return }
         if !load() { scheduleRetry() }
     }
 
+    /// Zda je připojený účet IS/STAG.
     var isConnected: Bool { account != nil }
 
-    /// Přístupový ticket z Klíčenky (nil = chybí nebo je Klíčenka momentálně nedostupná)
+    /// Přístupový ticket z Klíčenky (nil = chybí, je aktivní ukázkový režim, nebo je Klíčenka momentálně nedostupná).
     var ticket: String? {
         if DemoMode.isActive { return nil }
         return KeychainStore.string(for: ticketKey)
     }
 
     /// Uloží účet po úspěšném přihlášení.
-    /// - Throws: `StagAccountError.keychainWriteFailed`, pokud se ticket nebo účet nepodařilo uložit
+    ///
+    /// Zapíše ticket i účet do Klíčenky, smaže starší umístění v UserDefaults, nastaví
+    /// značku instalace a zruší případné čekání na odemčení. V ukázkovém režimu
+    /// účet jen podrží v paměti.
+    /// - Parameters:
+    ///   - account: Údaje o přihlášeném studentovi.
+    ///   - ticket: Přístupový ticket IS/STAG.
+    /// - Throws: ``StagAccountError/keychainWriteFailed``, pokud se ticket nebo účet nepodařilo uložit
+    ///   (při selhání zápisu účtu se již uložený ticket zase odstraní).
     func connect(_ account: StagAccount, ticket: String) throws {
         if DemoMode.isActive { self.account = account; return }
         guard KeychainStore.set(ticket, for: ticketKey) else {
@@ -96,7 +120,8 @@ final class StagAccountStore {
         self.account = account
     }
 
-    /// Poznamená čas posledního načtení předmětů
+    /// Poznamená čas posledního načtení předmětů a uloží účet do Klíčenky.
+    /// - Parameter date: Okamžik synchronizace (výchozí je aktuální čas).
     func markSynced(at date: Date = .now) {
         account?.lastSyncAt = date
         persist()
@@ -104,6 +129,7 @@ final class StagAccountStore {
 
     /// Odhlášení – smaže ticket, údaje o účtu, načtená data ze STAGu a vše, co by po účtu zůstalo
     /// (Live Activity, doručená oznámení, připomínky hodin, HTTP cache a cookies škol).
+    /// - Note: V ukázkovém režimu jen ukončí demo, skutečný účet zůstane zachovaný.
     func signOut() {
         // V ukázkovém režimu odhlášení = ukončení dema (skutečný účet zůstane)
         if DemoMode.isActive { DemoController.shared.exit(); return }
@@ -127,7 +153,8 @@ final class StagAccountStore {
         Self.removeCookies(forHosts: schoolHosts)
     }
 
-    /// Klient STAGu s přihlášením uloženého účtu (nil = nepřipojeno)
+    /// Vytvoří klienta STAGu s přihlášením uloženého účtu.
+    /// - Returns: ``StagService`` pro školu účtu, nebo nil, pokud účet nebo ticket chybí.
     func makeService() -> StagService? {
         guard let account, let ticket else { return nil }
         return StagService(baseURL: account.resolvedSchool.baseURL, ticket: ticket, stagUser: account.stagUser)
@@ -137,7 +164,10 @@ final class StagAccountStore {
 
     /// Načte účet z Klíčenky (případně ho přesune z UserDefaults) a po čisté instalaci uklidí
     /// přihlášení, které v Klíčence zůstalo po předchozí instalaci.
-    /// - Returns: `false` při přechodné chybě Klíčenky (nic se nesmazalo, zkusí se to znovu)
+    ///
+    /// Neúplné nebo poškozené přihlášení zahodí. Při přechodné chybě Klíčenky nic nemaže
+    /// a jako náhradu zkusí použít účet ze starého umístění v UserDefaults.
+    /// - Returns: `false` při přechodné chybě Klíčenky (nic se nesmazalo, zkusí se to znovu), jinak `true`.
     @discardableResult
     private func load() -> Bool {
         let defaults = UserDefaults.standard
@@ -201,6 +231,9 @@ final class StagAccountStore {
     }
 
     /// Po přechodné chybě zkusí účet načíst znovu, až bude zařízení odemčené / aplikace aktivní.
+    ///
+    /// Registruje pozorovatele `protectedDataDidBecomeAvailable` a `didBecomeActive`;
+    /// pokud už pozorovatelé existují, nic nedělá.
     private func scheduleRetry() {
         guard retryObservers.isEmpty else { return }
         let center = NotificationCenter.default
@@ -214,15 +247,20 @@ final class StagAccountStore {
         }
     }
 
+    /// Zopakuje ``load()`` a po úspěchu odregistruje pozorovatele.
     private func retryLoad() {
         if load() { cancelRetry() }
     }
 
+    /// Odregistruje všechny pozorovatele opakovaného načtení.
     private func cancelRetry() {
         for observer in retryObservers { NotificationCenter.default.removeObserver(observer) }
         retryObservers = []
     }
 
+    /// Uloží aktuální účet do Klíčenky (mimo ukázkový režim).
+    ///
+    /// Selhání zápisu jen zaloguje.
     private func persist() {
         if DemoMode.isActive { return }
         guard let account, let data = try? JSONEncoder().encode(account) else { return }
@@ -233,13 +271,14 @@ final class StagAccountStore {
 
     // MARK: - Ukázkový režim
 
-    /// Fiktivní účet jen v paměti (Klíčenka se nedotkne)
+    /// Nastaví fiktivní účet jen v paměti (Klíčenka se nedotkne).
+    /// - Parameter demoAccount: Ukázkový účet z dema.
     func loadDemo(_ demoAccount: StagAccount) {
         cancelRetry()
         account = demoAccount
     }
 
-    /// Po ukončení dema znovu načte skutečný účet z Klíčenky
+    /// Po ukončení dema znovu načte skutečný účet z Klíčenky.
     func reloadAfterDemo() {
         account = nil
         if !load() { scheduleRetry() }
@@ -247,7 +286,9 @@ final class StagAccountStore {
 
     // MARK: - Cookies
 
-    /// Domény škol (poslední dvě části hostu, např. „utb.cz“) – cookies STAGu i školního SSO
+    /// Domény škol (poslední dvě části hostu, např. „utb.cz“) – cookies STAGu i školního SSO.
+    /// - Parameter school: Škola účtu, která se přidá k seznamu známých škol a zvolené škole.
+    /// - Returns: Množina domén všech dotčených škol.
     private static func schoolHosts(including school: StagSchool?) -> Set<String> {
         let schools = StagSchool.all + [school, StagSchoolPreference.selected].compactMap { $0 }
         return Set(schools.compactMap { school in
@@ -257,6 +298,8 @@ final class StagAccountStore {
         })
     }
 
+    /// Smaže ze sdíleného úložiště cookies všech zadaných domén včetně subdomén.
+    /// - Parameter domains: Domény škol z ``schoolHosts(including:)``.
     private static func removeCookies(forHosts domains: Set<String>) {
         let storage = HTTPCookieStorage.shared
         for cookie in storage.cookies ?? [] {

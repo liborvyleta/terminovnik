@@ -7,11 +7,16 @@ import SwiftUI
 // a `perform()` je výslovně `@MainActor`, protože pracuje se SwiftData a SwiftUI.
 
 /// „Další hodina“ – nejbližší (nebo právě probíhající) hodina podle rozvrhu.
+///
+/// Akce se nabízí v Siri, aplikaci Zkratky a ve Spotlightu. Aplikaci neotevírá; čte uložený rozvrh
+/// a odpoví větou s předmětem, typem, dnem, časem a místností spolu s náhledem `TimetableSnippetView`.
 struct NextLessonIntent: AppIntent {
     static let title: LocalizedStringResource = "Další hodina"
     static let description = IntentDescription("Řekne, kdy a kde máš nejbližší hodinu podle rozvrhu ze STAGu.")
     static let openAppWhenRun: Bool = false
 
+    /// Najde nejbližší hodinu v příštích 14 dnech (probíhající se počítá).
+    /// - Returns: Odpověď s větou a náhledem hodiny; bez rozvrhu nebo výuky vysvětlující text.
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog & ShowsSnippetView {
         let now = Date.now
@@ -51,11 +56,15 @@ struct NextLessonIntent: AppIntent {
 }
 
 /// „Rozvrh na den“ – vyjmenuje hodiny dne (dnes / zítra / pozítří).
+///
+/// Akce se nabízí v Siri, aplikaci Zkratky a ve Spotlightu. Aplikaci neotevírá; vypíše čas, kód
+/// předmětu, typ a místnost každé hodiny a zobrazí jejich seznam v `TimetableSnippetView`.
 struct TimetableForDayIntent: AppIntent {
     static let title: LocalizedStringResource = "Rozvrh na den"
     static let description = IntentDescription("Vypíše hodiny vybraného dne – čas, předmět, typ a místnost.")
     static let openAppWhenRun: Bool = false
 
+    /// Den, pro který se rozvrh vypíše; výchozí je dnešek.
     @Parameter(title: "Den", default: .dnes)
     var day: ScheduleDay
 
@@ -63,6 +72,8 @@ struct TimetableForDayIntent: AppIntent {
         Summary("Rozvrh na \(\.$day)")
     }
 
+    /// Vypíše hodiny zvoleného dne seřazené podle začátku.
+    /// - Returns: Odpověď s výčtem hodin a jejich náhledem; bez rozvrhu nebo výuky vysvětlující text.
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog & ShowsSnippetView {
         let calendar = Calendar.current

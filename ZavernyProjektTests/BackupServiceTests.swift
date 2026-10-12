@@ -3,12 +3,21 @@ import SwiftData
 import Testing
 @testable import ZavernyProjekt
 
-/// Testy zálohy do souboru: kódování, slučování, nahrazení a odolnost vůči poškozeným datům.
+/// Testy zálohy dat do souboru (`BackupService`).
+///
+/// Ověřují kódování a dekódování zálohy, obnovu ve sloučení i nahrazení, odmítnutí neznámé verze
+/// a poškozených dat, tolerantní dekódování a odstranění duplicit importovaných ze STAGu.
 @MainActor
 struct BackupServiceTests {
     private let old = makeDate(2026, 1, 1)
     private let new = makeDate(2026, 6, 1)
 
+    /// Vloží do kontextu jeden předmět s jedním splněným úkolem a uloží je.
+    ///
+    /// Oba záznamy mají `updatedAt` nastavené na starší datum `old`.
+    ///
+    /// - Parameter context: Kontext, do kterého se data vloží.
+    /// - Returns: Vložený předmět a k němu přiřazený úkol.
     private func seed(_ context: ModelContext) -> (Subject, ExamTask) {
         let subject = Subject(name: "Mobilní technologie", code: "AP9PT", hexColor: "#FF0000", credits: 5)
         subject.updatedAt = old
@@ -22,6 +31,7 @@ struct BackupServiceTests {
         return (subject, task)
     }
 
+    /// Záloha po zakódování, dekódování a obnově do nové databáze zachová všechna pole úkolu i předmětu.
     @Test func roundtrip() throws {
         let sourceContainer = try makeInMemoryContainer() // kontejner musí žít po celý test, kontext ho nedrží
         let source = sourceContainer.mainContext
@@ -46,6 +56,7 @@ struct BackupServiceTests {
         #expect(restored.subject?.credits == 5)
     }
 
+    /// Sloučení nevytváří duplicity, přidá nový úkol a u existujících záznamů vyhraje novější verze.
     @Test func mergeDedupsAndNewerWins() throws {
         let contextContainer = try makeInMemoryContainer()
         let context = contextContainer.mainContext
@@ -68,6 +79,7 @@ struct BackupServiceTests {
         #expect(subject.taskList.count == 2)
     }
 
+    /// Režim nahrazení smaže stávající předměty i úkoly a ponechá jen data ze zálohy.
     @Test func replaceRemovesExisting() throws {
         let contextContainer = try makeInMemoryContainer()
         let context = contextContainer.mainContext
@@ -81,16 +93,19 @@ struct BackupServiceTests {
         #expect(try context.fetchCount(FetchDescriptor<ExamTask>()) == 0)
     }
 
+    /// Záloha s neznámou verzí formátu je odmítnuta chybou `unsupportedVersion`.
     @Test func unknownVersionIsRejected() throws {
         let data = Data(#"{"version": 99, "createdAt": "2026-01-01T00:00:00Z", "subjects": "cokoli"}"#.utf8)
         #expect(throws: BackupService.BackupError.unsupportedVersion(99)) { try BackupService.decode(data) }
     }
 
+    /// Neplatný JSON nebo chybějící povinná pole vedou k chybě `corrupted`.
     @Test func corruptedFileIsRejected() throws {
         #expect(throws: BackupService.BackupError.corrupted) { try BackupService.decode(Data("není json".utf8)) }
         #expect(throws: BackupService.BackupError.corrupted) { try BackupService.decode(Data(#"{"subjects": []}"#.utf8)) }
     }
 
+    /// Poškozené položky se přeskočí, chybějící hodnoty dostanou výchozí hodnoty a neznámý typ úkolu se změní na úkol.
     @Test func tolerantDecodingSkipsBrokenItems() throws {
         let json = #"""
         {"version": 1, "subjects": [{"id": "6F9619FF-8B86-D011-B42D-00C04FC964FF", "code": "AP9PT"}, {"name": "bez id"}],
@@ -106,10 +121,12 @@ struct BackupServiceTests {
         #expect(try context.fetch(FetchDescriptor<ExamTask>()).first?.taskType == .ukol)
     }
 
+    /// Název souboru zálohy obsahuje datum vytvoření.
     @Test func fileNameContainsDate() {
         #expect(BackupService.fileName(for: makeDate(2026, 10, 11, 12), calendar: TestCalendar.prague) == "Termínovník-záloha-2026-10-11")
     }
 
+    /// Duplicitní předmět (kód bez ohledu na velikost písmen) a úkol se stejným ID termínu STAGu se odstraní.
     @Test func removesStagDuplicates() throws {
         let contextContainer = try makeInMemoryContainer()
         let context = contextContainer.mainContext

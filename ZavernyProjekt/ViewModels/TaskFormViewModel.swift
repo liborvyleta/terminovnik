@@ -3,19 +3,32 @@ import Observation
 import SwiftData
 
 /// ViewModel formuláře pro přidání / úpravu deadlinu.
+///
+/// Drží rozpracované hodnoty úkolu odděleně od modelu, validuje je, informuje o plánované připomínce (`NotificationManager`) a ukládá či maže úkol přes `TaskService`. Používá ho formulář úkolu.
 @Observable
 final class TaskFormViewModel {
+    /// Rozpracovaný název úkolu.
     var title: String
+    /// Typ úkolu; u nového výchozí zkouška.
     var taskType: TaskType
+    /// Termín úkolu; u nového za týden v 9:00.
     var dueDate: Date
+    /// Poznámka k úkolu.
     var note: String
+    /// Vybraný předmět (povinný).
     var selectedSubject: Subject?
+    /// Zda je úkol splněný.
     var isCompleted: Bool
+    /// Body nebo známka; prázdný text se uloží jako `nil`.
     var pointsOrGrade: String
 
-    /// Upravovaný úkol; `nil` znamená vytváření nového
+    /// Upravovaný úkol; `nil` znamená vytváření nového.
     private let editedTask: ExamTask?
 
+    /// Vytvoří ViewModel formuláře a předvyplní hodnoty z upravovaného úkolu.
+    /// - Parameters:
+    ///   - task: Upravovaný úkol, nebo `nil` pro nový.
+    ///   - preselectedSubject: Předem vybraný předmět pro nový úkol.
     init(task: ExamTask? = nil, preselectedSubject: Subject? = nil) {
         editedTask = task
         title = task?.title ?? ""
@@ -27,9 +40,10 @@ final class TaskFormViewModel {
         pointsOrGrade = task?.pointsOrGrade ?? ""
     }
 
+    /// Příznak, zda formulář upravuje existující úkol.
     var isEditing: Bool { editedTask != nil }
 
-    /// Povinný je název a předmět
+    /// Povinný je název a předmět.
     var isValid: Bool { !trimmedTitle.isEmpty && selectedSubject != nil }
 
     // MARK: - Informace o připomínce
@@ -40,7 +54,7 @@ final class TaskFormViewModel {
         return fireDate > .now
     }
 
-    /// Text pod formulářem, kdy přijde notifikace
+    /// Text pod formulářem, kdy přijde notifikace (nebo proč nepřijde).
     var reminderInfo: String {
         if isCompleted { return String(localized: "Úkol je splněný, připomínka je vypnutá.") }
         if dueDate < .now { return String(localized: "Termín už proběhl.") }
@@ -52,6 +66,9 @@ final class TaskFormViewModel {
 
     // MARK: - Uložení a smazání
 
+    /// Vytvoří nový nebo upraví existující úkol, uloží ho a přeplánuje jeho připomínku.
+    /// - Parameter context: SwiftData kontext, do kterého se úkol ukládá.
+    /// - Returns: Uložený úkol.
     @discardableResult
     func save(in context: ModelContext) -> ExamTask {
         let task: ExamTask
@@ -78,6 +95,8 @@ final class TaskFormViewModel {
         return task
     }
 
+    /// Smaže upravovaný úkol přes `TaskService`; u nového úkolu nic nedělá.
+    /// - Parameter context: SwiftData kontext, ze kterého se úkol odstraní.
     func delete(in context: ModelContext) {
         guard let editedTask else { return }
         TaskService.delete(editedTask, in: context)
@@ -85,9 +104,11 @@ final class TaskFormViewModel {
 
     // MARK: - Pomocné
 
+    /// Název bez úvodních a koncových bílých znaků.
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
 
-    /// Výchozí termín nového úkolu: za týden v 9:00
+    /// Výchozí termín nového úkolu: za týden v 9:00.
+    /// - Returns: Datum za 7 dní v 9:00.
     private static func defaultDueDate() -> Date {
         let calendar = Calendar.current
         let inAWeek = calendar.date(byAdding: .day, value: 7, to: .now) ?? .now

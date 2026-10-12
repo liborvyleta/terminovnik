@@ -2,14 +2,23 @@ import Foundation
 import Observation
 import WatchConnectivity
 
-/// Data hodinek: přijímá application context z iPhonu (`WatchSync` v aplikaci pro iPhone),
-/// ukládá ho do UserDefaults hodinek a při startu načte poslední známý stav,
-/// takže aplikace funguje i bez spojení s telefonem.
+/// Úložiště dat aplikace pro Apple Watch.
+///
+/// Přijímá application context, který přes WatchConnectivity posílá aplikace pro iPhone
+/// (`WatchSync`), a to jak při aktivaci relace (`receivedApplicationContext`), tak živě
+/// přes `session(_:didReceiveApplicationContext:)`. Z kontextu ponechá jen hodnoty typu
+/// `Data`, `Date` a `Int`, dekóduje z nich rozvrh a deadliny a uloží ho do UserDefaults
+/// hodinek. Při startu načte poslední uložený stav, takže aplikace funguje i bez spojení
+/// s telefonem. Starší kontext nikdy nepřepíše novější.
 @Observable
 final class WatchStore: NSObject {
+    /// Sdílená instance používaná aplikací.
     static let shared = WatchStore()
 
-    /// Klíče application contextu – musí odpovídat `WatchSync.Key` v aplikaci pro iPhone
+    /// Klíče application contextu.
+    ///
+    /// Hodnoty musí odpovídat `WatchSync.Key` v aplikaci pro iPhone, jinak hodinky
+    /// přijatá data nerozpoznají.
     enum Key {
         static let version = "v"
         static let deadlines = "deadlines"
@@ -24,7 +33,10 @@ final class WatchStore: NSObject {
     /// Kdy iPhone data naposledy poslal (nil = zatím nic nepřišlo)
     private(set) var updatedAt: Date?
 
-    /// Žádná data – zobrazí se výzva k otevření aplikace na iPhonu
+    /// Udává, zda hodinky nemají žádná data k zobrazení.
+    ///
+    /// Platí, když rozvrh chybí nebo nemá žádné akce a zároveň není žádný deadline;
+    /// aplikace pak zobrazí výzvu k otevření aplikace na iPhonu.
     var isEmpty: Bool {
         (timetable?.events.isEmpty ?? true) && deadlines.isEmpty
     }
@@ -32,7 +44,10 @@ final class WatchStore: NSObject {
     @ObservationIgnored private let defaults: UserDefaults?
     @ObservationIgnored private static let storageKey = "watchContext.v1"
 
-    /// Aplikace: načte uložená data a připojí se k iPhonu
+    /// Vytvoří sdílenou instanci a načte z UserDefaults naposledy uložený kontext.
+    ///
+    /// K iPhonu se nepřipojuje – to zajišťuje ``activate()``. V konfiguraci Debug
+    /// s argumentem `-demo` místo toho naplní ukázková data a nic neukládá.
     private override init() {
         #if DEBUG
         if DemoLaunch.isEnabled {
@@ -52,7 +67,12 @@ final class WatchStore: NSObject {
         }
     }
 
-    /// Náhledy a testy: pevná data, bez WatchConnectivity a bez ukládání
+    /// Vytvoří instanci s pevnými daty pro náhledy a testy, bez WatchConnectivity a bez ukládání.
+    ///
+    /// - Parameters:
+    ///   - timetable: Rozvrh, nebo `nil`, pokud rozvrh není k dispozici.
+    ///   - deadlines: Deadliny k zobrazení.
+    ///   - updatedAt: Čas poslední aktualizace dat; výchozí hodnota je aktuální čas.
     init(timetable: TimetableSnapshot?, deadlines: [WidgetDeadline], updatedAt: Date? = .now) {
         defaults = nil
         super.init()
@@ -61,7 +81,10 @@ final class WatchStore: NSObject {
         self.updatedAt = updatedAt
     }
 
-    /// Aktivuje WatchConnectivity. Volá se jednou při startu aplikace.
+    /// Aktivuje relaci WatchConnectivity a nastaví tuto instanci jako jejího delegáta.
+    ///
+    /// Nic neudělá u instance bez úložiště (náhledy, ukázkový režim), na zařízení bez
+    /// podpory WatchConnectivity nebo pokud relace již delegáta má. Volá se jednou při startu aplikace.
     func activate() {
         guard defaults != nil, WCSession.isSupported() else { return }
         let session = WCSession.default
@@ -72,12 +95,20 @@ final class WatchStore: NSObject {
 
     // MARK: - Zpracování dat
 
-    /// Vybere z kontextu jen hodnoty, které umíme uložit (Data, Date, Int)
+    /// Vybere z kontextu jen hodnoty, které lze uložit do UserDefaults.
+    ///
+    /// - Parameter context: Application context přijatý z iPhonu.
+    /// - Returns: Kontext obsahující pouze hodnoty typu `Data`, `Date` a `Int`.
     nonisolated static func storable(_ context: [String: Any]) -> [String: Any] {
         context.filter { $0.value is Data || $0.value is Date || $0.value is Int }
     }
 
-    /// Přijatý kontext z iPhonu: uložit a zobrazit
+    /// Zpracuje kontext přijatý z iPhonu: zobrazí jeho data a uloží ho do UserDefaults.
+    ///
+    /// Kontext odeslaný dříve než aktuálně zobrazená data se zahodí, stejně jako kontext
+    /// v neznámém formátu.
+    ///
+    /// - Parameter context: Přijatý kontext s hodnotami vybranými pomocí ``storable(_:)``.
     private func receive(_ context: [String: Any]) {
         // Starší data nepřepíší novější (kontext z aktivace může přijít po živé aktualizaci)
         if let sentAt = context[Key.sentAt] as? Date, let updatedAt, sentAt < updatedAt { return }
@@ -85,7 +116,13 @@ final class WatchStore: NSObject {
         defaults?.set(context, forKey: Self.storageKey)
     }
 
-    /// Dekóduje kontext. Vrací false, když formát neznáme (novější verze aplikace na iPhonu).
+    /// Dekóduje kontext a nastaví z něj rozvrh, deadliny a čas aktualizace.
+    ///
+    /// Chybějící nebo nedekódovatelný rozvrh se nastaví na `nil` a deadliny na prázdné pole.
+    ///
+    /// - Parameter context: Kontext k dekódování.
+    /// - Returns: `false`, pokud má kontext verzi vyšší než 1 (novější verze aplikace na iPhonu)
+    ///   a data se nezměnila; jinak `true`.
     @discardableResult
     private func apply(_ context: [String: Any]) -> Bool {
         if let version = context[Key.version] as? Int, version > 1 { return false }
@@ -102,6 +139,12 @@ final class WatchStore: NSObject {
 // MARK: - WCSessionDelegate
 
 extension WatchStore: WCSessionDelegate {
+    /// Po úspěšné aktivaci relace zpracuje poslední kontext, který iPhone poslal, zatímco aplikace neběžela.
+    ///
+    /// - Parameters:
+    ///   - session: Relace WatchConnectivity.
+    ///   - activationState: Výsledný stav aktivace; kontext se zpracuje jen ve stavu `.activated`.
+    ///   - error: Chyba aktivace; nevyhodnocuje se.
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         guard activationState == .activated else { return }
         // Poslední kontext, který iPhone poslal, zatímco aplikace neběžela
@@ -111,6 +154,11 @@ extension WatchStore: WCSessionDelegate {
         Task { @MainActor in self.receive(sendable) }
     }
 
+    /// Zpracuje živě přijatý application context z iPhonu na hlavním vlákně.
+    ///
+    /// - Parameters:
+    ///   - session: Relace WatchConnectivity.
+    ///   - applicationContext: Přijatý kontext; ponechají se jen hodnoty vybrané pomocí ``storable(_:)``.
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         nonisolated(unsafe) let context = Self.storable(applicationContext)
         Task { @MainActor in self.receive(context) }
@@ -120,12 +168,18 @@ extension WatchStore: WCSessionDelegate {
 // MARK: - Výpočty pro obrazovky
 
 extension WatchStore {
-    /// Probíhající nebo nejbližší hodina
+    /// Vrátí probíhající nebo nejbližší hodinu.
+    ///
+    /// - Parameter now: Okamžik, od kterého se hodina hledá; výchozí hodnota je aktuální čas.
+    /// - Returns: Nejbližší výskyt hodiny, nebo `nil`, pokud rozvrh chybí nebo žádná hodina nenásleduje.
     func nextLesson(now: Date = .now) -> TimetableOccurrence? {
         timetable?.upcoming(after: now, limit: 1).first
     }
 
-    /// Dnešní hodiny (včetně těch, které už skončily)
+    /// Vrátí hodiny konané v daný den, včetně těch, které už skončily.
+    ///
+    /// - Parameter now: Okamžik určující den; výchozí hodnota je aktuální čas.
+    /// - Returns: Výskyty hodin v daném dni, nebo prázdné pole, pokud rozvrh chybí.
     func todayLessons(now: Date = .now) -> [TimetableOccurrence] {
         timetable?.occurrences(on: now) ?? []
     }
@@ -134,14 +188,19 @@ extension WatchStore {
 #if DEBUG
 // MARK: - Ukázkový režim (pouze Debug)
 
-/// Spuštění s argumentem `-demo` naplní hodinky ukázkovými daty pro snímky obrazovky.
-/// Argument `-page next|today|deadlines` určuje výchozí stránku.
+/// Ukázkový režim pro snímky obrazovky (pouze konfigurace Debug).
+///
+/// Spuštění s argumentem `-demo` naplní hodinky ukázkovými daty místo dat přijatých
+/// přes WatchConnectivity. Argument `-page next|today|deadlines` určuje výchozí stránku.
 enum DemoLaunch {
+    /// Udává, zda byla aplikace spuštěna s argumentem `-demo`.
     static var isEnabled: Bool {
         ProcessInfo.processInfo.arguments.contains("-demo")
     }
 
-    /// Hodnota argumentu `-page` (UserDefaults čte argumenty spuštění ve tvaru `-klíč hodnota`)
+    /// Hodnota argumentu `-page`, nebo `nil`, pokud nebyl zadán.
+    ///
+    /// UserDefaults čte argumenty spuštění ve tvaru `-klíč hodnota`.
     static var page: String? {
         UserDefaults.standard.string(forKey: "page")
     }
@@ -149,6 +208,9 @@ enum DemoLaunch {
     /// Ukázkový rozvrh, ve kterém se tři akce konají dnes: jedna už proběhla, další začíná
     /// za 20–34 minut a třetí po krátké přestávce. Časy jsou zaokrouhlené na čtvrthodiny,
     /// aby obrazovky „Další hodina“ i „Dnes“ vypadaly jako skutečný rozvrh v kteroukoli denní dobu.
+    ///
+    /// - Parameter now: Okamžik, ke kterému se rozvrh sestaví; výchozí hodnota je aktuální čas.
+    /// - Returns: Upravená kopie `TimetableSnapshot.sample`.
     static func timetable(now: Date = .now) -> TimetableSnapshot {
         let sample = TimetableSnapshot.sample
         let calendar = Calendar.current

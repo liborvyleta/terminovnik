@@ -6,16 +6,22 @@ import UIKit
 import UserNotifications
 import WidgetKit
 
-/// ViewModel obrazovky Nastavení – stav povolení oznámení, připomínky výuky, mazání dat a informace o verzi.
+/// ViewModel obrazovky Nastavení.
+///
+/// Drží stav povolení oznámení (z `UNUserNotificationCenter`), reaguje na přepínače připomínek výuky, upozornění na termíny a známky a Live Activity (`ClassReminderScheduler`, `LiveActivityManager`), maže všechna data aplikace včetně dat ze STAGu (`TimetableStore`, `ExamTermStore`, `GradeStore`) a poskytuje informace o jazyce a verzi aplikace. Používá ho obrazovka Nastavení.
 @Observable
 final class SettingsViewModel {
     /// Zjednodušený stav povolení notifikací pro zobrazení v UI.
+    ///
+    /// Převádí systémový `UNAuthorizationStatus` na čtyři stavy s textem, ikonou a barvou pro řádek v Nastavení.
     enum NotificationPermission {
         case unknown        // stav se ještě načítá
         case notDetermined  // uživatel se zatím nerozhodl
         case authorized
         case denied
 
+        /// Převede systémový stav autorizace; dočasná i provizorní povolení se berou jako povoleno.
+        /// - Parameter status: Stav autorizace notifikací ze systému.
         init(_ status: UNAuthorizationStatus) {
             switch status {
             case .notDetermined: self = .notDetermined
@@ -25,6 +31,7 @@ final class SettingsViewModel {
             }
         }
 
+        /// Lokalizovaný popis stavu.
         var title: String {
             switch self {
             case .unknown: String(localized: "Zjišťuji…")
@@ -34,6 +41,7 @@ final class SettingsViewModel {
             }
         }
 
+        /// Název SF Symbolu pro stav.
         var systemImage: String {
             switch self {
             case .unknown: "ellipsis.circle"
@@ -43,6 +51,7 @@ final class SettingsViewModel {
             }
         }
 
+        /// Barva ikony stavu.
         var tint: Color {
             switch self {
             case .unknown: .secondary
@@ -53,22 +62,24 @@ final class SettingsViewModel {
         }
     }
 
+    /// Aktuální stav povolení oznámení; obnovuje ho ``refreshNotificationStatus()``.
     var notificationPermission: NotificationPermission = .unknown
+    /// Zda se zobrazuje potvrzení smazání všech dat.
     var isConfirmingDeleteAll = false
 
-    /// Odkaz do systémového Nastavení přímo na oznámení této aplikace
+    /// Odkaz do systémového Nastavení přímo na oznámení této aplikace.
     let notificationSettingsURL = URL(string: UIApplication.openNotificationSettingsURLString)
 
-    /// Odkaz do systémového Nastavení této aplikace – tam iOS nabízí volbu jazyka aplikace
+    /// Odkaz do systémového Nastavení této aplikace – tam iOS nabízí volbu jazyka aplikace.
     let appSettingsURL = URL(string: UIApplication.openSettingsURLString)
 
-    /// Název aktuálního jazyka aplikace („Čeština“ / „English“) – vždy v daném jazyce
+    /// Název aktuálního jazyka aplikace („Čeština“ / „English“) – vždy v daném jazyce.
     var appLanguageName: String {
         let code = Bundle.main.preferredLocalizations.first ?? "cs"
         return code.hasPrefix("en") ? "English" : "Čeština"
     }
 
-    /// Verze aplikace z Info.plist, např. „1.0 (1)“
+    /// Verze aplikace z Info.plist, např. „1.0 (1)“.
     var versionText: String {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? "–"
@@ -92,8 +103,10 @@ final class SettingsViewModel {
 
     // MARK: - Výuka
 
-    /// Zapnutí / vypnutí připomínek hodin. Při zapnutí si případně vyžádá povolení oznámení,
-    /// pak připomínky hned přeplánuje.
+    /// Zapnutí / vypnutí připomínek hodin.
+    ///
+    /// Při zapnutí si případně (dosud nerozhodnuto) vyžádá povolení oznámení, pak připomínky hned přeplánuje.
+    /// - Parameter enabled: Nový stav přepínače.
     func classRemindersChanged(enabled: Bool) async {
         if enabled, notificationPermission == .notDetermined {
             await requestNotifications()
@@ -101,14 +114,16 @@ final class SettingsViewModel {
         ClassReminderScheduler.shared.reschedule()
     }
 
-    /// Zapnutí upozornění na nové termíny – bez povolených oznámení by nepřišla, tak o ně rovnou požádáme
+    /// Zapnutí upozornění na nové termíny – bez povolených oznámení by nepřišla, tak o ně rovnou požádáme.
+    /// - Parameter enabled: Nový stav přepínače.
     func examTermAlertsChanged(enabled: Bool) async {
         if enabled, notificationPermission == .notDetermined {
             await requestNotifications()
         }
     }
 
-    /// Zapnutí upozornění na nové známky – stejně jako u termínů rovnou požádáme o povolení oznámení
+    /// Zapnutí upozornění na nové známky – stejně jako u termínů rovnou požádáme o povolení oznámení.
+    /// - Parameter enabled: Nový stav přepínače.
     func gradeAlertsChanged(enabled: Bool) async {
         await examTermAlertsChanged(enabled: enabled)
     }
@@ -125,10 +140,12 @@ final class SettingsViewModel {
 
     // MARK: - Data
 
-    /// Smaže všechna data aplikace: předměty, deadliny, připomínky (deadlinů i hodin), uložený rozvrh,
-    /// termíny zkoušek a známky, ukončí Live Activity a obnoví widgety.
-    /// Úkoly předmětů smaže SwiftData kaskádou, úkoly bez předmětu mažeme ručně.
-    /// - Parameter signOut: `true` = navíc odhlásí účet STAG (smaže přístupový klíč a údaje o účtu).
+    /// Smaže všechna data aplikace.
+    ///
+    /// Předměty, deadliny, připomínky deadlinů, uložený rozvrh, termíny zkoušek a známky. Mimo ukázkový režim navíc zruší připomínky hodin, ukončí Live Activity, odstraní doručená oznámení a obnoví widgety. Úkoly předmětů smaže SwiftData kaskádou, úkoly bez předmětu mažeme ručně.
+    /// - Parameters:
+    ///   - context: SwiftData kontext, ze kterého se data mažou.
+    ///   - signOut: `true` = navíc odhlásí účet STAG (smaže přístupový klíč a údaje o účtu).
     func deleteAllData(in context: ModelContext, signOut: Bool = false) {
         do {
             let tasks = try context.fetch(FetchDescriptor<ExamTask>())

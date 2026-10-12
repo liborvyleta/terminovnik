@@ -13,16 +13,24 @@ import WatchConnectivity
 /// - `"deadlines"`: JSON `WidgetSnapshot` (Data)
 /// - `"timetable"`: JSON `TimetableSnapshot` (Data) – chybí, pokud rozvrh není (odhlášení ze STAGu)
 /// - `"sentAt"`: okamžik odeslání (Date)
+///
+/// Volá ho ``WidgetSync/refresh(from:)`` a sám sleduje změny `UserDefaults` (uložení rozvrhu do App Group).
 final class WatchSync: NSObject {
+    /// Sdílená instance (delegát relace)
     static let shared = WatchSync()
 
     /// Klíče a verze application contextu
     enum Key {
+        /// Verze formátu (Int)
         static let version = "v"
+        /// JSON `WidgetSnapshot` (Data)
         static let deadlines = "deadlines"
+        /// JSON `TimetableSnapshot` (Data), volitelně
         static let timetable = "timetable"
+        /// Okamžik odeslání (Date)
         static let sentAt = "sentAt"
     }
+    /// Aktuální verze formátu kontextu – musí odpovídat `WatchStore` na hodinkách
     static let formatVersion = 1
 
     /// Kolik deadlinů hodinky dostanou (zobrazí se seznam, víc nemá na malém displeji smysl)
@@ -30,22 +38,27 @@ final class WatchSync: NSObject {
     /// Nejvýše tolik rozvrhových akcí – pojistka proti příliš velkému kontextu
     static let eventLimit = 150
 
+    /// Výchozí relace WatchConnectivity, nebo `nil`, pokud zařízení WatchConnectivity nepodporuje.
     private var session: WCSession? { WCSession.isSupported() ? WCSession.default : nil }
 
     /// Podpis naposledy odeslaných dat (bez časových razítek) – stejná data neposíláme znovu
     private var lastSignature: Data?
     /// Odložené odeslání po změně v UserDefaults (rozvrh se ukládá asynchronně po stažení ze STAGu)
     private var debounceTask: Task<Void, Never>?
+    /// Pozorovatel `UserDefaults.didChangeNotification` (aktivní jen se spárovanými hodinkami)
     private var defaultsObserver: NSObjectProtocol?
     /// Spárované hodinky s nainstalovanou aplikací. Zjišťuje se jen po aktivaci a při změně stavu –
     /// dotaz na `isPaired` bez hodinek (simulátor) zahlcuje konzoli hláškou „WCSession is not paired“.
     private var hasWatchApp = false
 
+    /// Soukromý inicializátor – používá se jen ``shared``.
     private override init() {
         super.init()
     }
 
     /// Aktivuje relaci WatchConnectivity. Volá se jednou při startu aplikace.
+    ///
+    /// Opakované volání (delegát už nastaven) nebo nepodporované zařízení nic nedělá.
     func activate() {
         guard let session, session.delegate == nil else { return }
         session.delegate = self
@@ -54,7 +67,10 @@ final class WatchSync: NSObject {
     }
 
     /// Odešle hodinkám aktuální deadliny a rozvrh z App Group.
+    ///
+    /// Neodesílá před aktivací relace, bez spárovaných hodinek s aplikací ani když se podpis dat nezměnil.
     /// - Parameter force: odeslat i tehdy, když se data od minula nezměnila
+    /// - Note: V ukázkovém režimu se nic neodesílá – hodinky ukazují skutečná data.
     func push(force: Bool = false) {
         guard !DemoMode.isActive else { return }
         guard let session else { return }
@@ -78,6 +94,9 @@ final class WatchSync: NSObject {
     }
 
     /// Načte stav hodinek (jen z callbacků relace) a podle něj zapne nebo vypne sledování změn.
+    ///
+    /// Nakonec vždy vynutí odeslání aktuálních dat.
+    /// - Parameter session: relace, ze které se čte `isPaired` a `isWatchAppInstalled`
     private func updateWatchState(_ session: WCSession) {
         hasWatchApp = session.isPaired && session.isWatchAppInstalled
         if hasWatchApp, defaultsObserver == nil {
@@ -97,6 +116,7 @@ final class WatchSync: NSObject {
         push(force: true)
     }
 
+    /// Naplánuje odložené (1 s) odeslání; předchozí čekající odeslání zruší.
     private func schedulePush() {
         debounceTask?.cancel()
         debounceTask = Task { @MainActor [weak self] in
@@ -108,7 +128,14 @@ final class WatchSync: NSObject {
 
     // MARK: - Sestavení dat
 
-    /// Application context a podpis dat (pro rozpoznání změny)
+    /// Application context a podpis dat (pro rozpoznání změny).
+    ///
+    /// Deadliny ořízne na ``deadlineLimit``, rozvrh přes ``trimmed(_:now:calendar:)``; JSON se kóduje se seřazenými klíči.
+    /// - Parameters:
+    ///   - deadlines: snímek deadlinů z widgetu
+    ///   - timetable: snímek rozvrhu, nebo `nil` bez rozvrhu
+    ///   - now: okamžik odeslání a referenční čas pro ořez rozvrhu
+    /// - Returns: Slovník pro `updateApplicationContext` a podpis obsahu bez časových razítek.
     static func payload(deadlines: WidgetSnapshot, timetable: TimetableSnapshot?, now: Date = .now)
         -> (context: [String: Any], signature: Data?) {
         let encoder = JSONEncoder()
@@ -140,6 +167,11 @@ final class WatchSync: NSObject {
 
     /// Rozvrh bez akcí, které hodinky nikdy nezobrazí: skončené akce, jednorázové akce v minulosti
     /// a akce bez pevného dne a času. Omezí i počet akcí, aby kontext zůstal malý.
+    /// - Parameters:
+    ///   - snapshot: původní rozvrh
+    ///   - now: referenční okamžik („dnes“)
+    ///   - calendar: kalendář pro výpočet začátku dne
+    /// - Returns: Kopie rozvrhu s nejvýše ``eventLimit`` akcemi.
     static func trimmed(_ snapshot: TimetableSnapshot, now: Date, calendar: Calendar = .current) -> TimetableSnapshot {
         let today = calendar.startOfDay(for: now)
         let events = snapshot.events.filter { event in
@@ -159,6 +191,11 @@ final class WatchSync: NSObject {
 // MARK: - WCSessionDelegate
 
 extension WatchSync: WCSessionDelegate {
+    /// Dokončení aktivace relace – po úspěchu na hlavním vlákně zjistí stav hodinek a odešle data.
+    /// - Parameters:
+    ///   - session: aktivovaná relace
+    ///   - activationState: výsledný stav aktivace
+    ///   - error: chyba aktivace (neošetřuje se)
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         guard activationState == .activated else { return }
         Task { @MainActor in
@@ -167,14 +204,18 @@ extension WatchSync: WCSessionDelegate {
         }
     }
 
-    /// Změna spárování / instalace aplikace na hodinkách → poslat data znovu
+    /// Změna spárování / instalace aplikace na hodinkách → poslat data znovu.
+    /// - Parameter session: relace se změněným stavem
     nonisolated func sessionWatchStateDidChange(_ session: WCSession) {
         Task { @MainActor in self.updateWatchState(session) }
     }
 
+    /// Relace přestala být aktivní (přepínání hodinek) – není potřeba nic dělat.
+    /// - Parameter session: neaktivní relace
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
 
-    /// Přepnutí na jiné hodinky – relaci je potřeba znovu aktivovat
+    /// Přepnutí na jiné hodinky – relaci je potřeba znovu aktivovat.
+    /// - Parameter session: deaktivovaná relace
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
         session.activate()
     }

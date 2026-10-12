@@ -13,7 +13,7 @@
   <a href="https://github.com/liborvyleta/terminovnik/actions/workflows/ci.yml"><img src="https://github.com/liborvyleta/terminovnik/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/iOS-17%2B-0A84FF?logo=apple" alt="iOS 17+">
   <img src="https://img.shields.io/badge/watchOS-10%2B-0A84FF?logo=apple" alt="watchOS 10+">
-  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/Swift-5%20%C2%B7%20p%C5%99eklada%C4%8D%206.2-F05138?logo=swift&logoColor=white" alt="Swift 5, překladač 6.2">
   <img src="https://img.shields.io/badge/testy-195-34C759" alt="195 testů">
 </p>
 

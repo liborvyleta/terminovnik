@@ -4,7 +4,11 @@ import os
 
 /// Chyba Klíčenky – nese `OSStatus` (např. `errSecInteractionNotAllowed`, když je zařízení
 /// po restartu ještě zamčené a položky nejsou dostupné).
+///
+/// Vyhazují ji čtecí metody ``KeychainStore``; volající (např. úložiště účtu STAG) podle
+/// ``isTransient`` rozhodne, zda přihlášení zachovat.
 nonisolated struct KeychainError: Error, Equatable {
+    /// Návratový kód funkcí Security frameworku
     let status: OSStatus
 
     /// Přechodná chyba – data existují, ale teď k nim není přístup (zamčené zařízení před prvním odemčením)
@@ -16,10 +20,16 @@ nonisolated struct KeychainError: Error, Equatable {
 /// Odlišuje „položka neexistuje“ (`errSecItemNotFound` → `nil`) od ostatních chyb (`throws`),
 /// aby přechodná nedostupnost Klíčenky nevedla ke smazání přihlášení.
 /// Položky jsou dostupné i na pozadí po prvním odemčení a jen na tomto zařízení (nejdou do záloh).
+/// Všechny položky jsou typu generic password se společnou službou a klíčem v `kSecAttrAccount`.
 nonisolated enum KeychainStore {
+    /// Hodnota `kSecAttrService` všech položek aplikace
     private static let service = "cz.liborvyleta.terminovnik.stag"
+    /// Logger chyb (zapisuje jen kódy, nikdy hodnoty)
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Terminovnik", category: "keychain")
 
+    /// Základní dotaz na položku daného klíče.
+    /// - Parameter key: název položky (`kSecAttrAccount`)
+    /// - Returns: Slovník s třídou, službou a účtem pro funkce `SecItem…`.
     private static func baseQuery(_ key: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
@@ -31,6 +41,10 @@ nonisolated enum KeychainStore {
     // MARK: - Čtení
 
     /// Data položky; `nil` = položka neexistuje, jiná chyba se vyhodí (`KeychainError`).
+    /// - Parameter key: název položky
+    /// - Returns: Uložená data, nebo `nil`, pokud položka neexistuje.
+    /// - Throws: ``KeychainError`` s kódem `SecItemCopyMatching` (např. zamčené zařízení),
+    ///   nebo s `errSecDecode`, pokud výsledek nejsou data.
     static func data(for key: String) throws -> Data? {
         var query = baseQuery(key)
         query[kSecReturnData as String] = true
@@ -49,6 +63,9 @@ nonisolated enum KeychainStore {
     }
 
     /// Text položky; `nil` = položka neexistuje, jiná chyba se vyhodí.
+    /// - Parameter key: název položky
+    /// - Returns: Text v UTF-8, nebo `nil`, pokud položka neexistuje.
+    /// - Throws: ``KeychainError`` z ``data(for:)``, nebo s `errSecDecode`, když data nejsou platné UTF-8.
     static func readString(for key: String) throws -> String? {
         guard let data = try data(for: key) else { return nil }
         guard let text = String(data: data, encoding: .utf8) else { throw KeychainError(status: errSecDecode) }
@@ -56,11 +73,15 @@ nonisolated enum KeychainStore {
     }
 
     /// Text položky, nebo `nil` (neexistuje i při chybě). Pro místa, kde na důvodu nezáleží.
+    /// - Parameter key: název položky
+    /// - Returns: Text položky, nebo `nil` při neexistenci i jakékoli chybě.
     static func string(for key: String) -> String? {
         try? readString(for: key)
     }
 
     /// Stav položky bez načtení jejího obsahu: `errSecSuccess`, `errSecItemNotFound`, nebo jiná chyba.
+    /// - Parameter key: název položky
+    /// - Returns: Kód vrácený `SecItemCopyMatching` při dotazu jen na atributy.
     static func status(for key: String) -> OSStatus {
         var query = baseQuery(key)
         query[kSecReturnAttributes as String] = true
@@ -70,6 +91,9 @@ nonisolated enum KeychainStore {
     }
 
     /// Existuje položka? Při jiné chybě než „nenalezeno“ se vyhodí `KeychainError`.
+    /// - Parameter key: název položky
+    /// - Returns: `true`, pokud položka existuje, `false`, pokud ne.
+    /// - Throws: ``KeychainError`` při jiném stavu než `errSecSuccess` nebo `errSecItemNotFound`.
     static func contains(_ key: String) throws -> Bool {
         let status = status(for: key)
         switch status {
@@ -83,6 +107,11 @@ nonisolated enum KeychainStore {
 
     /// Uloží (nebo přepíše) data. Přepis přes `SecItemUpdate`, nová položka přes `SecItemAdd`,
     /// takže stará hodnota nezmizí dřív, než je zapsaná nová.
+    ///
+    /// Položka má přístupnost `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`; chyba se zaloguje jen kódem.
+    /// - Parameters:
+    ///   - data: ukládaná hodnota
+    ///   - key: název položky
     /// - Returns: `true`, pokud se hodnota opravdu uložila
     @discardableResult
     static func set(_ data: Data, for key: String) -> Bool {
@@ -106,12 +135,18 @@ nonisolated enum KeychainStore {
     }
 
     /// Uloží (nebo přepíše) text.
+    /// - Parameters:
+    ///   - value: text uložený v UTF-8
+    ///   - key: název položky
+    /// - Returns: `true`, pokud se hodnota opravdu uložila (viz ``set(_:for:)``).
     @discardableResult
     static func set(_ value: String, for key: String) -> Bool {
         set(Data(value.utf8), for: key)
     }
 
     /// Smaže položku. `true` i tehdy, když položka neexistovala.
+    /// - Parameter key: název položky
+    /// - Returns: `false` jen při jiné chybě než „nenalezeno“ (ta se zaloguje).
     @discardableResult
     static func remove(_ key: String) -> Bool {
         let status = SecItemDelete(baseQuery(key) as CFDictionary)

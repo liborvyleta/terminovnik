@@ -2,25 +2,45 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-/// Načtená záloha čekající na potvrzení obnovy (z Nastavení nebo z aplikace Soubory)
+/// Načtená záloha čekající na potvrzení obnovy.
+///
+/// Obaluje dekódovaný `BackupFile` jedinečným identifikátorem, aby ji šlo
+/// zobrazit přes `.sheet(item:)`. Vzniká v `BackupRestore.open(_:)` – ať už
+/// soubor vybral uživatel v Nastavení, nebo přišel z aplikace Soubory.
 struct PendingBackup: Identifiable {
+    /// Jedinečný identifikátor pro prezentaci sheetu.
     let id = UUID()
+    /// Dekódovaný obsah zálohy.
     let backup: BackupFile
 }
 
-/// Sdílený stav obnovy – soubor může přijít z `fileImporter` v Nastavení i přes `onOpenURL`.
+/// Sdílený stav obnovy zálohy.
+///
+/// Soubor může přijít z `fileImporter` v `BackupSection` i přes `onOpenURL`
+/// v `BackupRestoreHandler`. Drží zálohu čekající na potvrzení, chybovou
+/// a výsledkovou zprávu a provádí samotnou obnovu přes `BackupService`,
+/// včetně přeplánování připomínek a obnovení widgetu.
 @Observable
 final class BackupRestore {
+    /// Sdílená instance používaná celou aplikací.
     static let shared = BackupRestore()
 
+    /// Záloha čekající na potvrzení v náhledu; `nil`, pokud se nic neobnovuje.
     var pending: PendingBackup?
+    /// Chybová zpráva pro alert (selhané čtení nebo obnova).
     var errorMessage: String?
+    /// Zpráva o úspěšné obnově se souhrnem změn.
     var resultMessage: String?
 
-    /// Klíč UserDefaults s datem poslední zálohy (TimeInterval od 1970)
+    /// Klíč UserDefaults s datem poslední zálohy (TimeInterval od roku 1970).
     static let lastBackupKey = "lastBackupDate"
 
-    /// Přečte soubor zálohy (i mimo sandbox – security-scoped URL) a nabídne náhled
+    /// Přečte soubor zálohy a nabídne jeho náhled.
+    ///
+    /// Funguje i pro soubory mimo sandbox díky security-scoped URL. V ukázkovém
+    /// režimu obnovu odmítne a nastaví `errorMessage`; při chybě dekódování
+    /// rovněž nastaví `errorMessage`, jinak naplní `pending`.
+    /// - Parameter url: Adresa souboru zálohy.
     func open(_ url: URL) {
         guard !DemoMode.isActive else {
             errorMessage = String(localized: "V ukázkovém režimu nelze obnovit zálohu. Nejdřív ukázkový režim ukonči.")
@@ -38,7 +58,16 @@ final class BackupRestore {
         }
     }
 
-    /// Obnoví zálohu a sladí připomínky a widget
+    /// Obnoví zálohu a sladí připomínky a widget.
+    ///
+    /// V ukázkovém režimu nedělá nic. Při režimu `.replace` nejprve zruší
+    /// připomínky všech stávajících úkolů. Po obnově přeplánuje notifikace,
+    /// obnoví widget a nastaví `resultMessage` (nebo `errorMessage`);
+    /// nakonec vynuluje `pending`.
+    /// - Parameters:
+    ///   - backup: Záloha k obnovení.
+    ///   - mode: Režim obnovy – sloučení, nebo nahrazení.
+    ///   - context: SwiftData kontext, do kterého se data zapíší.
     func restore(_ backup: BackupFile, mode: BackupService.RestoreMode, in context: ModelContext) {
         guard !DemoMode.isActive else { return }
         if mode == .replace {
@@ -59,12 +88,20 @@ final class BackupRestore {
     }
 }
 
-/// Náhled zálohy s volbou Sloučit / Nahradit a otevírání souborů `.terminovnik`.
-/// Vkládá se ke kořenovému view aplikace.
+/// Modifikátor, který obsluhuje otevírání a obnovu záloh.
+///
+/// Zachytává soubory `.terminovnik` přes `onOpenURL`, zobrazuje náhled
+/// zálohy (`BackupPreviewView`) s volbou Sloučit / Nahradit a alert
+/// s výsledkem či chybou. Stav čte ze sdíleného `BackupRestore`.
+/// Vkládá se ke kořenovému view aplikace přes `backupRestoreHandler()`.
 struct BackupRestoreHandler: ViewModifier {
+    /// SwiftData kontext, do kterého se záloha obnovuje.
     @Environment(\.modelContext) private var context
+    /// Sdílený stav obnovy zálohy.
     @State private var restore = BackupRestore.shared
 
+    /// Připojí k obsahu obsluhu URL, sheet náhledu a alert výsledku.
+    /// - Parameter content: Obsah, na který se modifikátor aplikuje.
     func body(content: Content) -> some View {
         content
             .onOpenURL { url in
@@ -90,16 +127,28 @@ struct BackupRestoreHandler: ViewModifier {
 }
 
 extension View {
+    /// Připojí obsluhu otevírání a obnovy záloh (`BackupRestoreHandler`).
+    /// - Returns: View s připojeným modifikátorem.
     func backupRestoreHandler() -> some View { modifier(BackupRestoreHandler()) }
 }
 
+/// Náhled obsahu zálohy před obnovou.
+///
+/// Zobrazuje datum vytvoření, počet předmětů a deadlinů a verzi aplikace
+/// a nabízí akce Sloučit a Nahradit (nahrazení vyžaduje potvrzení).
+/// Prezentuje ho `BackupRestoreHandler` jako sheet.
 private struct BackupPreviewView: View {
+    /// Záloha, jejíž obsah se zobrazuje.
     let backup: BackupFile
+    /// Akce volaná se zvoleným režimem obnovy.
     let onRestore: (BackupService.RestoreMode) -> Void
+    /// Akce volaná při zrušení náhledu.
     let onCancel: () -> Void
 
+    /// Zda se zobrazuje potvrzovací dialog nahrazení dat.
     @State private var isConfirmingReplace = false
 
+    /// Formulář se sekcí obsahu zálohy a sekcí akcí, s tlačítkem Zrušit v toolbaru.
     var body: some View {
         NavigationStack {
             Form {
@@ -147,16 +196,28 @@ private struct BackupPreviewView: View {
     }
 }
 
-/// Sekce Nastavení „Záloha a synchronizace“
+/// Sekce Nastavení „Záloha a synchronizace“.
+///
+/// Umožňuje uložit zálohu předmětů a deadlinů do souboru (`fileExporter`)
+/// a obnovit ji ze souboru (`fileImporter` → `BackupRestore`). Zobrazuje
+/// datum poslední zálohy z `@AppStorage` a informaci o synchronizaci přes
+/// iCloud. V ukázkovém režimu jsou akce vypnuté. Používá se v `SettingsView`.
 struct BackupSection: View {
+    /// SwiftData kontext, ze kterého se vytváří záloha.
     @Environment(\.modelContext) private var context
+    /// Datum poslední úspěšné zálohy (TimeInterval od 1970, 0 = nikdy).
     @AppStorage(BackupRestore.lastBackupKey) private var lastBackup: Double = 0
 
+    /// Připravený dokument zálohy pro export.
     @State private var exportDocument: BackupDocument?
+    /// Zda je zobrazen dialog pro uložení souboru.
     @State private var isExporting = false
+    /// Zda je zobrazen výběr souboru pro obnovu.
     @State private var isImporting = false
+    /// Chybová zpráva exportu zobrazená v patičce sekce.
     @State private var exportError: String?
 
+    /// Sekce s tlačítky zálohy a obnovy, datem poslední zálohy a info o iCloudu.
     var body: some View {
         Section {
             Button {
@@ -215,11 +276,15 @@ struct BackupSection: View {
         }
     }
 
+    /// Text s datem poslední zálohy, případně „Nikdy“.
     private var lastBackupText: String {
         guard lastBackup > 0 else { return String(localized: "Nikdy") }
         return Date(timeIntervalSince1970: lastBackup).formatted(date: .abbreviated, time: .shortened)
     }
 
+    /// Vytvoří zálohu z kontextu, zakóduje ji a otevře dialog pro uložení.
+    ///
+    /// Při chybě nastaví `exportError`.
     private func prepareExport() {
         exportError = nil
         do {

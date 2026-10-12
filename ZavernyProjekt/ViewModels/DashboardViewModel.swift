@@ -2,15 +2,18 @@ import Foundation
 import Observation
 import SwiftData
 
-/// Hodnoty segmentového přepínače na Dashboardu
+/// Hodnoty segmentového přepínače na Dashboardu.
+///
+/// Určuje, které úkoly ``DashboardViewModel`` vrací v sekcích: všechny, jen nadcházející nesplněné, nebo jen splněné. Používá se v segmentovém pickeru přehledu.
 enum DashboardFilter: String, CaseIterable, Identifiable {
     case all = "Vše"
     case upcoming = "Blížící se"
     case completed = "Splněné"
 
+    /// Identifikátor pro `ForEach` – samotná hodnota výčtu.
     var id: Self { self }
 
-    /// Název segmentu zobrazovaný v UI
+    /// Lokalizovaný název segmentu zobrazovaný v UI.
     var title: String {
         switch self {
         case .all: String(localized: "Vše")
@@ -20,14 +23,18 @@ enum DashboardFilter: String, CaseIterable, Identifiable {
     }
 }
 
-/// Jedna sekce seznamu (např. „Dnes a zítra“)
+/// Jedna sekce seznamu úkolů (např. „Dnes a zítra“).
+///
+/// Obsahuje stabilní identifikátor, lokalizovaný nadpis a úkoly patřící do sekce. Vytváří ji ``DashboardViewModel/sections(from:now:)`` a vykresluje Dashboard jako `Section` v seznamu.
 struct TaskSection: Identifiable {
     let id: String
     let title: String
     let tasks: [ExamTask]
 }
 
-/// Čísla pro souhrnné kartičky nahoře
+/// Čísla pro souhrnné kartičky v horní části Dashboardu.
+///
+/// Počet aktivních úkolů, úkolů v příštích 7 dnech a úkolů po termínu. Vytváří ji ``DashboardViewModel/stats(from:now:)``.
 struct DashboardStats {
     var active = 0
     var thisWeek = 0
@@ -36,20 +43,20 @@ struct DashboardStats {
 
 /// ViewModel hlavního přehledu.
 ///
-/// MVVM se SwiftData: `@Query` musí žít ve View (jen tam se automaticky aktualizuje),
-/// proto View předává načtená data sem a ViewModel řeší filtrování, vyhledávání,
-/// seskupení a akce. Logika je tak oddělená od UI a snadno testovatelná.
+/// MVVM se SwiftData: `@Query` musí žít ve View (jen tam se automaticky aktualizuje), proto View předává načtená data sem a ViewModel řeší filtrování, vyhledávání, seskupení podle naléhavosti a akce (splnění, smazání přes `TaskService`). Logika je tak oddělená od UI a snadno testovatelná.
 @Observable
 final class DashboardViewModel {
-    /// Text z vyhledávacího pole (.searchable)
+    /// Text z vyhledávacího pole (`.searchable`).
     var searchText = ""
-    /// Zvolený segment – výchozí jsou nadcházející nesplněné deadliny
+    /// Zvolený segment – výchozí jsou nadcházející nesplněné deadliny.
     var filter: DashboardFilter = .upcoming
-    /// Zvýší se při každém splnění – View na změnu reaguje haptickou odezvou
+    /// Zvýší se při každém splnění – View na změnu reaguje haptickou odezvou.
     private(set) var completionFeedback = 0
 
+    /// Příznak, zda uživatel právě vyhledává (dotaz bez bílých znaků není prázdný).
     var isSearching: Bool { !trimmedQuery.isEmpty }
 
+    /// Vyhledávací dotaz bez úvodních a koncových bílých znaků.
     private var trimmedQuery: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -57,6 +64,12 @@ final class DashboardViewModel {
     // MARK: - Data pro View
 
     /// Vrátí sekce k zobrazení podle filtru a vyhledávání.
+    ///
+    /// Aktivní úkoly řadí od nejbližšího termínu a seskupí podle naléhavosti, splněné řadí od nejpozdějšího termínu do jedné sekce.
+    /// - Parameters:
+    ///   - tasks: Všechny úkoly načtené ve View přes `@Query`.
+    ///   - now: Referenční okamžik pro určení naléhavosti.
+    /// - Returns: Neprázdné sekce v pořadí pro zobrazení.
     func sections(from tasks: [ExamTask], now: Date = .now) -> [TaskSection] {
         let matching = tasks.filter(matchesSearch)
         // Aktivní od nejbližšího termínu, splněné od nejpozdějšího termínu
@@ -75,6 +88,10 @@ final class DashboardViewModel {
     }
 
     /// Spočítá souhrnná čísla pro kartičky (počítá se ze všech úkolů, ne z vyhledávání).
+    /// - Parameters:
+    ///   - tasks: Všechny úkoly.
+    ///   - now: Referenční okamžik pro určení zpoždění a týdenního okna.
+    /// - Returns: Statistiky aktivních, týdenních a zpožděných úkolů.
     func stats(from tasks: [ExamTask], now: Date = .now) -> DashboardStats {
         var stats = DashboardStats()
         for task in tasks where !task.isCompleted {
@@ -90,11 +107,17 @@ final class DashboardViewModel {
 
     // MARK: - Akce
 
+    /// Přepne stav splnění úkolu přes `TaskService`; při splnění zvýší ``completionFeedback``.
+    /// - Parameter task: Úkol, jehož stav se mění.
     func toggleCompletion(_ task: ExamTask) {
         TaskService.toggleCompletion(task)
         if task.isCompleted { completionFeedback += 1 }
     }
 
+    /// Smaže úkol přes `TaskService`.
+    /// - Parameters:
+    ///   - task: Úkol ke smazání.
+    ///   - context: SwiftData kontext, ze kterého se úkol odstraní.
     func delete(_ task: ExamTask, in context: ModelContext) {
         TaskService.delete(task, in: context)
     }
@@ -102,6 +125,8 @@ final class DashboardViewModel {
     // MARK: - Pomocné funkce
 
     /// Hledá v názvu, předmětu (název i kód), typu a poznámce. Ignoruje velikost písmen i diakritiku.
+    /// - Parameter task: Testovaný úkol.
+    /// - Returns: `true`, pokud úkol odpovídá dotazu nebo je dotaz prázdný.
     private func matchesSearch(_ task: ExamTask) -> Bool {
         let query = trimmedQuery
         guard !query.isEmpty else { return true }
@@ -116,6 +141,10 @@ final class DashboardViewModel {
     }
 
     /// Rozdělí aktivní úkoly do časových skupin; prázdné skupiny vynechá.
+    /// - Parameters:
+    ///   - tasks: Aktivní úkoly seřazené podle termínu.
+    ///   - now: Referenční okamžik.
+    /// - Returns: Sekce „Po termínu“, „Dnes a zítra“, „Příštích 7 dní“ a „Později“ bez prázdných.
     private func groupByUrgency(_ tasks: [ExamTask], now: Date) -> [TaskSection] {
         var overdue: [ExamTask] = []
         var soon: [ExamTask] = []

@@ -9,6 +9,7 @@ import AppIntents
 /// České fráze se uplatní při hledání ve Zkratkách a ve Spotlightu.
 /// Každá fráze musí obsahovat `\(.applicationName)` – název aplikace z Info.plist.
 nonisolated struct TerminovnikShortcuts: AppShortcutsProvider {
+    /// Čtyři zkratky: Další hodina, Rozvrh na den, Nejbližší zkouška a Přidat deadline.
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: NextLessonIntent(),
@@ -59,5 +60,6 @@ nonisolated struct TerminovnikShortcuts: AppShortcutsProvider {
         )
     }
 
+    /// Barva dlaždic zkratek v aplikaci Zkratky.
     static let shortcutTileColor: ShortcutTileColor = .blue
 }

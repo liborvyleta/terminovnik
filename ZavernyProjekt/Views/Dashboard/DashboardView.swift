@@ -2,33 +2,44 @@ import SwiftUI
 import SwiftData
 
 /// Hlavní přehled – nadcházející deadliny seřazené od nejbližšího.
-/// View drží `@Query` (živá data ze SwiftData), filtrování a akce deleguje na `DashboardViewModel`.
+///
+/// View drží `@Query` (živá data ze SwiftData), filtrování, statistiky a akce deleguje na
+/// `DashboardViewModel`; nové termíny čte z `ExamTermStore`. Uživatel může přidat, upravit,
+/// splnit nebo smazat deadline, přidat ho do Kalendáře, spustit Live Activity, filtrovat a hledat.
+/// Je první záložkou v `ContentView`.
 struct DashboardView: View {
+    /// Kontext SwiftData pro mazání úkolů.
     @Environment(\.modelContext) private var modelContext
 
-    /// Všechny úkoly seřazené podle termínu. @Query se sám překreslí při každé změně dat.
+    /// Všechny úkoly seřazené podle termínu. `@Query` se sám překreslí při každé změně dat.
     @Query(sort: \ExamTask.dueDate) private var tasks: [ExamTask]
-    /// Předměty – prázdný stav podle nich nabídne import ze STAGu
+    /// Předměty – prázdný stav podle nich nabídne import ze STAGu.
     @Query private var subjects: [Subject]
 
+    /// ViewModel s filtrem, vyhledáváním, sekcemi a akcemi nad úkoly.
     @State private var viewModel = DashboardViewModel()
+    /// Zobrazení formuláře nového deadlinu.
     @State private var isAddingTask = false
+    /// Úkol otevřený ve formuláři pro úpravu.
     @State private var taskToEdit: ExamTask?
-    /// Úkol, pro který je otevřený editor události v Kalendáři
+    /// Úkol, pro který je otevřený editor události v Kalendáři.
     @State private var taskForCalendar: ExamTask?
+    /// Zobrazení importu předmětů ze STAGu.
     @State private var isImportingFromStag = false
-    /// Vybraná záložka – karta nových termínů přepíná na Zkoušky
+    /// Vybraná záložka – karta nových termínů přepíná na Zkoušky.
     @AppStorage("selectedTab") private var selectedTab = "dashboard"
 
-    /// Termíny ze STAGu (@Observable singleton – čtení v body se automaticky sleduje)
+    /// Termíny ze STAGu (`@Observable` singleton – čtení v `body` se automaticky sleduje).
     private var termStore: ExamTermStore { .shared }
 
-    /// Nově vypsané termíny, které si uživatel ještě neprohlédl
+    /// Nově vypsané termíny, které si uživatel ještě neprohlédl.
     private var newTerms: [ExamTerm] {
         guard termStore.hasNewTerms else { return [] }
         return termStore.availableTerms.filter { termStore.newTermIDs.contains($0.id) }
     }
 
+    /// Navigace s prázdným stavem nebo seznamem, tlačítkem „+“ v liště a sheety pro formulář,
+    /// Kalendář a import ze STAGu.
     var body: some View {
         NavigationStack {
             Group {
@@ -57,6 +68,8 @@ struct DashboardView: View {
 
     // MARK: - Seznam deadlinů
 
+    /// Seznam: karta nových termínů, souhrnné kartičky, filtr a sekce deadlinů (nebo prázdný stav
+    /// filtru); s vyhledáváním.
     private var taskList: some View {
         let sections = viewModel.sections(from: tasks)
 
@@ -104,7 +117,9 @@ struct DashboardView: View {
     }
 
     /// Řádek s gesty: klepnutí = úprava, swipe doprava = splnit, swipe doleva = smazat,
-    /// dlouhé podržení = kontextové menu (včetně přidání do Kalendáře)
+    /// dlouhé podržení = kontextové menu (včetně přidání do Kalendáře a Live Activity).
+    /// - Parameter task: zobrazený úkol.
+    /// - Returns: řádek deadlinu s gesty a menu.
     private func row(for task: ExamTask) -> some View {
         TaskRowView(task: task) { toggle(task) }
             .contentShape(Rectangle())
@@ -169,6 +184,8 @@ struct DashboardView: View {
             }
     }
 
+    /// Animovaně přepne splnění úkolu přes ViewModel.
+    /// - Parameter task: úkol k přepnutí.
     private func toggle(_ task: ExamTask) {
         withAnimation(.snappy) { viewModel.toggleCompletion(task) }
     }
@@ -187,6 +204,7 @@ struct DashboardView: View {
         }
     }
 
+    /// Prázdný stav s tlačítkem „Přidat deadline“ a (bez předmětů) importem ze STAGu.
     private var emptyStateContent: some View {
         EmptyStateView(
             symbol: "calendar.badge.plus",
@@ -202,7 +220,7 @@ struct DashboardView: View {
         .frame(maxHeight: .infinity)
     }
 
-    /// Filtr nebo vyhledávání nic nenašlo
+    /// Filtr nebo vyhledávání nic nenašlo.
     @ViewBuilder
     private var filteredEmptyState: some View {
         if viewModel.isSearching {
@@ -227,11 +245,17 @@ struct DashboardView: View {
 
 // MARK: - Nové termíny
 
-/// Výrazná karta „Vypsány nové termíny“ – klepnutí otevře záložku Zkoušky.
+/// Výrazná karta „Vypsány nové termíny“.
+///
+/// Zobrazuje počet nových termínů a kódy jejich předmětů (z `ExamTermStore` přes `DashboardView`).
+/// Klepnutí zavolá `action`, která otevře záložku Zkoušky. Používá se jen v `DashboardView`.
 private struct NewTermsCard: View {
+    /// Nově vypsané termíny.
     let terms: [ExamTerm]
+    /// Akce po klepnutí na kartu.
     let action: () -> Void
 
+    /// Kódy předmětů bez duplicit (bez ohledu na velikost písmen), oddělené čárkou.
     private var subjectCodes: String {
         var seen = Set<String>()
         return terms.map(\.subjectCode)
@@ -239,10 +263,12 @@ private struct NewTermsCard: View {
             .joined(separator: ", ")
     }
 
+    /// Lokalizovaný text „N nových termínů“.
     private var countText: String {
         String(localized: "\(terms.count) nových termínů")
     }
 
+    /// Tlačítko s ikonou, nadpisem, počtem a kódy předmětů na indigovém přechodu.
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {

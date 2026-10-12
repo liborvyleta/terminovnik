@@ -12,18 +12,32 @@ extension UTType {
 
 // MARK: - Formát zálohy
 
-/// Obsah souboru zálohy. Obsahuje jen vlastní data uživatele (předměty a úkoly) –
-/// nikdy přihlašovací údaje, ticket STAGu ani nic z Klíčenky.
+/// Obsah souboru zálohy Termínovníku.
+///
+/// Obsahuje jen vlastní data uživatele (předměty a úkoly) – nikdy přihlašovací údaje, ticket STAGu
+/// ani nic z Klíčenky. Vytváří ho ``BackupService/makeBackup(from:now:)``, serializuje
+/// ``BackupService/encode(_:)`` a zpět do SwiftData ho zapisuje ``BackupService/restore(_:into:mode:)``.
 nonisolated struct BackupFile: Codable, Equatable {
     /// Verze formátu – novější verzi, než aplikace zná, odmítneme
     static let currentVersion = 1
 
+    /// Verze formátu tohoto souboru.
     var version: Int
+    /// Okamžik vytvoření zálohy.
     var createdAt: Date
+    /// Verze aplikace (`CFBundleShortVersionString`), která zálohu vytvořila.
     var appVersion: String?
     var subjects: [SubjectRecord]
     var tasks: [TaskRecord]
 
+    /// Vytvoří zálohu z připravených záznamů.
+    ///
+    /// - Parameters:
+    ///   - version: Verze formátu (výchozí ``BackupFile/currentVersion``).
+    ///   - createdAt: Okamžik vytvoření zálohy.
+    ///   - appVersion: Verze aplikace, která zálohu vytvořila.
+    ///   - subjects: Záznamy předmětů.
+    ///   - tasks: Záznamy úkolů.
     init(version: Int = BackupFile.currentVersion, createdAt: Date, appVersion: String?,
          subjects: [SubjectRecord], tasks: [TaskRecord]) {
         self.version = version
@@ -36,6 +50,12 @@ nonisolated struct BackupFile: Codable, Equatable {
     private enum CodingKeys: String, CodingKey { case version, createdAt, appVersion, subjects, tasks }
 
     /// Tolerantní dekódování: chybějící pole dostanou výchozí hodnotu, nečitelné položky se přeskočí.
+    ///
+    /// U nepodporované verze se předměty a úkoly nedekódují (zůstanou prázdné); verzi kontroluje
+    /// až ``BackupService/decode(_:)``.
+    ///
+    /// - Parameter decoder: Dekodér se vstupními daty.
+    /// - Throws: `DecodingError`, pokud chybí nebo je nečitelné pole `version`.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
@@ -53,14 +73,27 @@ nonisolated struct BackupFile: Codable, Equatable {
             .compactMap(\.value) ?? []
     }
 
+    /// Záznam jednoho předmětu v záloze.
+    ///
+    /// Odpovídá modelu `Subject`; shoda při obnově se určuje podle `id`.
     nonisolated struct SubjectRecord: Codable, Equatable {
         var id: UUID
         var name: String
         var code: String
         var hexColor: String
         var credits: Int
+        /// Čas poslední změny – při sloučení vyhrává novější verze záznamu.
         var updatedAt: Date?
 
+        /// Vytvoří záznam předmětu.
+        ///
+        /// - Parameters:
+        ///   - id: Identifikátor předmětu.
+        ///   - name: Název předmětu.
+        ///   - code: Kód předmětu.
+        ///   - hexColor: Barva předmětu v hex zápisu.
+        ///   - credits: Počet kreditů.
+        ///   - updatedAt: Čas poslední změny.
         init(id: UUID, name: String, code: String, hexColor: String, credits: Int, updatedAt: Date?) {
             self.id = id; self.name = name; self.code = code
             self.hexColor = hexColor; self.credits = credits; self.updatedAt = updatedAt
@@ -68,6 +101,10 @@ nonisolated struct BackupFile: Codable, Equatable {
 
         private enum CodingKeys: String, CodingKey { case id, name, code, hexColor, credits, updatedAt }
 
+        /// Tolerantně dekóduje záznam předmětu; chybějící pole dostanou výchozí hodnotu.
+        ///
+        /// - Parameter decoder: Dekodér se vstupními daty.
+        /// - Throws: `DecodingError`, pokud chybí nebo je nečitelné povinné pole `id`.
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             id = try c.decode(UUID.self, forKey: .id)
@@ -79,6 +116,9 @@ nonisolated struct BackupFile: Codable, Equatable {
         }
     }
 
+    /// Záznam jednoho úkolu (zkoušky, deadlinu…) v záloze.
+    ///
+    /// Odpovídá modelu `ExamTask`; vazbu na předmět drží přes `subjectID`.
     nonisolated struct TaskRecord: Codable, Equatable {
         var id: UUID
         var title: String
@@ -88,10 +128,26 @@ nonisolated struct BackupFile: Codable, Equatable {
         var isCompleted: Bool
         var pointsOrGrade: String?
         var note: String
+        /// Identifikátor termínu ve STAGu, pokud úkol vznikl ze zapsaného termínu.
         var stagTermID: String?
+        /// Identifikátor předmětu (``BackupFile/SubjectRecord/id``), ke kterému úkol patří.
         var subjectID: UUID?
+        /// Čas poslední změny – při sloučení vyhrává novější verze záznamu.
         var updatedAt: Date?
 
+        /// Vytvoří záznam úkolu.
+        ///
+        /// - Parameters:
+        ///   - id: Identifikátor úkolu.
+        ///   - title: Název úkolu.
+        ///   - taskType: rawValue `TaskType`.
+        ///   - dueDate: Termín úkolu.
+        ///   - isCompleted: Zda je úkol splněný.
+        ///   - pointsOrGrade: Body nebo známka.
+        ///   - note: Poznámka.
+        ///   - stagTermID: Identifikátor termínu ve STAGu.
+        ///   - subjectID: Identifikátor předmětu.
+        ///   - updatedAt: Čas poslední změny.
         init(id: UUID, title: String, taskType: String, dueDate: Date, isCompleted: Bool, pointsOrGrade: String?,
              note: String, stagTermID: String?, subjectID: UUID?, updatedAt: Date?) {
             self.id = id; self.title = title; self.taskType = taskType; self.dueDate = dueDate
@@ -103,6 +159,10 @@ nonisolated struct BackupFile: Codable, Equatable {
             case id, title, taskType, dueDate, isCompleted, pointsOrGrade, note, stagTermID, subjectID, updatedAt
         }
 
+        /// Tolerantně dekóduje záznam úkolu; chybějící nepovinná pole dostanou výchozí hodnotu.
+        ///
+        /// - Parameter decoder: Dekodér se vstupními daty.
+        /// - Throws: `DecodingError`, pokud chybí nebo je nečitelné povinné pole `id` nebo `dueDate`.
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             id = try c.decode(UUID.self, forKey: .id)
@@ -119,21 +179,35 @@ nonisolated struct BackupFile: Codable, Equatable {
     }
 }
 
-/// Obal, který místo chyby vrátí nil – jedna poškozená položka nezmaří celou obnovu
+/// Obal, který místo chyby vrátí nil – jedna poškozená položka nezmaří celou obnovu.
+///
+/// Používá ho ``BackupFile/init(from:)`` při dekódování polí předmětů a úkolů.
 nonisolated private struct Lenient<Value: Decodable>: Decodable {
+    /// Dekódovaná hodnota, nebo `nil`, pokud položka nešla přečíst.
     let value: Value?
+    /// Pokusí se dekódovat hodnotu; chybu nepropaguje.
+    ///
+    /// - Parameter decoder: Dekodér s daty jedné položky.
+    /// - Throws: Nikdy – případná chyba se převede na `nil`.
     init(from decoder: Decoder) throws { value = try? Value(from: decoder) }
 }
 
 // MARK: - Služba
 
-/// Záloha a obnova vlastních dat do souboru. Čisté funkce bez UI, notifikací a widgetu –
-/// o přeplánování připomínek se stará volající (`BackupRestore`).
+/// Záloha a obnova vlastních dat do souboru.
+///
+/// Čisté funkce bez UI, notifikací a widgetu – čtou a zapisují předměty a úkoly ve SwiftData
+/// a převádějí je na ``BackupFile`` (JSON). O přeplánování připomínek se stará volající (`BackupRestore`).
+/// Obsahuje i úklid duplicit vzniklých synchronizací přes iCloud.
 enum BackupService {
+    /// Chyby při čtení souboru zálohy.
     nonisolated enum BackupError: LocalizedError, Equatable {
+        /// Soubor nejde přečíst nebo to není záloha Termínovníku.
         case corrupted
+        /// Záloha má novější verzi formátu, než aplikace zná.
         case unsupportedVersion(Int)
 
+        /// Lokalizovaný popis chyby pro uživatele.
         var errorDescription: String? {
             switch self {
             case .corrupted:
@@ -144,6 +218,7 @@ enum BackupService {
         }
     }
 
+    /// Způsob obnovy zálohy.
     enum RestoreMode: Equatable {
         /// Ponechá stávající data; shodné záznamy (UUID) přepíše jen novější verzí
         case merge
@@ -151,6 +226,7 @@ enum BackupService {
         case replace
     }
 
+    /// Souhrn provedené obnovy (počty přidaných a aktualizovaných záznamů).
     struct RestoreSummary: Equatable {
         var subjectsAdded = 0
         var subjectsUpdated = 0
@@ -160,6 +236,13 @@ enum BackupService {
 
     // MARK: - Export
 
+    /// Vytvoří zálohu všech předmětů a úkolů z databáze.
+    ///
+    /// - Parameters:
+    ///   - context: SwiftData kontext, ze kterého se čtou předměty (podle kódu) a úkoly (podle termínu).
+    ///   - now: Okamžik vytvoření zálohy (pro testy).
+    /// - Returns: Záloha v aktuální verzi formátu.
+    /// - Throws: Chybu SwiftData, pokud se nepodaří načíst předměty nebo úkoly.
     static func makeBackup(from context: ModelContext, now: Date = .now) throws -> BackupFile {
         let subjects = try context.fetch(FetchDescriptor<Subject>(sortBy: [SortDescriptor(\.code)]))
         let tasks = try context.fetch(FetchDescriptor<ExamTask>(sortBy: [SortDescriptor(\.dueDate)]))
@@ -178,6 +261,11 @@ enum BackupService {
         )
     }
 
+    /// Serializuje zálohu do čitelného JSON (ISO 8601 data, seřazené klíče).
+    ///
+    /// - Parameter backup: Záloha k serializaci.
+    /// - Returns: Data souboru zálohy.
+    /// - Throws: `EncodingError`, pokud serializace selže.
     nonisolated static func encode(_ backup: BackupFile) throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -185,6 +273,12 @@ enum BackupService {
         return try encoder.encode(backup)
     }
 
+    /// Načte zálohu z dat souboru a ověří verzi formátu.
+    ///
+    /// - Parameter data: Obsah souboru zálohy (JSON).
+    /// - Returns: Dekódovaná záloha v podporované verzi.
+    /// - Throws: ``BackupService/BackupError/corrupted``, pokud data nejdou dekódovat nebo je verze menší než 1;
+    ///   ``BackupService/BackupError/unsupportedVersion(_:)``, pokud je verze novější než ``BackupFile/currentVersion``.
     nonisolated static func decode(_ data: Data) throws -> BackupFile {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -201,7 +295,12 @@ enum BackupService {
         return backup
     }
 
-    /// „Termínovník-záloha-2026-10-11.terminovnik“
+    /// Vrátí název souboru zálohy bez přípony, např. „Termínovník-záloha-2026-10-11“.
+    ///
+    /// - Parameters:
+    ///   - date: Datum, které se vloží do názvu.
+    ///   - calendar: Kalendář pro rozklad data na rok, měsíc a den.
+    /// - Returns: Název souboru ve tvaru `Termínovník-záloha-RRRR-MM-DD`.
     nonisolated static func fileName(for date: Date = .now, calendar: Calendar = .current) -> String {
         let c = calendar.dateComponents([.year, .month, .day], from: date)
         let stamp = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
@@ -210,6 +309,20 @@ enum BackupService {
 
     // MARK: - Obnova
 
+    /// Obnoví předměty a úkoly ze zálohy do databáze.
+    ///
+    /// V režimu ``BackupService/RestoreMode/replace`` nejdřív smaže všechna stávající data; v režimu
+    /// ``BackupService/RestoreMode/merge`` přidá chybějící záznamy a existující (shodné UUID) přepíše jen
+    /// novější verzí podle `updatedAt`. Úkoly se navážou na předměty podle `subjectID`.
+    ///
+    /// - Parameters:
+    ///   - backup: Načtená záloha.
+    ///   - context: SwiftData kontext, do kterého se zapisuje.
+    ///   - mode: Způsob obnovy (sloučení nebo nahrazení).
+    /// - Returns: Souhrn přidaných a aktualizovaných záznamů.
+    /// - Throws: Chybu SwiftData při načítání nebo ukládání kontextu.
+    /// - Note: Ukládá přímo `context.save()`, ne přes `TaskService`, aby se zachovalo `updatedAt` ze zálohy.
+    ///   Připomínky musí přeplánovat volající.
     @discardableResult
     static func restore(_ backup: BackupFile, into context: ModelContext, mode: RestoreMode) throws -> RestoreSummary {
         if mode == .replace {
@@ -270,6 +383,11 @@ enum BackupService {
         return summary
     }
 
+    /// Přepíše vlastnosti existujícího předmětu hodnotami ze zálohy.
+    ///
+    /// - Parameters:
+    ///   - record: Záznam předmětu ze zálohy.
+    ///   - subject: Předmět v databázi, který se aktualizuje.
     private static func apply(_ record: BackupFile.SubjectRecord, to subject: Subject) {
         subject.name = record.name
         subject.code = record.code
@@ -278,6 +396,11 @@ enum BackupService {
         subject.updatedAt = record.updatedAt
     }
 
+    /// Přepíše vlastnosti existujícího úkolu hodnotami ze zálohy (bez vazby na předmět).
+    ///
+    /// - Parameters:
+    ///   - record: Záznam úkolu ze zálohy; neznámý typ se převede na „Úkol“.
+    ///   - task: Úkol v databázi, který se aktualizuje.
     private static func apply(_ record: BackupFile.TaskRecord, to task: ExamTask) {
         task.title = record.title
         task.taskType = TaskType(rawValue: record.taskType) ?? .ukol
@@ -291,10 +414,15 @@ enum BackupService {
 
     // MARK: - Duplicity (synchronizace přes iCloud)
 
-    /// Odstraní duplicity, které vzniknou, když STAG import proběhne na dvou zařízeních se synchronizací:
-    /// předměty se shodným kódem (bez ohledu na velikost písmen) a úkoly se shodným `stagTermID`.
+    /// Odstraní duplicity, které vzniknou, když STAG import proběhne na dvou zařízeních se synchronizací.
+    ///
+    /// Duplicitou jsou předměty se shodným kódem (bez ohledu na velikost písmen) a úkoly se shodným `stagTermID`.
     /// Ponechá záznam s nejmenším UUID (deterministicky na všech zařízeních; u úkolů má přednost splněný),
-    /// úkoly duplicitních předmětů přesune k ponechanému. Vrací počet odstraněných záznamů.
+    /// úkoly duplicitních předmětů přesune k ponechanému. Kontext uloží jen při nějaké změně.
+    ///
+    /// - Parameter context: SwiftData kontext s předměty a úkoly.
+    /// - Returns: Počet odstraněných záznamů.
+    /// - Throws: Chybu SwiftData při načítání nebo ukládání kontextu.
     @discardableResult
     static func removeStagDuplicates(in context: ModelContext) throws -> Int {
         var removed = 0
@@ -328,19 +456,36 @@ enum BackupService {
 
 // MARK: - Dokument pro fileExporter
 
-/// Obal zálohy pro `fileExporter`; obsahuje již serializovaná data.
+/// Obal zálohy pro `fileExporter`/`fileImporter`.
+///
+/// Obsahuje již serializovaná data z ``BackupService/encode(_:)``; jejich dekódování a kontrolu verze
+/// provádí ``BackupService/decode(_:)``.
 struct BackupDocument: FileDocument {
+    /// Podporované typy souborů: záloha Termínovníku a obecný JSON.
     static var readableContentTypes: [UTType] { [.terminovnikBackup, .json] }
 
+    /// Serializovaný obsah zálohy (JSON).
     var data: Data
 
+    /// Vytvoří dokument z již serializovaných dat.
+    ///
+    /// - Parameter data: Obsah souboru zálohy.
     init(data: Data) { self.data = data }
 
+    /// Načte dokument ze souboru vybraného uživatelem.
+    ///
+    /// - Parameter configuration: Konfigurace čtení s obalem souboru.
+    /// - Throws: ``BackupService/BackupError/corrupted``, pokud soubor nemá čitelný obsah.
     init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else { throw BackupService.BackupError.corrupted }
         self.data = data
     }
 
+    /// Vytvoří obal souboru pro uložení zálohy.
+    ///
+    /// - Parameter configuration: Konfigurace zápisu (nevyužívá se).
+    /// - Returns: Obal běžného souboru s daty zálohy.
+    /// - Throws: Nevyhazuje; signaturu vyžaduje `FileDocument`.
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: data)
     }

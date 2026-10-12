@@ -1,9 +1,15 @@
 import SwiftUI
 
 /// Zaoblený čtverec v barvě předmětu s iniciálami.
+///
+/// Čistě dekorativní (skrytý pro VoiceOver), bez akcí. Používá se na kartě předmětu
+/// a ve formuláři předmětu.
 struct SubjectAvatar: View {
+    /// Iniciály předmětu.
     let initials: String
+    /// Barva předmětu.
     let color: Color
+    /// Délka strany čtverce v bodech.
     var size: CGFloat = 48
 
     var body: some View {

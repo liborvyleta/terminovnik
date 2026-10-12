@@ -1,9 +1,15 @@
 import SwiftUI
 
-/// Nejbližší nesplněné deadliny s odpočtem a barvou naléhavosti.
+/// Stránka s nejbližšími nesplněnými deadliny.
+///
+/// Zobrazuje deadliny, které ``WatchStore`` dekódoval z kontextu přijatého z iPhonu přes
+/// WatchConnectivity, s odpočtem a barvou naléhavosti přepočítávanými každou minutu.
+/// Klepnutím na řádek se otevře detail deadlinu.
 struct DeadlinesView: View {
+    /// Zdroj dat přijatých z iPhonu.
     let store: WatchStore
 
+    /// Seznam deadlinů, nebo prázdný stav „Vše hotovo“, když žádný deadline není.
     var body: some View {
         TimelineView(.everyMinute) { context in
             if store.deadlines.isEmpty {
@@ -25,11 +31,17 @@ struct DeadlinesView: View {
     }
 }
 
-/// Řádek deadlinu: odpočet v barvě naléhavosti, název a předmět
+/// Řádek seznamu deadlinů.
+///
+/// Zobrazuje odpočet v barvě naléhavosti, název deadlinu a zkratku předmětu s typem;
+/// pro VoiceOver tvoří jediný prvek.
 struct DeadlineRow: View {
+    /// Zobrazovaný deadline.
     let deadline: WidgetDeadline
+    /// Aktuální čas, ke kterému se počítá odpočet a naléhavost.
     let now: Date
 
+    /// Obsah řádku.
     var body: some View {
         let urgency = DeadlineUrgency(dueDate: deadline.dueDate, now: now)
         VStack(alignment: .leading, spacing: 2) {
@@ -53,10 +65,15 @@ struct DeadlineRow: View {
     }
 }
 
-/// Detail deadlinu: přesný termín a živý odpočet
+/// Detail jednoho deadlinu.
+///
+/// Zobrazuje typ, název, předmět, přesný termín a odpočet; během posledních 24 hodin
+/// přidá odpočet po sekundách. Pozadí má barvu naléhavosti.
 struct DeadlineDetailView: View {
+    /// Zobrazovaný deadline.
     let deadline: WidgetDeadline
 
+    /// Obsah detailu, přepočítávaný každou minutu.
     var body: some View {
         TimelineView(.everyMinute) { context in
             let now = context.date
@@ -101,7 +118,10 @@ struct DeadlineDetailView: View {
 // MARK: - Ukázková data
 
 extension WidgetDeadline {
-    /// Ukázkové deadliny pro náhledy – různé míry naléhavosti
+    /// Ukázkové deadliny pro náhledy a ukázkový režim.
+    ///
+    /// Obsahuje čtyři deadliny s různou mírou naléhavosti včetně jednoho, který už uplynul;
+    /// termíny jsou relativní k okamžiku volání.
     static var watchSamples: [WidgetDeadline] {
         let now = Date.now
         func deadline(_ title: String, _ code: String, _ name: String, _ color: String,

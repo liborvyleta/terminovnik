@@ -1,16 +1,27 @@
 import SwiftUI
 
-// Sdíleno mezi aplikací a widgetem – pracuje jen s datem, ne se SwiftData modelem.
+// Sdíleno mezi aplikací, widgetem a hodinkami – pracuje jen s datem, ne se SwiftData modelem.
 
 /// Míra naléhavosti deadlinu – určuje barvu a ikonu odpočtu.
+///
+/// Používá ji aplikace, widget i náhledy akcí Siri; varianta pro `ExamTask` je v `Countdown+ExamTask.swift`.
 enum DeadlineUrgency {
+    /// Povinnost je splněná.
     case done
+    /// Termín uplynul a povinnost není splněná.
     case overdue
+    /// Termín je dnes a ještě neuplynul.
     case today
-    /// Termín do 3 dnů.
+    /// Termín za 1–3 kalendářní dny.
     case soon
+    /// Termín za více než 3 dny.
     case upcoming
 
+    /// Určí naléhavost podle termínu a stavu splnění.
+    /// - Parameters:
+    ///   - dueDate: Datum a čas termínu.
+    ///   - isCompleted: Zda je povinnost splněná.
+    ///   - now: Referenční okamžik, výchozí je aktuální čas.
     init(dueDate: Date, isCompleted: Bool = false, now: Date = .now) {
         if isCompleted {
             self = .done
@@ -25,6 +36,7 @@ enum DeadlineUrgency {
         }
     }
 
+    /// Barva odpočtu (zelená, červená, oranžová, modrá).
     var color: Color {
         switch self {
         case .done: .green
@@ -35,6 +47,7 @@ enum DeadlineUrgency {
         }
     }
 
+    /// Název SF Symbolu odpočtu.
     var symbol: String {
         switch self {
         case .done: "checkmark"
@@ -47,8 +60,15 @@ enum DeadlineUrgency {
 }
 
 /// Lidsky čitelný odpočet do termínu: „Dnes“, „Zítra“, „Za 5 dní“, „Před 2 dny“…
+///
 /// Texty jsou v String Catalogu; tvary podle počtu („Za 2 dny“ / „Za 5 dní“) řeší plurálové varianty.
 enum Countdown {
+    /// Vrátí text odpočtu podle počtu kalendářních dní do termínu.
+    /// - Parameters:
+    ///   - date: Datum a čas termínu.
+    ///   - isCompleted: Zda je povinnost splněná (pak vrací „Splněno“).
+    ///   - now: Referenční okamžik, výchozí je aktuální čas.
+    /// - Returns: Lokalizovaný text odpočtu.
     static func text(for date: Date, isCompleted: Bool = false, now: Date = .now) -> String {
         if isCompleted { return String(localized: "Splněno", comment: "Odpočet: povinnost je splněná") }
         let days = date.calendarDays(from: now)

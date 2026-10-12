@@ -1,28 +1,47 @@
 import SwiftUI
 import SwiftData
 
-/// Obrazovka Nastavení: účet STAG, oznámení, návod k widgetu, správa dat a informace o aplikaci.
+/// Obrazovka Nastavení aplikace.
+///
+/// Obsahuje účet STAG (`StagAccountSection`), stav a povolení oznámení,
+/// nastavení výuky (připomínky hodin, Live Activity, upozornění na změny
+/// rozvrhu, nové termíny a známky), návod k widgetu, jazyk, zálohu
+/// (`BackupSection`), správu dat se smazáním všeho a informace o aplikaci.
+/// Počty čte přes `@Query`, logiku deleguje na `SettingsViewModel`
+/// a přepínače ukládá do `@AppStorage`. Jedna ze záložek hlavní navigace.
 struct SettingsView: View {
+    /// SwiftData kontext pro smazání všech dat.
     @Environment(\.modelContext) private var context
+    /// Fáze scény – po návratu do aplikace se obnoví stav oznámení.
     @Environment(\.scenePhase) private var scenePhase
+    /// Barevné schéma pro volbu varianty loga.
     @Environment(\.colorScheme) private var colorScheme
+    /// Akce pro otevření systémového nastavení.
     @Environment(\.openURL) private var openURL
 
+    /// Všechny předměty (pro počet a kontrolu, zda je co mazat).
     @Query private var subjects: [Subject]
+    /// Všechny deadliny (pro počet a kontrolu, zda je co mazat).
     @Query private var tasks: [ExamTask]
 
+    /// ViewModel s oprávněním oznámení, mazáním dat a informacemi o aplikaci.
     @State private var viewModel = SettingsViewModel()
 
     // Nastavení výuky – klíče sdílí ClassReminderScheduler a LiveActivityManager
+    /// Zda jsou zapnuté připomínky před hodinou.
     @AppStorage(ClassReminderScheduler.enabledKey) private var classRemindersEnabled = true
+    /// Předstih připomínky hodiny v minutách.
     @AppStorage(ClassReminderScheduler.leadMinutesKey) private var classReminderLeadMinutes = ClassReminderScheduler.defaultLeadMinutes
+    /// Zda se zobrazuje Live Activity s probíhající hodinou.
     @AppStorage("lessonLiveActivityEnabled") private var lessonLiveActivityEnabled = true
-    /// Upozornění na nově vypsané termíny zkoušek – klíč čte ExamTermStore
+    /// Upozornění na nově vypsané termíny zkoušek – klíč čte `ExamTermStore`.
     @AppStorage(ExamTermStore.alertsEnabledKey) private var examTermAlertsEnabled = true
-    /// Upozornění na nové známky – klíč čte GradeStore
+    /// Upozornění na nové známky – klíč čte `GradeStore`.
     @AppStorage(GradeStore.alertsEnabledKey) private var gradeAlertsEnabled = true
+    /// Upozornění na změny v rozvrhu – klíč čte `TimetableStore`.
     @AppStorage(TimetableStore.changeAlertsEnabledKey) private var timetableChangeAlertsEnabled = true
 
+    /// Formulář se všemi sekcemi, dialogem pro smazání dat a obnovou stavu oznámení.
     var body: some View {
         NavigationStack {
             Form {
@@ -68,7 +87,9 @@ struct SettingsView: View {
 
     // MARK: - Úložiště
 
-    /// Trvalé úložiště se nepodařilo otevřít – aplikace běží z paměti a po zavření o změny přijde
+    /// Varování, že trvalé úložiště se nepodařilo otevřít.
+    ///
+    /// Aplikace běží z paměti a po zavření o změny přijde.
     private var storageWarningSection: some View {
         Section {
             Label("Data se nepodařilo načíst – změny se neuloží", systemImage: "exclamationmark.triangle.fill")
@@ -80,6 +101,7 @@ struct SettingsView: View {
 
     // MARK: - Oznámení
 
+    /// Stav oprávnění oznámení s tlačítkem pro povolení nebo otevření nastavení iOS.
     private var notificationsSection: some View {
         Section {
             LabeledContent("Stav") {
@@ -114,6 +136,7 @@ struct SettingsView: View {
 
     // MARK: - Výuka
 
+    /// Přepínače výuky a upozornění; změny předává `SettingsViewModel`.
     private var lessonsSection: some View {
         Section {
             Toggle(isOn: $classRemindersEnabled) {
@@ -203,6 +226,7 @@ struct SettingsView: View {
         }
     }
 
+    /// Patička sekce Výuka, doplněná o varování při vypnutých oznámeních.
     private var lessonsFooter: String {
         var text = String(localized: "Upozornění na hodiny i Live Activity fungují, když je načtený rozvrh ze STAGu. Nové termíny a známky hlídáme, když jsi přihlášený do STAGu.")
         if classRemindersEnabled || examTermAlertsEnabled || gradeAlertsEnabled, viewModel.notificationPermission == .denied {
@@ -213,6 +237,7 @@ struct SettingsView: View {
 
     // MARK: - Widget
 
+    /// Návod, jak přidat widget na plochu a zamčenou obrazovku.
     private var widgetSection: some View {
         Section {
             widgetStep(
@@ -232,6 +257,12 @@ struct SettingsView: View {
         }
     }
 
+    /// Řádek jednoho kroku návodu k widgetu.
+    /// - Parameters:
+    ///   - icon: Název SF Symbolu.
+    ///   - title: Nadpis kroku.
+    ///   - text: Popis postupu.
+    /// - Returns: View řádku kroku.
     private func widgetStep(icon: String, title: LocalizedStringKey, text: LocalizedStringKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Image(systemName: icon)
@@ -249,7 +280,9 @@ struct SettingsView: View {
 
     // MARK: - Jazyk
 
-    /// Jazyk aplikace volí iOS (Nastavení → Termínovník → Jazyk) – tady ho jen ukážeme a nabídneme odkaz
+    /// Sekce s jazykem aplikace a odkazem do nastavení iOS.
+    ///
+    /// Jazyk volí iOS (Nastavení → Termínovník → Jazyk) – tady ho jen ukážeme.
     private var languageSection: some View {
         Section {
             LabeledContent("Jazyk aplikace", value: viewModel.appLanguageName)
@@ -268,6 +301,7 @@ struct SettingsView: View {
 
     // MARK: - Data
 
+    /// Počty předmětů a deadlinů a tlačítko pro smazání všech dat.
     private var dataSection: some View {
         Section {
             LabeledContent("Předměty", value: "\(subjects.count)")
@@ -287,7 +321,9 @@ struct SettingsView: View {
         }
     }
 
-    /// Je co mazat? Kromě předmětů a deadlinů i rozvrh, termíny, známky nebo přihlášený účet STAG.
+    /// Zda je co mazat.
+    ///
+    /// Kromě předmětů a deadlinů i rozvrh, termíny, známky nebo přihlášený účet STAG.
     private var hasAnyData: Bool {
         !subjects.isEmpty || !tasks.isEmpty
             || TimetableStore.shared.snapshot != nil
@@ -296,6 +332,7 @@ struct SettingsView: View {
             || StagAccountStore.shared.isConnected
     }
 
+    /// Text potvrzovacího dialogu smazání, doplněný o zmínku o účtu STAG.
     private var deleteAllMessage: String {
         var text = String(localized: "Smažou se všechny předměty, deadliny a připomínky i uložený rozvrh, termíny zkoušek a známky. Akci nelze vrátit.")
         if StagAccountStore.shared.isConnected {
@@ -306,6 +343,7 @@ struct SettingsView: View {
 
     // MARK: - O aplikaci
 
+    /// Logo, název, verze, odkazy na zásady a podporu a copyright.
     private var aboutSection: some View {
         Section {
             HStack(spacing: 14) {

@@ -2,8 +2,13 @@ import SwiftUI
 
 /// Zásady ochrany osobních údajů přímo v aplikaci (App Store Review Guidelines 5.1.1(i)).
 ///
-/// Při změně obsahu je nutné aktualizovat také datum účinnosti.
+/// Statický seznam sekcí: shrnutí, jaká data aplikace zpracovává, k čemu
+/// slouží, kde jsou uložena, komu se předávají, jak dlouho se uchovávají,
+/// jak je smazat, práva podle GDPR a kontakt na autora (z `AppInfo`).
+/// Otevírá se z sekce „O aplikaci“ v `SettingsView`. Při změně obsahu
+/// je nutné aktualizovat také datum účinnosti.
 struct PrivacyPolicyView: View {
+    /// Seznam všech sekcí zásad s titulkem v navigační liště.
     var body: some View {
         List {
             summarySection
@@ -22,6 +27,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Shrnutí
 
+    /// Úvodní shrnutí s datem účinnosti.
     private var summarySection: some View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
@@ -42,6 +48,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Jaká data
 
+    /// Výčet zpracovávaných dat.
     private var dataSection: some View {
         Section {
             item(icon: "person.text.rectangle", title: "Účet IS/STAG",
@@ -61,6 +68,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - K čemu
 
+    /// Účel zpracování dat.
     private var purposeSection: some View {
         Section {
             paragraph("Data se ze systému IS/STAG tvé školy načítají jen na tvůj pokyn – po přihlášení. Slouží výhradně k tomu, aby se ti zobrazila v aplikaci, ve widgetech, v oznámeních, v Live Activity a v akcích pro Siri a Zkratky.")
@@ -73,6 +81,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Kde
 
+    /// Místa, kde jsou data uložena.
     private var storageSection: some View {
         Section {
             item(icon: "key.fill", title: "Klíčenka iOS",
@@ -90,6 +99,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Komu
 
+    /// Informace o (ne)předávání dat třetím stranám.
     private var sharingSection: some View {
         Section {
             paragraph("Nikomu dalšímu. Aplikace nemá vlastní server a neobsahuje analytiku, reklamu, sledování ani knihovny (SDK) třetích stran. Vývojář k tvým datům nemá přístup.")
@@ -101,6 +111,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Jak dlouho
 
+    /// Doba uchování dat.
     private var retentionSection: some View {
         Section {
             paragraph("Data zůstávají v zařízení, dokud se neodhlásíš, data nesmažeš nebo aplikaci neodinstaluješ. Přístupový klíč platí nejvýše 90 dní; když vyprší, aplikace ho smaže a požádá tě o nové přihlášení.")
@@ -111,6 +122,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Smazání
 
+    /// Způsoby smazání dat.
     private var deletionSection: some View {
         Section {
             item(icon: "rectangle.portrait.and.arrow.right", title: "Nastavení → Odhlásit ze STAGu",
@@ -128,6 +140,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Práva
 
+    /// Práva uživatele podle GDPR.
     private var rightsSection: some View {
         Section {
             paragraph("Podle GDPR máš právo na přístup ke svým údajům, jejich opravu a výmaz, omezení zpracování a přenositelnost a právo podat stížnost u Úřadu pro ochranu osobních údajů (uoou.gov.cz).")
@@ -139,6 +152,7 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Kontakt
 
+    /// Kontakt na autora a odkazy na podporu a zásady na webu.
     private var contactSection: some View {
         Section {
             LabeledContent("Autor", value: AppInfo.developerName)
@@ -170,6 +184,12 @@ struct PrivacyPolicyView: View {
 
     // MARK: - Pomocné
 
+    /// Řádek s ikonou, tučným nadpisem a vysvětlujícím textem.
+    /// - Parameters:
+    ///   - icon: Název SF Symbolu.
+    ///   - title: Nadpis položky.
+    ///   - text: Popis položky.
+    /// - Returns: View řádku sloučené pro VoiceOver.
     private func item(icon: String, title: LocalizedStringKey, text: LocalizedStringKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Image(systemName: icon)
@@ -187,6 +207,9 @@ struct PrivacyPolicyView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Odstavec textu zásad.
+    /// - Parameter text: Lokalizovaný text odstavce.
+    /// - Returns: Naformátovaný text.
     private func paragraph(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.subheadline)

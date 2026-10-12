@@ -1,9 +1,15 @@
 import SwiftUI
 
-/// Karta předmětu v seznamu: avatar, název, kód, kredity, postup a nejbližší deadline.
+/// Karta předmětu v seznamu.
+///
+/// Zobrazuje avatar, název, kód, kredity, případnou známku ze STAGu
+/// (`GradeStore`), postup plnění úkolů a nejbližší deadline. Používá se
+/// v `SubjectsListView` jako obsah odkazu do detailu předmětu.
 struct SubjectCardView: View {
+    /// Zobrazovaný předmět.
     let subject: Subject
 
+    /// Hlavička s avatarem, názvem a známkou a pod ní ukazatel postupu s nejbližším deadlinem.
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 14) {
@@ -50,16 +56,17 @@ struct SubjectCardView: View {
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    /// Hodnocení ze STAGu (@Observable singleton – nová známka se na kartě hned ukáže)
+    /// Hodnocení ze STAGu (`@Observable` singleton – nová známka se na kartě hned ukáže).
     private var grade: SubjectGrade? {
         subject.code.isEmpty ? nil : GradeStore.shared.grade(forSubjectCode: subject.code)
     }
 
-    /// „4 kredity“ – tvar podle počtu doplňuje String Catalog
+    /// Text kreditů, např. „4 kredity“ – tvar podle počtu doplňuje String Catalog.
     private var creditsText: String {
         String(localized: "\(subject.credits) kreditů")
     }
 
+    /// Nejbližší deadline s odpočtem, „Vše splněno“, nebo „Bez úkolů“.
     @ViewBuilder
     private var nextDeadline: some View {
         if let next = subject.nextTask {

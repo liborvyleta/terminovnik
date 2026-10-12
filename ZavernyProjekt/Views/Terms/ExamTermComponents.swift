@@ -5,13 +5,24 @@ import SwiftUI
 
 // MARK: - Karta nejbližšího zapsaného termínu
 
-/// Výrazná karta v barvě předmětu s odpočtem – nejbližší zapsaný termín
+/// Výrazná karta v barvě předmětu s odpočtem k nejbližšímu zapsanému termínu.
+///
+/// Zobrazuje název a kód předmětu, typ termínu, den, čas, místnost, zkoušejícího
+/// a případně lhůtu pro odhlášení; zrušený termín je šedý a přeškrtnutý. Data dostává
+/// hotová zvenku, texty skládá přes statické pomocníky `ExamTermsViewModel`.
+/// Používá se nahoře v seznamu `ExamTermsView`, klepnutím se otevře detail termínu.
 struct ExamTermHeroCard: View {
+    /// Zobrazovaný zapsaný termín.
     let term: ExamTerm
+    /// Název předmětu z rozvrhu; když chybí, zobrazí se kód předmětu.
     let subjectName: String?
+    /// Barva předmětu použitá pro pozadí karty.
     let tint: Color
+    /// Aktuální čas pro výpočet odpočtu a lhůty odhlášení.
     let now: Date
 
+    /// Hlavička se štítkem a odpočtem, předmět, datum a místo pod sebou,
+    /// na pozadí gradient v barvě předmětu s velkou průhlednou ikonou typu termínu.
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
@@ -102,11 +113,19 @@ struct ExamTermHeroCard: View {
 
 // MARK: - Řádek zapsaného termínu
 
-/// Další zapsaný termín: dlaždice s datem, předmět, čas, místnost, zkoušející a odpočet
+/// Řádek dalšího zapsaného termínu v seznamu zkoušek.
+///
+/// Zobrazuje dlaždici s datem, název předmětu s odpočtem, kód a typ termínu,
+/// štítek „Zrušeno“, místnost, zkoušejícího a lhůtu pro odhlášení. Data dostává zvenku
+/// a texty skládá přes `ExamTermsViewModel`. Používá se v sekci zapsaných termínů `ExamTermsView`.
 struct ExamTermRegisteredRow: View {
+    /// Zobrazovaný zapsaný termín.
     let term: ExamTerm
+    /// Název předmětu z rozvrhu; když chybí, zobrazí se kód předmětu.
     let subjectName: String?
+    /// Barva předmětu pro dlaždici s datem a kód předmětu.
     let tint: Color
+    /// Aktuální čas pro odpočet a lhůtu odhlášení.
     let now: Date
 
     var body: some View {
@@ -152,13 +171,24 @@ struct ExamTermRegisteredRow: View {
 
 // MARK: - Řádek vypsaného termínu
 
-/// Vypsaný termín: datum, čas, místnost, obsazenost, okno přihlašování a důvod blokace
+/// Řádek vypsaného termínu, na který se lze přihlásit.
+///
+/// Zobrazuje dlaždici s datem, čas a typ termínu, štítky „opravný“ a „Nový“, místnost,
+/// zkoušejícího, ukazatel obsazenosti, okno přihlašování (oranžově, když se brzy zavírá)
+/// a důvod, proč STAG zápis blokuje. Texty skládá přes `ExamTermsViewModel`.
+/// Používá se v sekcích vypsaných termínů v `ExamTermsView`.
 struct ExamTermAvailableRow: View {
+    /// Zobrazovaný vypsaný termín.
     let term: ExamTerm
+    /// Barva předmětu pro dlaždici s datem.
     let tint: Color
+    /// Zda je termín nově vypsaný od poslední synchronizace (zobrazí štítek „Nový“).
     let isNew: Bool
+    /// Aktuální čas pro výpočet okna přihlašování.
     let now: Date
 
+    /// Dlaždice s datem vlevo, vpravo sloupec s časem, štítky, místem, obsazeností,
+    /// oknem přihlašování a důvodem blokace.
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             ExamTermDateTile(date: term.start, tint: tint)
@@ -213,8 +243,12 @@ struct ExamTermAvailableRow: View {
 
 // MARK: - Společné části
 
-/// Místnost a zkoušející pod sebou
+/// Místnost a zkoušející termínu pod sebou.
+///
+/// Zobrazí jen údaje, které nejsou prázdné. Sdílí ho řádky `ExamTermRegisteredRow`
+/// a `ExamTermAvailableRow` v tomto souboru.
 private struct ExamTermInfoLines: View {
+    /// Termín, jehož místnost a zkoušející se zobrazí.
     let term: ExamTerm
 
     var body: some View {
@@ -234,9 +268,14 @@ private struct ExamTermInfoLines: View {
     }
 }
 
-/// Dlaždice ve stylu kalendáře: den v týdnu, číslo dne a měsíc v barvě předmětu
+/// Dlaždice ve stylu kalendáře s datem termínu.
+///
+/// Zobrazuje zkratku dne v týdnu, číslo dne a zkratku měsíce v češtině na podkladu
+/// v barvě předmětu. Pro VoiceOver je skrytá. Používá se v řádcích termínů.
 struct ExamTermDateTile: View {
+    /// Zobrazované datum.
     let date: Date
+    /// Barva předmětu pro podklad, rámeček a den v týdnu.
     let tint: Color
 
     var body: some View {
@@ -262,10 +301,16 @@ struct ExamTermDateTile: View {
     }
 }
 
-/// Ukazatel obsazenosti: pruh a text „14/20 · volno 6“, plný termín červeně
+/// Ukazatel obsazenosti termínu.
+///
+/// Zobrazuje pruh zaplnění a text typu „14/20 · volno 6“; plný termín má text
+/// tučně červeně. Barvu, podíl i text bere ze statických pomocníků `ExamTermsViewModel`.
+/// Používá se v `ExamTermAvailableRow` a v detailu termínu.
 struct ExamTermOccupancyBar: View {
+    /// Termín, jehož obsazenost se zobrazí.
     let term: ExamTerm
 
+    /// Pruh se zaplněním (jen když je známa kapacita) a vedle text obsazenosti.
     var body: some View {
         let color = ExamTermsViewModel.occupancyColor(term)
         HStack(spacing: 8) {
@@ -293,9 +338,14 @@ struct ExamTermOccupancyBar: View {
     }
 }
 
-/// Odpočet do termínu v barvě naléhavosti („Za 9 dní“)
+/// Odpočet do začátku termínu v barvě naléhavosti („Za 9 dní“).
+///
+/// Barvu a ikonu určuje `DeadlineUrgency` podle data termínu, text
+/// `ExamTermsViewModel.countdownText`. Používá se v `ExamTermRegisteredRow`.
 struct ExamTermCountdownChip: View {
+    /// Termín, k jehož začátku se odpočítává.
     let term: ExamTerm
+    /// Aktuální čas pro výpočet odpočtu.
     let now: Date
 
     var body: some View {
@@ -311,7 +361,9 @@ struct ExamTermCountdownChip: View {
     }
 }
 
-/// Štítek „Nový“ u nově vypsaného termínu
+/// Štítek „Nový“ u nově vypsaného termínu.
+///
+/// Bílý text s ikonou na kapsli v barvě aplikace. Používá se v `ExamTermAvailableRow`.
 struct ExamTermNewBadge: View {
     var body: some View {
         Label("Nový", systemImage: "sparkles")
@@ -325,10 +377,16 @@ struct ExamTermNewBadge: View {
     }
 }
 
-/// Malý barevný štítek („opravný“, „Zrušeno“, „Zapsáno“)
+/// Malý barevný štítek s textem a volitelnou ikonou.
+///
+/// Slouží pro označení jako „opravný“, „Zrušeno“ nebo „Zapsáno“ v řádcích
+/// a detailu termínu.
 struct ExamTermChip: View {
+    /// Text štítku.
     let text: LocalizedStringKey
+    /// Volitelný název SF Symbolu zobrazený před textem.
     var symbol: String? = nil
+    /// Barva textu a podkladu štítku.
     let color: Color
 
     var body: some View {

@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Zápis na termíny – zpracování odpovědí a volba akce (bez sítě, STAG se nikdy nevolá).
+/// Testy zápisu na termíny zkoušek.
+///
+/// Ověřují zpracování odpovědí a volbu akce – bez sítě, STAG se nikdy nevolá.
 @Suite("STAG – zápis na termíny")
 struct StagTermRegistrationTests {
 

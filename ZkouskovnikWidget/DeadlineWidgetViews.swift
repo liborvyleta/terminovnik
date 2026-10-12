@@ -5,16 +5,24 @@ import WidgetKit
 // Pohledy jednotlivých rodin widgetu. Žádný z nich nečte `widgetFamily` –
 // výběr dělá jen `DeadlineWidgetView`, takže je lze vykreslit i samostatně.
 
-/// Kořenový pohled widgetu – podle rodiny vybere konkrétní rozvržení.
+/// Kořenový pohled widgetu „Nejbližší deadliny“.
+///
+/// Podle aktuální rodiny (`widgetFamily`) vybere konkrétní rozvržení a doplní pozadí
+/// kontejneru. `.systemExtraLarge` sdílí rozvržení s velkým widgetem, neznámé rodiny malé.
 struct DeadlineWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    /// Záznam časové osy, který se má zobrazit.
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `DeadlineWidgetView` sestavený z jeho vstupních hodnot.
     var body: some View {
         content
             .containerBackground(for: .widget) { background }
     }
 
+    /// Rozvržení odpovídající aktuální rodině widgetu.
+    ///
+    /// - Returns: Pohled pro danou rodinu.
     @ViewBuilder
     private var content: some View {
         switch family {
@@ -28,6 +36,9 @@ struct DeadlineWidgetView: View {
         }
     }
 
+    /// Pozadí kontejneru widgetu: průhledné pro widgety zamčené obrazovky, jinak systémové pozadí.
+    ///
+    /// - Returns: Pohled pozadí pro `containerBackground(for:)`.
     @ViewBuilder
     private var background: some View {
         switch family {
@@ -42,10 +53,14 @@ struct DeadlineWidgetView: View {
 
 // MARK: - Plocha: malý
 
-/// Malý widget: nejbližší deadline s velkým barevným odpočtem.
+/// Malý widget s nejbližším deadlinem.
+///
+/// Zobrazí štítek předmětu, ikonu naléhavosti, přepínač splnění, typ, název, velký barevný
+/// odpočet a datum. Bez deadlinů ukáže kompaktní prázdný stav.
 struct SmallDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `SmallDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         if let deadline = entry.nearest {
             let urgency = DeadlineUrgency(dueDate: deadline.dueDate, now: entry.date)
@@ -100,30 +115,41 @@ struct SmallDeadlineView: View {
 
 // MARK: - Plocha: střední a velký
 
-/// Střední widget: hlavička a 3 nejbližší deadliny.
+/// Střední widget s hlavičkou a 3 nejbližšími deadliny.
+///
+/// Rozvržení obstarává `WidgetDeadlineList`.
 struct MediumDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `MediumDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         WidgetDeadlineList(entry: entry, maxRows: 3, isLarge: false)
     }
 }
 
-/// Velký widget: hlavička a 6 nejbližších deadlinů.
+/// Velký widget s hlavičkou a 6 nejbližšími deadliny.
+///
+/// Rozvržení obstarává `WidgetDeadlineList`; řádky navíc ukazují datum a oddělovače.
 struct LargeDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `LargeDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         WidgetDeadlineList(entry: entry, maxRows: 6, isLarge: true)
     }
 }
 
 /// Společné rozvržení seznamu pro střední a velký widget.
+///
+/// Zobrazí hlavičku s počtem a nejvýše `maxRows` řádků, případně prázdný stav.
 struct WidgetDeadlineList: View {
     let entry: DeadlineEntry
+    /// Maximální počet zobrazených řádků.
     let maxRows: Int
+    /// Zda jde o velkou variantu (větší písmo, rozestupy a oddělovače).
     let isLarge: Bool
 
+    /// Obsah pohledu `WidgetDeadlineList` sestavený z jeho vstupních hodnot.
     var body: some View {
         VStack(alignment: .leading, spacing: isLarge ? 10 : 6) {
             WidgetListHeader(count: entry.deadlines.count, isLarge: isLarge)
@@ -147,12 +173,17 @@ struct WidgetDeadlineList: View {
     }
 }
 
-/// Hlavička „Nejbližší deadliny“ s počtem.
+/// Hlavička seznamu „Nejbližší deadliny“ s počtem.
+///
+/// Počet se zobrazí v kapsli barvy značky, jen pokud je větší než nula.
 struct WidgetListHeader: View {
     @Environment(\.colorScheme) private var colorScheme
+    /// Celkový počet nesplněných deadlinů.
     let count: Int
+    /// Zda použít větší písmo velkého widgetu.
     let isLarge: Bool
 
+    /// Obsah pohledu `WidgetListHeader` sestavený z jeho vstupních hodnot.
     var body: some View {
         let brand = WidgetBrand.color(for: colorScheme)
 
@@ -176,12 +207,19 @@ struct WidgetListHeader: View {
     }
 }
 
-/// Řádek seznamu: barevný proužek předmětu, název, „kód · typ“ a odpočet vpravo.
+/// Řádek seznamu deadlinů.
+///
+/// Obsahuje přepínač splnění, název, „kód · typ“, odpočet vpravo (ve velké variantě i datum)
+/// a barevný proužek předmětu na levém okraji.
 struct WidgetDeadlineRow: View {
+    /// Zobrazovaný deadline.
     let deadline: WidgetDeadline
+    /// Okamžik, vůči kterému se počítá odpočet a naléhavost.
     let now: Date
+    /// Zda použít variantu velkého widgetu.
     let isLarge: Bool
 
+    /// Obsah pohledu `WidgetDeadlineRow` sestavený z jeho vstupních hodnot.
     var body: some View {
         let urgency = DeadlineUrgency(dueDate: deadline.dueDate, now: now)
 
@@ -226,10 +264,13 @@ struct WidgetDeadlineRow: View {
 
 // MARK: - Zamčená obrazovka
 
-/// Obdélníkový widget: „KÓD · odpočet“, název a datum.
+/// Obdélníkový widget zamčené obrazovky.
+///
+/// Ukáže „KÓD · odpočet“, název a datum nejbližšího deadlinu, nebo stav „Vše hotovo“.
 struct RectangularDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `RectangularDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let deadline = entry.nearest {
@@ -262,10 +303,14 @@ struct RectangularDeadlineView: View {
     }
 }
 
-/// Kruhový widget: počet dní do nejbližšího deadlinu (nebo „Dnes“).
+/// Kruhový widget zamčené obrazovky.
+///
+/// Ukáže kód předmětu a počet kalendářních dní do nejbližšího deadlinu, „Dnes“ s časem,
+/// nebo „Prošlo“ u deadlinu po termínu; bez deadlinů „Hotovo“.
 struct CircularDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `CircularDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
@@ -275,6 +320,9 @@ struct CircularDeadlineView: View {
         }
     }
 
+    /// Obsah kruhu podle stavu nejbližšího deadlinu.
+    ///
+    /// - Returns: Pohled s kódem a odpočtem, nebo prázdný stav.
     @ViewBuilder
     private var content: some View {
         if let deadline = entry.nearest {
@@ -320,8 +368,12 @@ struct CircularDeadlineView: View {
     }
 
     /// Jednotka pod velkým číslem: „den / dny / dní“ (anglicky „day / days“).
+    ///
     /// Vezme lokalizovanou frázi „%lld dní“ (plurálové varianty v katalogu) a odebere z ní číslo,
     /// takže stačí jeden klíč s počtem místo samostatného slova bez kontextu.
+    ///
+    /// - Parameter days: Počet dní, podle kterého se volí plurálový tvar.
+    /// - Returns: Jednotka bez čísla; když číslo ve frázi nenajde, celá fráze.
     private static func dayUnit(_ days: Int) -> String {
         let phrase = String(localized: "\(days) dní", comment: "Počet dní, např. „5 dní“ (plurál)")
         guard let range = phrase.range(of: String(days)) else { return phrase }
@@ -331,10 +383,13 @@ struct CircularDeadlineView: View {
     }
 }
 
-/// Řádkový widget, např. „AP9PT: Zítra · Zápočtový test“.
+/// Řádkový widget zamčené obrazovky, např. „AP9PT: Zítra · Zápočtový test“.
+///
+/// Bez deadlinů zobrazí „Vše hotovo – žádné deadliny“.
 struct InlineDeadlineView: View {
     let entry: DeadlineEntry
 
+    /// Obsah pohledu `InlineDeadlineView` sestavený z jeho vstupních hodnot.
     var body: some View {
         if let deadline = entry.nearest {
             Text("\(deadline.subjectCode): \(Countdown.text(for: deadline.dueDate, now: entry.date)) · \(deadline.title)")
@@ -351,9 +406,12 @@ struct InlineDeadlineView: View {
 /// `Toggle(isOn:intent:)` systém po klepnutí okamžitě překreslí do opačného stavu (kroužek → fajfka),
 /// zatímco `CompleteDeadlineIntent` běží v aplikaci. Ta pak přepíše přehled a deadline z widgetu zmizí.
 struct WidgetCompleteToggle: View {
+    /// Deadline, který přepínač označí jako splněný.
     let deadline: WidgetDeadline
+    /// Písmo určující velikost ikony; výchozí je `.body`.
     var font: Font = .body
 
+    /// Obsah pohledu `WidgetCompleteToggle` sestavený z jeho vstupních hodnot.
     var body: some View {
         // Widget ukazuje jen nesplněné deadliny → výchozí stav je vždy „nesplněno“.
         Toggle(isOn: false, intent: CompleteDeadlineIntent(deadlineID: deadline.id)) {
@@ -365,10 +423,17 @@ struct WidgetCompleteToggle: View {
     }
 }
 
-/// Vzhled přepínače: prázdný kroužek, po klepnutí zelená fajfka s animací symbolu.
+/// Vzhled přepínače splnění.
+///
+/// Prázdný kroužek, v zapnutém stavu zelená fajfka s animací nahrazení symbolu.
 struct WidgetCheckToggleStyle: ToggleStyle {
+    /// Písmo určující velikost ikony.
     let font: Font
 
+    /// Vykreslí přepínač jako ikonu kroužku nebo fajfky.
+    ///
+    /// - Parameter configuration: Konfigurace přepínače se stavem `isOn`.
+    /// - Returns: Ikona s minimální plochou pro klepnutí 24 × 24 bodů.
     func makeBody(configuration: Configuration) -> some View {
         Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
             .font(font)
@@ -380,11 +445,16 @@ struct WidgetCheckToggleStyle: ToggleStyle {
     }
 }
 
-/// Štítek předmětu – kapsle v barvě předmětu s bílým kódem.
+/// Štítek předmětu.
+///
+/// Kapsle v barvě předmětu s bílým tučným kódem.
 struct WidgetSubjectBadge: View {
+    /// Kód předmětu, např. „AP9PT“.
     let code: String
+    /// Barva předmětu v hexadecimálním zápisu.
     let hexColor: String
 
+    /// Obsah pohledu `WidgetSubjectBadge` sestavený z jeho vstupních hodnot.
     var body: some View {
         Text(code)
             .font(.caption2.weight(.bold))
@@ -397,9 +467,13 @@ struct WidgetSubjectBadge: View {
 }
 
 /// Prázdný stav – žádné nesplněné deadliny.
+///
+/// Zelená pečeť s textem „Vše hotovo“ a „Žádné nadcházející deadliny“.
 struct WidgetEmptyState: View {
+    /// Zda použít menší variantu pro malé a střední widgety.
     let compact: Bool
 
+    /// Obsah pohledu `WidgetEmptyState` sestavený z jeho vstupních hodnot.
     var body: some View {
         VStack(spacing: compact ? 4 : 8) {
             Image(systemName: "checkmark.seal.fill")
@@ -417,11 +491,19 @@ struct WidgetEmptyState: View {
     }
 }
 
-/// Barva značky Termínovníku – indigo, v tmavém režimu světlejší.
+/// Barva značky Termínovníku.
+///
+/// Indigo, v tmavém režimu světlejší odstín.
 enum WidgetBrand {
+    /// Barva značky pro světlý režim.
     static let light = Color(hex: "#4F46E5")
+    /// Barva značky pro tmavý režim.
     static let dark = Color(hex: "#818CF8")
 
+    /// Vrátí barvu značky pro zadaný barevný režim.
+    ///
+    /// - Parameter scheme: Aktuální barevný režim.
+    /// - Returns: `dark` v tmavém režimu, jinak `light`.
     static func color(for scheme: ColorScheme) -> Color {
         scheme == .dark ? dark : light
     }

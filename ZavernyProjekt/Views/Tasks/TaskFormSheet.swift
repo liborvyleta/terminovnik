@@ -1,20 +1,32 @@
 import SwiftUI
 import SwiftData
 
-/// Formulář pro přidání nebo úpravu deadlinu:
-/// předmět, název, typ, termín s časem, poznámka (a při úpravě i stav a hodnocení).
+/// Formulář pro přidání nebo úpravu deadlinu.
+///
+/// Obsahuje předmět, název, typ, termín s časem, informaci o připomínce, poznámku, přidání
+/// do Kalendáře a při úpravě i stav, hodnocení a smazání. Předměty čte přes `@Query`, stav a uložení
+/// řeší `TaskFormViewModel`. Uživatel může uložit, zrušit, vytvořit nový předmět, otevřít editor
+/// události v Kalendáři a smazat deadline. Otevírá se jako sheet z Přehledu a z detailu předmětu.
 struct TaskFormSheet: View {
+    /// Akce pro zavření sheetu.
     @Environment(\.dismiss) private var dismiss
+    /// Kontext SwiftData pro uložení a smazání.
     @Environment(\.modelContext) private var modelContext
+    /// Předměty seřazené podle názvu pro výběr.
     @Query(sort: \Subject.name) private var subjects: [Subject]
 
+    /// ViewModel s hodnotami formuláře, validací a ukládáním.
     @State private var viewModel: TaskFormViewModel
+    /// Zobrazení formuláře nového předmětu.
     @State private var isAddingSubject = false
+    /// Zobrazení potvrzení smazání.
     @State private var isConfirmingDelete = false
-    /// Brání dvojitému uložení, než se vyřeší dialog s povolením notifikací
+    /// Brání dvojitému uložení, než se vyřeší dialog s povolením notifikací.
     @State private var isSaving = false
+    /// Zobrazení editoru události v Kalendáři.
     @State private var isAddingToCalendar = false
 
+    /// Vytvoří formulář pro nový nebo upravovaný deadline.
     /// - Parameters:
     ///   - task: upravovaný úkol, `nil` = nový
     ///   - preselectedSubject: předvybraný předmět (při přidávání z detailu předmětu)
@@ -22,6 +34,8 @@ struct TaskFormSheet: View {
         _viewModel = State(initialValue: TaskFormViewModel(task: task, preselectedSubject: preselectedSubject))
     }
 
+    /// Formulář se sekcemi v navigaci; tlačítka Zrušit/Uložit (uložení po žádosti o notifikace),
+    /// sheety pro nový předmět a Kalendář a potvrzovací dialog smazání.
     var body: some View {
         NavigationStack {
             Form {
@@ -84,6 +98,7 @@ struct TaskFormSheet: View {
 
     // MARK: - Sekce formuláře
 
+    /// Výběr předmětu (nebo upozornění, že žádný neexistuje) a tlačítko „Nový předmět“.
     private var subjectSection: some View {
         Section {
             if subjects.isEmpty {
@@ -121,6 +136,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Název, typ a termín deadlinu.
     private var detailsSection: some View {
         Section("Deadline") {
             TextField("Název (např. Zkouška – 1. termín)", text: $viewModel.title)
@@ -135,6 +151,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Informace, zda a kdy přijde připomínka.
     private var reminderSection: some View {
         Section {
             Label(
@@ -150,6 +167,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Víceřádková poznámka.
     private var noteSection: some View {
         Section("Poznámka") {
             TextField("Místnost, pomůcky, požadavky…", text: $viewModel.note, axis: .vertical)
@@ -157,6 +175,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Tlačítko pro otevření editoru události v Kalendáři (jen u platného formuláře).
     private var calendarSection: some View {
         Section {
             Button("Přidat do Kalendáře", systemImage: "calendar.badge.plus") {
@@ -168,6 +187,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Přepínač splnění a pole pro body či známku (jen při úpravě).
     private var resultSection: some View {
         Section("Stav a hodnocení") {
             Toggle("Splněno", isOn: $viewModel.isCompleted.animation())
@@ -175,6 +195,7 @@ struct TaskFormSheet: View {
         }
     }
 
+    /// Tlačítko pro smazání deadlinu s potvrzením (jen při úpravě).
     private var deleteSection: some View {
         Section {
             Button("Smazat deadline", systemImage: "trash", role: .destructive) {

@@ -5,13 +5,32 @@ import UIKit
 // Týdenní mřížka rozvrhu – klasický rozvrh jako ve STAGu (dny ve sloupcích, hodiny v řádcích)
 // v současném vizuálním stylu. Komponenta má pevnou výšku, rodič ji vkládá do `ScrollView`.
 
+/// Týdenní mřížka rozvrhu – dny ve sloupcích, hodiny v řádcích.
+///
+/// Zobrazuje hlavičky dnů, čáry celých a půlhodin, popisky hodin, barevné bloky akcí
+/// (překrývající se akce v podsloupcích), podbarvený dnešní sloupec a červenou čáru „teď“.
+/// Výskyty získává přes předanou funkci (v aplikaci z `TimetableViewModel`). Klepnutím
+/// na blok uživatel otevře detail akce přes `onSelect`. Používá se v týdenním režimu
+/// záložky Rozvrh uvnitř `ScrollView`.
 struct TimetableWeekGridView: View {
+    /// Dny zobrazené ve sloupcích.
     private let days: [Date]
+    /// Vrací výskyty akcí pro daný den.
     private let occurrences: (Date) -> [TimetableOccurrence]
+    /// Aktuální čas pro čáru „teď“ a stav akcí.
     private let now: Date
+    /// Vrací barvu předmětu pro danou akci.
     private let color: (TimetableEvent) -> Color
+    /// Volá se po klepnutí na blok akce.
     private let onSelect: (TimetableOccurrence) -> Void
 
+    /// Vytvoří týdenní mřížku.
+    /// - Parameters:
+    ///   - days: Dny zobrazené ve sloupcích.
+    ///   - occurrences: Funkce vracející výskyty akcí daného dne.
+    ///   - now: Aktuální čas.
+    ///   - color: Funkce vracející barvu předmětu akce.
+    ///   - onSelect: Akce po klepnutí na blok výskytu.
     init(days: [Date],
          occurrences: @escaping (Date) -> [TimetableOccurrence],
          now: Date,
@@ -24,30 +43,35 @@ struct TimetableWeekGridView: View {
         self.onSelect = onSelect
     }
 
+    /// Světlý / tmavý režim pro sytost barev.
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Kalendář pro výpočty dnů a času.
     private let calendar = Calendar.current
 
     // MARK: - Rozměry
 
-    /// Výška jedné hodiny
+    /// Výška jedné hodiny.
     private let hourHeight: CGFloat = 52
-    /// Výška hlavičky se dny
+    /// Výška hlavičky se dny.
     private let headerHeight: CGFloat = 48
-    /// Šířka levého sloupce s hodinami
+    /// Šířka levého sloupce s hodinami.
     private let timeColumnWidth: CGFloat = 34
-    /// Místo nad první čarou (aby se vešel popisek první hodiny)
+    /// Místo nad první čarou (aby se vešel popisek první hodiny).
     private let gridTopInset: CGFloat = 8
-    /// Místo pod poslední čarou
+    /// Místo pod poslední čarou.
     private let bottomInset: CGFloat = 10
-    /// Vnitřní okraj karty
+    /// Vnitřní okraj karty.
     private let cardPadding: CGFloat = 6
 
+    /// Zda je aktivní tmavý režim.
     private var isDark: Bool { colorScheme == .dark }
+    /// Svislá pozice první hodinové čáry.
     private var gridTop: CGFloat { headerHeight + gridTopInset }
 
     // MARK: - Tělo
 
+    /// Karta s podbarvením dneška, mřížkou, popisky hodin, hlavičkami dnů, bloky a čárou „teď“ ve vrstvách `ZStack`.
     var body: some View {
         let columns = days.map { day in
             GridDayColumn(date: day, items: Self.layout(occurrences(day)))
@@ -95,6 +119,11 @@ struct TimetableWeekGridView: View {
 
     // MARK: - Hlavička dne
 
+    /// Hlavička sloupce se zkratkou dne a číslem dne (dnešek zvýrazněný).
+    /// - Parameters:
+    ///   - date: Datum dne.
+    ///   - isToday: Zda jde o dnešní den.
+    /// - Returns: Hlavička dne.
     private func dayHeader(_ date: Date, isToday: Bool) -> some View {
         VStack(spacing: 3) {
             Text(GridFormat.shortWeekday(date))
@@ -118,7 +147,12 @@ struct TimetableWeekGridView: View {
         .accessibilityAddTraits(.isHeader)
     }
 
-    /// Jemné podbarvení celého dnešního sloupce
+    /// Jemné podbarvení celého dnešního sloupce.
+    /// - Parameters:
+    ///   - index: Index dnešního sloupce.
+    ///   - columnWidth: Šířka sloupce dne.
+    ///   - height: Celková výška mřížky.
+    /// - Returns: Podbarvený obdélník.
     private func todayHighlight(index: Int, columnWidth: CGFloat, height: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: 12, style: .continuous)
             .fill(Color.accentColor.opacity(isDark ? 0.13 : 0.06))
@@ -129,6 +163,14 @@ struct TimetableWeekGridView: View {
 
     // MARK: - Mřížka
 
+    /// Čáry mřížky: čárkované půlhodiny, plné hodiny a svislé oddělovače dnů.
+    /// - Parameters:
+    ///   - hours: Rozsah zobrazených hodin.
+    ///   - columnCount: Počet sloupců dnů.
+    ///   - columnWidth: Šířka sloupce dne.
+    ///   - width: Celková šířka mřížky.
+    ///   - height: Celková výška mřížky.
+    /// - Returns: Vrstva čar mřížky.
     private func gridLines(hours: ClosedRange<Int>, columnCount: Int, columnWidth: CGFloat,
                            width: CGFloat, height: CGFloat) -> some View {
         let hourCount = hours.upperBound - hours.lowerBound
@@ -166,6 +208,11 @@ struct TimetableWeekGridView: View {
         .accessibilityHidden(true)
     }
 
+    /// Popisky hodin v levém sloupci; popisky u čáry „teď“ se skryjí.
+    /// - Parameters:
+    ///   - hours: Rozsah zobrazených hodin.
+    ///   - nowY: Pozice čáry „teď“, nebo `nil`.
+    /// - Returns: Popisky hodin.
     private func hourLabels(hours: ClosedRange<Int>, hiddenAround nowY: CGFloat?) -> some View {
         ForEach(Array(hours), id: \.self) { hour in
             let y = gridTop + CGFloat(hour - hours.lowerBound) * hourHeight
@@ -185,6 +232,13 @@ struct TimetableWeekGridView: View {
 
     // MARK: - Bloky akcí
 
+    /// Klikatelný blok akce umístěný podle času, dne a podsloupce.
+    /// - Parameters:
+    ///   - placed: Výskyt s přiřazeným podsloupcem.
+    ///   - columnIndex: Index sloupce dne.
+    ///   - columnWidth: Šířka sloupce dne.
+    ///   - hours: Rozsah zobrazených hodin.
+    /// - Returns: Tlačítko s blokem akce, které volá `onSelect`.
     @ViewBuilder
     private func block(_ placed: GridPlacedOccurrence, columnIndex: Int, columnWidth: CGFloat,
                        hours: ClosedRange<Int>) -> some View {
@@ -214,6 +268,9 @@ struct TimetableWeekGridView: View {
         .accessibilityHint("Zobrazí podrobnosti akce")
     }
 
+    /// Sestaví popisek bloku pro VoiceOver.
+    /// - Parameter occurrence: Výskyt akce.
+    /// - Returns: Datum, čas, předmět, typ, místnost a stav oddělené čárkami.
     private func accessibilityLabel(for occurrence: TimetableOccurrence) -> String {
         let event = occurrence.event
         var parts = [
@@ -235,6 +292,12 @@ struct TimetableWeekGridView: View {
 
     // MARK: - Čára „teď“
 
+    /// Červená čára „teď“ přes dnešní sloupec s bublinou času v levém sloupci.
+    /// - Parameters:
+    ///   - x: Levý okraj dnešního sloupce.
+    ///   - y: Svislá pozice čáry.
+    ///   - columnWidth: Šířka sloupce dne.
+    /// - Returns: Indikátor aktuálního času.
     private func nowIndicator(x: CGFloat, y: CGFloat, columnWidth: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
             Rectangle()
@@ -263,7 +326,9 @@ struct TimetableWeekGridView: View {
 
     // MARK: - Výpočty
 
-    /// Rozsah zobrazených hodin – podle nejdřívější a nejpozdější akce v týdnu, minimálně 8–16
+    /// Rozsah zobrazených hodin – podle nejdřívější a nejpozdější akce v týdnu, minimálně 8–16.
+    /// - Parameter columns: Sloupce dnů s rozmístěnými akcemi.
+    /// - Returns: Rozsah hodin omezený na 0–24.
     private func hourRange(for columns: [GridDayColumn]) -> ClosedRange<Int> {
         var first = 8
         var last = 16
@@ -280,18 +345,30 @@ struct TimetableWeekGridView: View {
         return first...last
     }
 
+    /// Počet minut od začátku referenčního dne, omezený na 0–1440.
+    /// - Parameters:
+    ///   - date: Převáděný čas.
+    ///   - reference: Den, od jehož půlnoci se počítá.
+    /// - Returns: Minuty od půlnoci.
     private func minutesFromStartOfDay(_ date: Date, dayOf reference: Date) -> Double {
         let minutes = date.timeIntervalSince(calendar.startOfDay(for: reference)) / 60
         return min(max(minutes, 0), 24 * 60)
     }
 
-    /// Svislá pozice času v mřížce
+    /// Svislá pozice času v mřížce.
+    /// - Parameters:
+    ///   - date: Čas.
+    ///   - reference: Den, od jehož půlnoci se počítá.
+    ///   - hours: Rozsah zobrazených hodin.
+    /// - Returns: Souřadnice y.
     private func offset(for date: Date, dayOf reference: Date, in hours: ClosedRange<Int>) -> CGFloat {
         let minutes = minutesFromStartOfDay(date, dayOf: reference) - Double(hours.lowerBound * 60)
         return gridTop + CGFloat(minutes / 60) * hourHeight
     }
 
-    /// Pozice čáry „teď“, pokud aktuální čas spadá do zobrazeného rozsahu
+    /// Pozice čáry „teď“, pokud aktuální čas spadá do zobrazeného rozsahu.
+    /// - Parameter hours: Rozsah zobrazených hodin.
+    /// - Returns: Souřadnice y, nebo `nil` mimo rozsah.
     private func nowOffset(in hours: ClosedRange<Int>) -> CGFloat? {
         let minutes = minutesFromStartOfDay(now, dayOf: now)
         guard minutes >= Double(hours.lowerBound * 60), minutes <= Double(hours.upperBound * 60) else { return nil }
@@ -300,6 +377,8 @@ struct TimetableWeekGridView: View {
 
     /// Rozmístí překrývající se akce vedle sebe – shluky navzájem se překrývajících akcí
     /// se rozdělí do sloupců, každá akce dostane první volný sloupec.
+    /// - Parameter items: Výskyty akcí jednoho dne.
+    /// - Returns: Výskyty s přiřazeným podsloupcem a počtem podsloupců ve shluku.
     static func layout(_ items: [TimetableOccurrence]) -> [GridPlacedOccurrence] {
         let sorted = items.sorted { lhs, rhs in
             lhs.start == rhs.start ? lhs.end > rhs.end : lhs.start < rhs.start
@@ -336,36 +415,55 @@ struct TimetableWeekGridView: View {
 
 // MARK: - Pomocné typy
 
-/// Jeden den (sloupec) mřížky s rozmístěnými akcemi
+/// Jeden den (sloupec) mřížky s rozmístěnými akcemi.
+///
+/// Vzniká v `body` mřížky pro každý zobrazený den.
 private struct GridDayColumn {
+    /// Datum dne.
     let date: Date
+    /// Akce dne s přiřazenými podsloupci.
     let items: [GridPlacedOccurrence]
 }
 
-/// Akce s přiděleným podsloupcem (kvůli překryvům)
+/// Akce s přiděleným podsloupcem (kvůli překryvům).
+///
+/// Výsledek `TimetableWeekGridView.layout(_:)`, podle kterého se počítá šířka a posun bloku.
 struct GridPlacedOccurrence: Identifiable {
+    /// Umístěný výskyt.
     let occurrence: TimetableOccurrence
-    /// Index podsloupce v rámci shluku překrývajících se akcí
+    /// Index podsloupce v rámci shluku překrývajících se akcí.
     let column: Int
-    /// Počet podsloupců ve shluku
+    /// Počet podsloupců ve shluku.
     let columnCount: Int
 
+    /// Identifikátor převzatý z výskytu.
     var id: String { occurrence.id }
 }
 
-/// Barevný blok jedné akce v mřížce
+/// Barevný blok jedné akce v mřížce.
+///
+/// Zobrazuje kód předmětu a podle výšky i místnost a zkratku typu. Proběhlé akce
+/// jsou vybledlé, probíhající mají obrys. Používá se jako popisek tlačítka v `TimetableWeekGridView`.
 private struct GridEventBlock: View {
+    /// Zobrazovaný výskyt.
     let occurrence: TimetableOccurrence
+    /// Barva předmětu.
     let tint: Color
+    /// Zda akce už skončila.
     let isPast: Bool
+    /// Zda akce právě probíhá.
     let isOngoing: Bool
+    /// Zda je aktivní tmavý režim.
     let isDark: Bool
+    /// Výška bloku, podle které se volí zobrazené řádky.
     let height: CGFloat
 
+    /// Tvar bloku se zaoblenými rohy.
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: 8, style: .continuous)
     }
 
+    /// Řádky kódu, místnosti a typu na barevném podkladu s proužkem vlevo.
     var body: some View {
         let event = occurrence.event
 
@@ -409,8 +507,13 @@ private struct GridEventBlock: View {
     }
 }
 
-/// Jemné zmenšení bloku při stisku
+/// Styl tlačítka s jemným zmenšením bloku při stisku.
+///
+/// Používá se pro bloky akcí v `TimetableWeekGridView`.
 private struct GridBlockButtonStyle: ButtonStyle {
+    /// Zmenší popisek při stisku s animací.
+    /// - Parameter configuration: Konfigurace tlačítka.
+    /// - Returns: Upravený popisek tlačítka.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
@@ -418,10 +521,14 @@ private struct GridBlockButtonStyle: ButtonStyle {
     }
 }
 
-/// Formátování dat pro mřížku (v jazyce aplikace)
+/// Formátování dat pro mřížku (v jazyce aplikace).
+///
+/// Sdílené formátovače pro hlavičky dnů, popisky VoiceOver a čas.
 private enum GridFormat {
+    /// Jazyk formátování.
     private static let locale = Locale.czech
 
+    /// Formátovač zkratky dne v týdnu.
     private static let shortWeekdayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = locale
@@ -429,6 +536,7 @@ private enum GridFormat {
         return formatter
     }()
 
+    /// Formátovač plného data s dnem v týdnu.
     private static let fullDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = locale
@@ -437,6 +545,7 @@ private enum GridFormat {
         return formatter
     }()
 
+    /// Formátovač času „H:mm“.
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = locale
@@ -444,17 +553,23 @@ private enum GridFormat {
         return formatter
     }()
 
-    /// „Po“, „Út“, …
+    /// Zkratka dne v týdnu, např. „Po“, „Út“.
+    /// - Parameter date: Datum.
+    /// - Returns: Zkratka s velkým počátečním písmenem.
     static func shortWeekday(_ date: Date) -> String {
         shortWeekdayFormatter.string(from: date).capitalized(with: locale)
     }
 
-    /// „pondělí 5. října“
+    /// Plné datum, např. „pondělí 5. října“.
+    /// - Parameter date: Datum.
+    /// - Returns: Text data.
     static func fullDate(_ date: Date) -> String {
         fullDateFormatter.string(from: date)
     }
 
-    /// „10:00“
+    /// Čas, např. „10:00“.
+    /// - Parameter date: Datum s časem.
+    /// - Returns: Text času.
     static func time(_ date: Date) -> String {
         timeFormatter.string(from: date)
     }
@@ -462,9 +577,14 @@ private enum GridFormat {
 
 // MARK: - Náhled
 
+/// Pomocný pohled pro náhled týdenní mřížky s ukázkovými daty.
+///
+/// Používá ukázkový rozvrh `TimetableSnapshot.sample`.
 private struct TimetableWeekGridPreview: View {
+    /// Ukázkový rozvrh.
     private let snapshot = TimetableSnapshot.sample
 
+    /// Pracovní dny (pondělí–pátek) aktuálního týdne.
     private var weekDays: [Date] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)

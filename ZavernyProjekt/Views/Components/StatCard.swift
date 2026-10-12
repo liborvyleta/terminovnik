@@ -1,10 +1,17 @@
 import SwiftUI
 
 /// Malá souhrnná kartička s číslem (např. „3 · Po termínu“).
+///
+/// Zobrazuje symbol, hodnotu a popisek; data dostává zvenku. Nemá akce; používá se v hlavičce
+/// Přehledu (`StatsHeaderView`) a v seznamu předmětů.
 struct StatCard: View {
+    /// Zobrazené číslo.
     let value: Int
+    /// Popisek pod číslem.
     let title: String
+    /// SF Symbol kartičky.
     let symbol: String
+    /// Barva symbolu.
     let color: Color
 
     var body: some View {

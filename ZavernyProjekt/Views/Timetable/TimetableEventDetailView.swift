@@ -1,19 +1,32 @@
 import SwiftUI
 
 /// Detail rozvrhové akce (sheet): kdy, kde, kdo a přidání do Kalendáře.
+///
+/// Zobrazuje hlavičku s ikonou typu, názvem a kódem předmětu, sekce Kdy (datum, čas,
+/// opakování, platnost), Kde (mapa budovy přes `BuildingMapSection` nebo jen místnost),
+/// vyučujícího a údaje o předmětu. Data přebírá z předaného `TimetableSelection`.
+/// U konkrétního výskytu může uživatel otevřít předvyplněný editor události v Kalendáři
+/// a spustit sledování hodiny jako Live Activity (`LiveActivityManager`).
+/// Otevírá se jako sheet ze záložky Rozvrh po klepnutí na akci.
 struct TimetableEventDetailView: View {
+    /// Vybraná akce a případně její konkrétní výskyt.
     let selection: TimetableSelection
+    /// Barva předmětu pro hlavičku a tlačítka.
     let tint: Color
 
+    /// Zavře sheet.
     @Environment(\.dismiss) private var dismiss
+    /// Zda je zobrazen editor události v Kalendáři.
     @State private var isAddingToCalendar = false
-    /// Hodina se sleduje jako Live Activity na zamčené obrazovce
+    /// Hodina se sleduje jako Live Activity na zamčené obrazovce.
     @State private var isTracking = false
-    /// Spuštění selhalo (typicky vypnuté Živé aktivity v Nastavení iOS)
+    /// Spuštění selhalo (typicky vypnuté Živé aktivity v Nastavení iOS).
     @State private var trackingFailed = false
 
+    /// Akce rozvrhu z výběru.
     private var event: TimetableEvent { selection.event }
 
+    /// Seznam sekcí v `NavigationStack` s tlačítkem Hotovo a sheetem editoru Kalendáře.
     var body: some View {
         NavigationStack {
             List {
@@ -91,6 +104,7 @@ struct TimetableEventDetailView: View {
 
     // MARK: - Hlavička
 
+    /// Hlavička s ikonou typu akce, názvem předmětu, štítkem kódu a časem výskytu.
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
             Image(systemName: TimetableViewModel.symbol(for: event))
@@ -122,7 +136,11 @@ struct TimetableEventDetailView: View {
 
     // MARK: - Sekce
 
-    /// Tlačítko pro sledování hodiny jako Live Activity (zamčená obrazovka, Dynamic Island)
+    /// Tlačítko pro sledování hodiny jako Live Activity (zamčená obrazovka, Dynamic Island).
+    ///
+    /// Po neúspěšném spuštění zobrazí v zápatí radu ke kontrole Nastavení iOS.
+    /// - Parameter occurrence: Výskyt hodiny, který se má sledovat.
+    /// - Returns: Sekce seznamu s tlačítkem a vysvětlujícím zápatím.
     private func liveActivitySection(_ occurrence: TimetableOccurrence) -> some View {
         Section {
             Button {
@@ -158,6 +176,7 @@ struct TimetableEventDetailView: View {
         .onAppear { isTracking = LiveActivityManager.shared.isTracking(occurrence) }
     }
 
+    /// Sekce Kdy: datum a čas výskytu (nebo „Bez pevného termínu“), opakování a platnost.
     private var whenSection: some View {
         Section("Kdy") {
             if let occurrence = selection.occurrence {
@@ -181,7 +200,7 @@ struct TimetableEventDetailView: View {
         }
     }
 
-    /// S budovou: název, adresa, mapa a navigace; bez budovy jen místnost
+    /// S budovou: název, adresa, mapa a navigace; bez budovy jen místnost.
     @ViewBuilder
     private var whereSection: some View {
         if let building = event.building, !building.isEmpty {
@@ -196,7 +215,7 @@ struct TimetableEventDetailView: View {
 
     // MARK: - Texty
 
-    /// Jak často se akce koná; u akcí bez pevného dne nic
+    /// Jak často se akce koná; u akcí bez pevného dne nic.
     private var repetitionText: String? {
         if event.singleDate != nil { return String(localized: "Jednorázově") }
         guard event.weekday != nil else { return nil }
@@ -208,7 +227,7 @@ struct TimetableEventDetailView: View {
         }
     }
 
-    /// „21. 9. 2026 – 18. 12. 2026“
+    /// Období platnosti akce, např. „21. 9. 2026 – 18. 12. 2026“; bez dat `nil`.
     private var validityText: String? {
         let style = Date.FormatStyle.dateTime.day().month(.defaultDigits).year().locale(.czech)
         switch (event.dateFrom, event.dateTo) {
@@ -219,12 +238,15 @@ struct TimetableEventDetailView: View {
         }
     }
 
+    /// Text délky výskytu.
+    /// - Parameter occurrence: Výskyt akce.
+    /// - Returns: Délka naformátovaná přes `TimetableViewModel.durationText(minutes:)`.
     private func durationText(_ occurrence: TimetableOccurrence) -> String {
         let minutes = Int(occurrence.end.timeIntervalSince(occurrence.start) / 60)
         return TimetableViewModel.durationText(minutes: minutes)
     }
 
-    /// Poznámka události v Kalendáři: místnost, vyučující, zdroj
+    /// Poznámka události v Kalendáři: místnost, vyučující, zdroj.
     private var calendarNotes: String {
         var lines: [String] = []
         if let location = event.locationText { lines.append(String(localized: "Místnost: \(location)")) }
@@ -233,6 +255,9 @@ struct TimetableEventDetailView: View {
         return lines.joined(separator: "\n")
     }
 
+    /// Převede první znak textu na velké písmeno.
+    /// - Parameter text: Vstupní text.
+    /// - Returns: Text s velkým počátečním písmenem.
     private static func capitalized(_ text: String) -> String {
         text.prefix(1).uppercased() + text.dropFirst()
     }

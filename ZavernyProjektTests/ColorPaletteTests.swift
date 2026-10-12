@@ -3,18 +3,34 @@ import Testing
 import UIKit
 @testable import ZavernyProjekt
 
-/// `Color(hex:)` a paleta barev předmětů.
+/// Testy převodu hex řetězce na barvu a palety barev předmětů.
+///
+/// Ověřují `Color(hex:)` včetně záložní šedé pro neplatný vstup, unikátnost barev a jejich názvů
+/// pro VoiceOver, cyklení indexu přes paletu a výběr náhodné barvy.
 @Suite("Barvy a paleta předmětů")
 struct ColorPaletteTests {
+    /// Složky barvy v rozsahu 0–1 pro porovnání s tolerancí.
+    ///
+    /// Slouží k porovnání vyřešené barvy s očekávanými hodnotami RGB.
     private struct RGBA: Equatable {
         let red: Double, green: Double, blue: Double, alpha: Double
 
+        /// Porovná dvě barvy po složkách s tolerancí.
+        ///
+        /// - Parameters:
+        ///   - other: Barva, se kterou se porovnává.
+        ///   - tolerance: Maximální povolený rozdíl každé složky, výchozí 0,003.
+        /// - Returns: `true`, pokud se všechny složky liší méně než o toleranci.
         func isClose(to other: RGBA, tolerance: Double = 0.003) -> Bool {
             abs(red - other.red) < tolerance && abs(green - other.green) < tolerance
                 && abs(blue - other.blue) < tolerance && abs(alpha - other.alpha) < tolerance
         }
     }
 
+    /// Rozloží SwiftUI barvu na složky RGBA ve světlém režimu.
+    ///
+    /// - Parameter color: Barva k rozložení.
+    /// - Returns: Složky barvy v rozsahu 0–1.
     private func components(_ color: Color) -> RGBA {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
@@ -22,6 +38,13 @@ struct ColorPaletteTests {
         return RGBA(red: r, green: g, blue: b, alpha: a)
     }
 
+    /// Převede složky 0–255 na očekávanou neprůhlednou barvu.
+    ///
+    /// - Parameters:
+    ///   - red: Červená složka 0–255.
+    ///   - green: Zelená složka 0–255.
+    ///   - blue: Modrá složka 0–255.
+    /// - Returns: Složky v rozsahu 0–1 s alfou 1.
     private func expected(_ red: Int, _ green: Int, _ blue: Int) -> RGBA {
         RGBA(red: Double(red) / 255, green: Double(green) / 255, blue: Double(blue) / 255, alpha: 1)
     }

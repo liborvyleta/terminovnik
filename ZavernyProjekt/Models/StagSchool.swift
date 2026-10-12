@@ -1,22 +1,28 @@
 import Foundation
 
-/// Vysoká škola s IS/STAG. Aplikace se připojuje k webovým službám zvolené školy.
+/// Vysoká škola s IS/STAG.
+///
+/// Aplikace se připojuje k webovým službám zvolené školy (`baseURL`). Kromě předdefinovaných
+/// škol (`all`) lze zadat vlastní server (`custom(address:)`). Volba se pamatuje ve `StagSchoolPreference`.
 nonisolated struct StagSchool: Codable, Hashable, Identifiable {
-    /// Stabilní identifikátor („utb“, „zcu“…; „custom“ = vlastní adresa)
+    /// Stabilní identifikátor („utb“, „zcu“…; „custom“ = vlastní adresa).
     let id: String
-    /// Plný název školy
+    /// Plný název školy.
     let name: String
-    /// Zkratka („UTB“)
+    /// Zkratka školy („UTB“).
     let shortName: String
-    /// Sídlo školy
+    /// Sídlo školy; u vlastní adresy prázdné.
     let city: String
-    /// Adresa webových služeb IS/STAG, např. https://stag-ws.utb.cz/ws
+    /// Adresa webových služeb IS/STAG, např. https://stag-ws.utb.cz/ws.
     let baseURL: URL
 
+    /// Příznak školy zadané vlastní adresou serveru.
     var isCustom: Bool { id == Self.customID }
 
-    /// Celý host serveru (s portem, je-li uvedený), např. „stag-ws.utb.cz“ – zobrazuje se
-    /// u přihlášení, aby uživatel viděl, komu zadává heslo. Mezinárodní domény jsou v punycode.
+    /// Celý host serveru (s portem, je-li uvedený) malými písmeny, např. „stag-ws.utb.cz“.
+    ///
+    /// Zobrazuje se u přihlášení, aby uživatel viděl, komu zadává heslo. Mezinárodní domény jsou v punycode.
+    /// Když host nejde zjistit, vrátí celou adresu.
     var displayHost: String {
         let components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         guard let host = components?.encodedHost ?? baseURL.host(), !host.isEmpty else {
@@ -28,6 +34,7 @@ nonisolated struct StagSchool: Codable, Hashable, Identifiable {
 }
 
 nonisolated extension StagSchool {
+    /// Identifikátor školy zadané vlastní adresou.
     static let customID = "custom"
 
     /// Školy s ověřenými webovými službami IS/STAG (veřejná služba i přihlášení odpovídají).
@@ -48,15 +55,24 @@ nonisolated extension StagSchool {
                    baseURL: URL(string: "https://ws.ujep.cz/ws")!)
     ]
 
-    /// Výchozí škola (původní chování aplikace)
+    /// Výchozí škola – UTB (původní chování aplikace).
     static var utb: StagSchool { all[0] }
 
+    /// Najde předdefinovanou školu podle identifikátoru.
+    /// - Parameter id: Identifikátor školy, např. „utb“.
+    /// - Returns: Škola ze seznamu `all`, nebo `nil`, pokud neexistuje.
     static func school(id: String) -> StagSchool? { all.first { $0.id == id } }
 
-    /// Vlastní škola zadaná adresou serveru. Přijme „stag-ws.skola.cz“, „https://stag-ws.skola.cz“
+    /// Vytvoří vlastní školu z adresy serveru zadané uživatelem.
+    ///
+    /// Přijme „stag-ws.skola.cz“, „https://stag-ws.skola.cz“
     /// i „https://stag-ws.skola.cz/ws“. Povolené je jen HTTPS.
     /// Jméno a heslo v adrese („https://user:heslo@server“) se zahodí, host se převede na malá písmena,
-    /// port zůstává.
+    /// port zůstává. Cesta se doplní o `/ws`, dotaz a fragment se odstraní. Název i zkratka školy
+    /// jsou rovny hostu.
+    /// - Parameter address: Adresa serveru zadaná uživatelem.
+    /// - Returns: Škola s identifikátorem `customID`, nebo `nil` při prázdné adrese, jiném schématu
+    ///   než HTTPS nebo hostu bez tečky.
     static func custom(address: String) -> StagSchool? {
         var text = address.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
@@ -81,10 +97,14 @@ nonisolated extension StagSchool {
     }
 }
 
-/// Škola zvolená před přihlášením (pamatuje se i po zavření aplikace)
+/// Škola zvolená před přihlášením.
+///
+/// Ukládá se jako JSON do `UserDefaults.standard` (klíč `stagSelectedSchool.v1`), takže se pamatuje
+/// i po zavření aplikace.
 enum StagSchoolPreference {
     private static let key = "stagSelectedSchool.v1"
 
+    /// Aktuálně zvolená škola; bez uložené nebo při nečitelné hodnotě vrací UTB.
     static var selected: StagSchool {
         get {
             guard let data = UserDefaults.standard.data(forKey: key),

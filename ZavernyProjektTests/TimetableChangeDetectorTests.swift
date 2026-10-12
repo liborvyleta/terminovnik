@@ -2,12 +2,28 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Detekce změn rozvrhu. Kalendář Europe/Prague, „teď“ = pondělí 5. 10. 2026 8:00.
+/// Testy detekce změn rozvrhu (`TimetableChangeDetector`).
+///
+/// Porovnávají dva snímky rozvrhu. Kalendář Europe/Prague, „teď“ = pondělí 5. 10. 2026 8:00.
 @Suite("Změny rozvrhu")
 struct TimetableChangeDetectorTests {
     let calendar = TestCalendar.prague
     let now = makeDate(2026, 10, 5, 8, 0)
 
+    /// Vytvoří rozvrhovou akci předmětu AP9PT s nastavitelnými vlastnostmi.
+    ///
+    /// - Parameters:
+    ///   - id: Identifikátor akce.
+    ///   - weekday: Den v týdnu, nebo `nil`.
+    ///   - start: Čas začátku.
+    ///   - end: Čas konce.
+    ///   - building: Budova.
+    ///   - room: Místnost.
+    ///   - teacher: Vyučující.
+    ///   - parity: Parita týdne.
+    ///   - to: Konec platnosti akce.
+    ///   - single: Datum jednorázové akce.
+    /// - Returns: Nová rozvrhová akce.
     private func event(
         id: String = "1",
         weekday: Int? = 2,
@@ -26,10 +42,23 @@ struct TimetableChangeDetectorTests {
                        dateFrom: nil, dateTo: to, singleDate: single, hexColor: nil)
     }
 
+    /// Zabalí akce do snímku rozvrhu staženého v čase `now`.
+    ///
+    /// - Parameters:
+    ///   - events: Akce rozvrhu.
+    ///   - semester: Semestr, výchozí ZS.
+    ///   - year: Akademický rok, výchozí 2026.
+    /// - Returns: Nový snímek rozvrhu.
     private func snapshot(_ events: [TimetableEvent], semester: String = "ZS", year: String = "2026") -> TimetableSnapshot {
         TimetableSnapshot(events: events, semester: semester, academicYear: year, fetchedAt: now)
     }
 
+    /// Porovná dva seznamy akcí a vrátí zjištěné změny.
+    ///
+    /// - Parameters:
+    ///   - old: Původní akce.
+    ///   - new: Nové akce.
+    /// - Returns: Změny nalezené `TimetableChangeDetector.diff`.
     private func diff(_ old: [TimetableEvent], _ new: [TimetableEvent]) -> [TimetableChange] {
         TimetableChangeDetector.diff(old: snapshot(old), new: snapshot(new), now: now, calendar: calendar)
     }

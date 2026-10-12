@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Odpočet do termínu (`Countdown`), naléhavost (`DeadlineUrgency`) a počítání kalendářních dní.
+/// Testy odpočtu do termínu a naléhavosti termínů.
+///
+/// Pokrývají odpočet (`Countdown`), naléhavost (`DeadlineUrgency`) a počítání kalendářních dní.
 /// Countdown i DeadlineUrgency interně používají `Calendar.current`, proto data stavíme v kalendáři zařízení.
 @Suite("Odpočet a naléhavost termínů")
 struct CountdownTests {
@@ -10,6 +12,14 @@ struct CountdownTests {
     /// Středa 7. 10. 2026 12:00
     var now: Date { makeDate(2026, 10, 7, 12, 0, calendar: calendar) }
 
+    /// Vytvoří datum v roce 2026 v kalendáři zařízení.
+    ///
+    /// - Parameters:
+    ///   - day: Den v měsíci.
+    ///   - hour: Hodina, výchozí 12.
+    ///   - minute: Minuta, výchozí 0.
+    ///   - month: Měsíc, výchozí říjen.
+    /// - Returns: Odpovídající datum.
     private func day(_ day: Int, _ hour: Int = 12, _ minute: Int = 0, month: Int = 10) -> Date {
         makeDate(2026, month, day, hour, minute, calendar: calendar)
     }

@@ -4,10 +4,12 @@ import SwiftData
 
 /// ViewModel sekce „Účet IS/STAG“ v Nastavení.
 ///
-/// Zobrazuje připojený účet ze `StagAccountStore` a spouští aktualizaci předmětů
-/// přes `StagSubjectSync` – s uloženým ticketem, tedy bez nového přihlášení.
+/// Zobrazuje připojený účet ze `StagAccountStore` a spouští aktualizaci předmětů přes `StagSubjectSync` – s uloženým ticketem, tedy bez nového přihlášení – spolu s obnovou rozvrhu, termínů a známek. Umožňuje také odhlášení účtu. V DEBUG sestavení nabízí náhledové instance pro #Preview.
 @Observable
 final class StagAccountViewModel {
+    /// Stav ruční aktualizace předmětů ze STAGu.
+    ///
+    /// Řídí, zda sekce ukazuje průběh, výsledek synchronizace, nebo chybu.
     enum SyncState: Equatable {
         case idle
         case syncing
@@ -15,16 +17,21 @@ final class StagAccountViewModel {
         case failed(String)
     }
 
+    /// Aktuální stav synchronizace zobrazovaný v sekci.
     private(set) var state: SyncState = .idle
 
+    /// Úložiště účtu STAG (ticket a údaje o účtu).
     private let store: StagAccountStore
 
     #if DEBUG
-    /// Jen pro #Preview: pevný účet místo skutečného úložiště
+    /// Jen pro #Preview: pevný účet místo skutečného úložiště.
     private var isPreview = false
+    /// Pevný účet zobrazovaný v náhledu.
     private var previewAccount: StagAccount?
     #endif
 
+    /// Vytvoří ViewModel nad úložištěm účtu.
+    /// - Parameter store: Úložiště účtu STAG; výchozí je sdílená instance.
     init(store: StagAccountStore = .shared) {
         self.store = store
     }
@@ -39,14 +46,18 @@ final class StagAccountViewModel {
         return store.account
     }
 
+    /// Příznak, zda je účet STAG připojený.
     var isConnected: Bool { account != nil }
 
+    /// Příznak, zda právě probíhá synchronizace.
     var isSyncing: Bool { state == .syncing }
 
     // MARK: - Akce
 
-    /// Aktualizuje předměty ze STAGu (a s nimi rozvrh, termíny a známky). Při vypršeném přihlášení se účet odhlásí
-    /// a v sekci se zobrazí chyba s výzvou k novému přihlášení.
+    /// Aktualizuje předměty ze STAGu (a s nimi rozvrh, termíny a známky).
+    ///
+    /// Při vypršeném přihlášení se účet odhlásí a v sekci se zobrazí chyba s výzvou k novému přihlášení. Pokud synchronizace už běží, nic nedělá.
+    /// - Parameter context: SwiftData kontext, do kterého se předměty ukládají.
     func sync(context: ModelContext) async {
         guard !isSyncing else { return }
         state = .syncing
@@ -62,8 +73,9 @@ final class StagAccountViewModel {
         }
     }
 
-    /// Odhlášení ze STAGu – smaže ticket, údaje o účtu i data načtená ze STAGu (rozvrh, termíny, známky);
-    /// předměty a deadliny v aplikaci zůstanou. V ukázkovém režimu jen ukončí demo.
+    /// Odhlášení ze STAGu – smaže ticket, údaje o účtu i data načtená ze STAGu (rozvrh, termíny, známky).
+    ///
+    /// Předměty a deadliny v aplikaci zůstanou. V ukázkovém režimu jen ukončí demo. Stav synchronizace vrátí na `.idle`.
     func signOut() {
         #if DEBUG
         if isPreview {
@@ -80,8 +92,9 @@ final class StagAccountViewModel {
 #if DEBUG
 // MARK: - Náhled
 
+/// Náhledové instance ``StagAccountViewModel`` pro #Preview.
 extension StagAccountViewModel {
-    /// Připojený účet po úspěšné aktualizaci – bez sítě a bez Klíčenky
+    /// Připojený účet po úspěšné aktualizaci – bez sítě a bez Klíčenky.
     static var previewConnected: StagAccountViewModel {
         let viewModel = StagAccountViewModel()
         viewModel.isPreview = true
@@ -97,7 +110,7 @@ extension StagAccountViewModel {
         return viewModel
     }
 
-    /// Nepřipojený stav
+    /// Nepřipojený stav – bez sítě a bez Klíčenky.
     static var previewDisconnected: StagAccountViewModel {
         let viewModel = StagAccountViewModel()
         viewModel.isPreview = true

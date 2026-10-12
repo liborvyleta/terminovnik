@@ -1,59 +1,71 @@
 import Foundation
 
-// Rozvrh studenta – sdíleno aplikací (záložka Rozvrh) i widgetem („Další hodina“).
+// Rozvrh studenta – sdíleno aplikací (záložka Rozvrh, akce Siri), widgetem („Další hodina“) i hodinkami.
 
 /// Jedna rozvrhová akce (přednáška, cvičení, seminář…) převedená z IS/STAG.
+///
+/// Popisuje opakující se nebo jednorázovou akci; konkrétní výskyty v kalendáři vrací
+/// `occurrence(on:calendar:)`. Ukládá se jako součást `TimetableSnapshot`.
 nonisolated struct TimetableEvent: Codable, Identifiable, Hashable {
-    /// Identifikátor akce ve STAGu (roakIdno)
+    /// Identifikátor akce ve STAGu (pole `roakIdno`).
     let id: String
-    /// Kód předmětu, např. „AP9PT“
+    /// Kód předmětu, např. „AP9PT“.
     let subjectCode: String
-    /// Katedra, např. „AUIUI“
+    /// Katedra, např. „AUIUI“.
     let department: String
-    /// Název předmětu
+    /// Název předmětu.
     let subjectName: String
-    /// Typ akce slovy („Přednáška“, „Cvičení“, „Seminář“)
+    /// Typ akce slovy („Přednáška“, „Cvičení“, „Seminář“).
     let typeName: String
-    /// Zkratka typu („Př“, „Cv“, „Se“)
+    /// Zkratka typu („Př“, „Cv“, „Se“).
     let typeShort: String
-    /// Den v týdnu 1 = pondělí … 7 = neděle; nil = akce bez pevného dne
+    /// Den v týdnu 1 = pondělí … 7 = neděle; `nil` = akce bez pevného dne.
     let weekday: Int?
-    /// Začátek „HH:mm“
+    /// Začátek ve formátu „HH:mm“.
     let startTime: String?
-    /// Konec „HH:mm“
+    /// Konec ve formátu „HH:mm“.
     let endTime: String?
+    /// Označení budovy, např. „52“.
     let building: String?
+    /// Číslo místnosti, např. „202“.
     let room: String?
-    /// Vyučující včetně titulů
+    /// Vyučující včetně titulů.
     let teacher: String?
-    /// Týden výuky ze STAGu: „Každý“, „Sudý“, „Lichý“, „Jiný“
+    /// Týden výuky ze STAGu: „Každý“, „Sudý“, „Lichý“, „Jiný“.
     let weekParity: String?
-    /// Platnost akce od / do (rozsah semestru)
+    /// Začátek platnosti akce (rozsah semestru).
     let dateFrom: Date?
+    /// Konec platnosti akce (rozsah semestru).
     let dateTo: Date?
-    /// Jednorázová akce v konkrétní den
+    /// Den jednorázové akce; je-li vyplněný, akce se koná jen tento den.
     let singleDate: Date?
-    /// Barva předmětu z aplikace („#RRGGBB“), pokud předmět v aplikaci existuje
+    /// Barva předmětu z aplikace („#RRGGBB“), pokud předmět v aplikaci existuje.
     var hexColor: String?
 }
 
 /// Jeden konkrétní výskyt akce v kalendáři (např. úterý 6. 10. 11:00–13:00).
+///
+/// Neukládá se – vzniká výpočtem z `TimetableEvent` pro zobrazení v aplikaci, widgetu a akcích Siri.
 nonisolated struct TimetableOccurrence: Identifiable, Hashable {
+    /// Rozvrhová akce, ke které výskyt patří.
     let event: TimetableEvent
+    /// Začátek výskytu.
     let start: Date
+    /// Konec výskytu.
     let end: Date
+    /// Identifikátor složený z ID akce a začátku výskytu.
     var id: String { "\(event.id)-\(start.timeIntervalSince1970)" }
 }
 
 // MARK: - Výpočty nad akcí
 
 nonisolated extension TimetableEvent {
-    /// Čas začátku v minutách od půlnoci
+    /// Čas začátku v minutách od půlnoci; `nil` při chybějícím nebo neplatném čase.
     var startMinutes: Int? { Self.minutes(from: startTime) }
-    /// Čas konce v minutách od půlnoci
+    /// Čas konce v minutách od půlnoci; `nil` při chybějícím nebo neplatném čase.
     var endMinutes: Int? { Self.minutes(from: endTime) }
 
-    /// „52/202“ – budova a místnost
+    /// Budova a místnost „52/202“; chybí-li jedna část, jen ta druhá, bez obou `nil`.
     var locationText: String? {
         switch (building?.isEmpty == false ? building : nil, room?.isEmpty == false ? room : nil) {
         case let (building?, room?): return "\(building)/\(room)"
@@ -63,7 +75,7 @@ nonisolated extension TimetableEvent {
         }
     }
 
-    /// „Sudý týden“ / „Lichý týden“, jinak nil (výuka každý týden)
+    /// Lokalizovaný text „Sudý týden“ / „Lichý týden“, jinak `nil` (výuka každý týden).
     var parityText: String? {
         switch weekParity {
         case "Sudý": return String(localized: "Sudý týden")
@@ -72,7 +84,13 @@ nonisolated extension TimetableEvent {
         }
     }
 
-    /// Koná se akce v daný den? Zohlední den v týdnu, platnost od–do, jednorázové datum a sudý/lichý týden.
+    /// Zjistí, zda se akce koná v daný den.
+    ///
+    /// Zohlední jednorázové datum, den v týdnu, platnost od–do a sudý/lichý týden (číslo týdne podle ISO 8601).
+    /// - Parameters:
+    ///   - date: Libovolný okamžik zkoumaného dne.
+    ///   - calendar: Kalendář pro výpočet, výchozí je aktuální.
+    /// - Returns: `true`, pokud se akce ten den koná.
     func occurs(on date: Date, calendar: Calendar = .current) -> Bool {
         let day = calendar.startOfDay(for: date)
         if let singleDate {
@@ -89,7 +107,11 @@ nonisolated extension TimetableEvent {
         }
     }
 
-    /// Výskyt akce v daný den (nil, pokud se ten den nekoná nebo nemá čas)
+    /// Vytvoří výskyt akce v daný den.
+    /// - Parameters:
+    ///   - date: Libovolný okamžik požadovaného dne.
+    ///   - calendar: Kalendář pro výpočet, výchozí je aktuální.
+    /// - Returns: Výskyt se začátkem a koncem, nebo `nil`, pokud se akce ten den nekoná nebo nemá čas.
     func occurrence(on date: Date, calendar: Calendar = .current) -> TimetableOccurrence? {
         guard occurs(on: date, calendar: calendar),
               let startMinutes, let endMinutes else { return nil }
@@ -101,12 +123,19 @@ nonisolated extension TimetableEvent {
         return TimetableOccurrence(event: self, start: start, end: end)
     }
 
-    /// Den v týdnu ve formátu 1 = pondělí … 7 = neděle
+    /// Určí den v týdnu ve formátu 1 = pondělí … 7 = neděle.
+    /// - Parameters:
+    ///   - date: Zkoumané datum.
+    ///   - calendar: Kalendář pro výpočet, výchozí je aktuální.
+    /// - Returns: Číslo dne v týdnu 1–7.
     static func weekday(of date: Date, calendar: Calendar = .current) -> Int {
         let sundayBased = calendar.component(.weekday, from: date) // 1 = neděle
         return (sundayBased + 5) % 7 + 1
     }
 
+    /// Převede čas „HH:mm“ na minuty od půlnoci.
+    /// - Parameter time: Čas jako text.
+    /// - Returns: Počet minut, nebo `nil` při chybějícím nebo neplatném vstupu.
     private static func minutes(from time: String?) -> Int? {
         guard let parts = time?.split(separator: ":"), parts.count == 2,
               let hours = Int(parts[0]), let minutes = Int(parts[1]) else { return nil }
@@ -117,36 +146,54 @@ nonisolated extension TimetableEvent {
 // MARK: - Uložený rozvrh
 
 /// Rozvrh uložený v App Group – aplikace ho zapisuje po načtení ze STAGu, widget ho čte.
+///
+/// Ukládá se jako JSON pod klíčem `timetableSnapshot.v1`; čtou ho i akce Siri a Zkratek.
 nonisolated struct TimetableSnapshot: Codable {
+    /// Všechny rozvrhové akce semestru.
     var events: [TimetableEvent]
-    /// „ZS“ / „LS“
+    /// Semestr: „ZS“ / „LS“.
     var semester: String
-    /// Začátek akademického roku, např. „2026“
+    /// Začátek akademického roku, např. „2026“.
     var academicYear: String
+    /// Okamžik načtení rozvrhu ze STAGu.
     var fetchedAt: Date
 
     private static let storageKey = "timetableSnapshot.v1"
 
+    /// Načte uložený rozvrh z App Group.
+    /// - Returns: Rozvrh, nebo `nil`, pokud chybí nebo nejde dekódovat.
     static func load() -> TimetableSnapshot? {
         guard let data = AppGroup.defaults?.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(TimetableSnapshot.self, from: data)
     }
 
+    /// Uloží rozvrh do App Group jako JSON (při chybě kódování neudělá nic).
     func save() {
         guard let data = try? JSONEncoder().encode(self) else { return }
         AppGroup.defaults?.set(data, forKey: Self.storageKey)
     }
 
+    /// Smaže uložený rozvrh z App Group.
     static func clear() {
         AppGroup.defaults?.removeObject(forKey: storageKey)
     }
 
-    /// Výskyty v daný den seřazené podle začátku
+    /// Vrátí výskyty všech akcí v daný den.
+    /// - Parameters:
+    ///   - date: Libovolný okamžik požadovaného dne.
+    ///   - calendar: Kalendář pro výpočet, výchozí je aktuální.
+    /// - Returns: Výskyty seřazené podle začátku.
     func occurrences(on date: Date, calendar: Calendar = .current) -> [TimetableOccurrence] {
         events.compactMap { $0.occurrence(on: date, calendar: calendar) }.sorted { $0.start < $1.start }
     }
 
-    /// Nejbližší výskyty od daného okamžiku (probíhající hodina se počítá), nejvýše `daysAhead` dní dopředu
+    /// Vrátí nejbližší výskyty od daného okamžiku; probíhající hodina se počítá.
+    /// - Parameters:
+    ///   - now: Okamžik, od kterého se hledá, výchozí je aktuální čas.
+    ///   - limit: Nejvyšší počet vrácených výskytů.
+    ///   - daysAhead: Kolik dní po dnešku se nejvýše prohledává.
+    ///   - calendar: Kalendář pro výpočet, výchozí je aktuální.
+    /// - Returns: Nejvýše `limit` výskytů seřazených chronologicky.
     func upcoming(after now: Date = .now, limit: Int = 5, daysAhead: Int = 14, calendar: Calendar = .current) -> [TimetableOccurrence] {
         var result: [TimetableOccurrence] = []
         let today = calendar.startOfDay(for: now)
@@ -158,7 +205,7 @@ nonisolated struct TimetableSnapshot: Codable {
         return Array(result.prefix(limit))
     }
 
-    /// Akce bez pevného dne a času (zobrazují se zvlášť)
+    /// Akce bez pevného dne v týdnu i jednorázového data (zobrazují se zvlášť).
     var unscheduledEvents: [TimetableEvent] {
         events.filter { $0.weekday == nil && $0.singleDate == nil }
     }
@@ -168,6 +215,7 @@ nonisolated struct TimetableSnapshot: Codable {
 
 nonisolated extension TimetableSnapshot {
     /// Realistický rozvrh studenta FAI UTB pro náhledy – platí vždy (bez omezení dat).
+    ///
     /// Jména vyučujících jsou smyšlená – ukázky se zobrazují i v Release (galerie widgetů, snímky obrazovky).
     static var sample: TimetableSnapshot {
         func event(_ id: String, _ code: String, _ name: String, _ type: String, _ short: String,

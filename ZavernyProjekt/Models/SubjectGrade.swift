@@ -1,63 +1,78 @@
 import Foundation
 
 /// Jedna část hodnocení předmětu – zápočet nebo zkouška.
+///
+/// Hodnotový typ uložený jako JSON spolu se `SubjectGrade` (není to SwiftData model).
 nonisolated struct GradePart: Codable, Hashable {
-    /// Výsledek tak, jak ho vrací STAG („A“, „1“, „Z“, „započteno“…)
+    /// Výsledek tak, jak ho vrací STAG („A“, „1“, „Z“, „započteno“…).
     let result: String
+    /// Datum hodnocení.
     let date: Date?
-    /// Pořadí pokusu (1 = řádný termín)
+    /// Pořadí pokusu (1 = řádný termín).
     let attempt: Int?
+    /// Jméno zkoušejícího.
     let examiner: String?
-    /// Body, pokud je zkoušející zadal
+    /// Body jako text, pokud je zkoušející zadal.
     let points: String?
 }
 
-/// Hodnocení předmětu v jednom akademickém roce a semestru (spojení služeb
-/// znamky/getZnamkyByStudent a student/getStudentPredmetyAbsolvoval).
+/// Hodnocení předmětu v jednom akademickém roce a semestru.
+///
+/// Vzniká spojením služeb STAGu `znamky/getZnamkyByStudent` a `student/getStudentPredmetyAbsolvoval`.
+/// Není to SwiftData model – hodnoty se ukládají jako JSON a zobrazují v přehledu známek.
 nonisolated struct SubjectGrade: Codable, Identifiable, Hashable {
+    /// Kód předmětu, např. „AP9PT“.
     let code: String
+    /// Zkratka katedry, např. „AUIUI“.
     let department: String
-    /// Začátek akademického roku („2026“ = 2026/2027)
+    /// Začátek akademického roku („2026“ = 2026/2027).
     let year: String
-    /// „ZS“ / „LS“
+    /// Semestr: „ZS“ (zimní) nebo „LS“ (letní).
     let semester: String
+    /// Název předmětu, pokud je známý.
     var name: String?
+    /// Počet kreditů, pokud je známý.
     var credits: Int?
-    /// Zápočet / klasifikovaný zápočet
+    /// Zápočet / klasifikovaný zápočet.
     var creditTest: GradePart?
-    /// Zkouška
+    /// Zkouška.
     var exam: GradePart?
-    /// Výsledná známka předmětu (pokud ji STAG uvádí)
+    /// Výsledná známka předmětu (pokud ji STAG uvádí).
     var finalGrade: String?
-    /// Předmět je absolvovaný
+    /// Příznak absolvovaného předmětu.
     var isPassed: Bool
-    /// Předmět byl uznaný (např. z jiného studia)
+    /// Příznak uznaného předmětu (např. z jiného studia).
     var isRecognized: Bool
 
+    /// Identifikátor ve tvaru „katedra/kód/rok/semestr“.
     var id: String { "\(department)/\(code)/\(year)/\(semester)" }
 }
 
 // MARK: - Výklad známek
 
-/// Kategorie známky – určuje barvu štítku
+/// Kategorie známky – určuje barvu štítku.
 nonisolated enum GradeLevel: Hashable {
+    /// `excellent`–`failed` odpovídají číselným známkám A–F, `passed`/`notPassed` zápočtu bez klasifikace.
     case excellent, veryGood, good, sufficient, failed, passed, notPassed, unknown
 }
 
 nonisolated extension SubjectGrade {
-    /// Známka, která se zobrazí jako hlavní (výsledná, jinak ze zkoušky, jinak ze zápočtu)
+    /// Známka, která se zobrazí jako hlavní (výsledná, jinak ze zkoušky, jinak ze zápočtu).
+    ///
+    /// Prázdné hodnoty se přeskakují; `nil`, pokud není žádná.
     var displayGrade: String? {
         [finalGrade, exam?.result, creditTest?.result]
             .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
             .first { !$0.isEmpty }
     }
 
-    /// Číselná hodnota pro průměr (A = 1 … F = 4), nil u zápočtu bez klasifikace
+    /// Číselná hodnota pro průměr (A = 1 … F = 4); `nil` u zápočtu bez klasifikace.
     var numericGrade: Double? { displayGrade.flatMap(Self.numericValue) }
 
+    /// Kategorie hlavní známky; bez známky `.unknown`.
     var level: GradeLevel { displayGrade.map(Self.level) ?? .unknown }
 
-    /// „ZS 2026/2027“
+    /// Lokalizovaný název semestru, např. „ZS 2026/2027“.
     var semesterTitle: String {
         let years = Int(year).map { "\($0)/\($0 + 1)" } ?? year
         switch semester {
@@ -67,9 +82,15 @@ nonisolated extension SubjectGrade {
         }
     }
 
-    /// Řadicí klíč semestru (novější dřív): rok + ZS před LS téhož roku
+    /// Řadicí klíč semestru: rok × 10 + 1 pro ZS, resp. 2 pro LS (LS je v akademickém roce později než ZS).
     var semesterSortKey: Int { (Int(year) ?? 0) * 10 + (semester == "LS" ? 2 : 1) }
 
+    /// Převede textovou známku na číselnou hodnotu pro průměr.
+    ///
+    /// Rozpozná stupnici ECTS (A–F, FX), číselné známky a slovní ekvivalenty; ignoruje velikost
+    /// písmen a desetinnou čárku.
+    /// - Parameter grade: Známka tak, jak ji vrací STAG.
+    /// - Returns: Hodnota 1–4, nebo `nil` u neklasifikovaného výsledku.
     static func numericValue(_ grade: String) -> Double? {
         let text = grade.trimmingCharacters(in: .whitespaces).uppercased().replacingOccurrences(of: ",", with: ".")
         switch text {
@@ -84,6 +105,9 @@ nonisolated extension SubjectGrade {
         }
     }
 
+    /// Určí kategorii známky pro barvu štítku.
+    /// - Parameter grade: Známka tak, jak ji vrací STAG.
+    /// - Returns: Kategorie podle číselné hodnoty, u zápočtu `.passed`/`.notPassed`, jinak `.unknown`.
     static func level(_ grade: String) -> GradeLevel {
         let text = grade.trimmingCharacters(in: .whitespaces).uppercased()
         if let value = numericValue(text) {
@@ -103,17 +127,19 @@ nonisolated extension SubjectGrade {
 
 // MARK: - Souhrny
 
-/// Souhrn výsledků (celé studium nebo jeden semestr)
+/// Souhrn výsledků (celé studium nebo jeden semestr).
 nonisolated struct GradeSummary: Hashable {
-    /// Vážený studijní průměr podle kreditů (jen klasifikované předměty), nil = zatím žádná známka
+    /// Vážený studijní průměr podle kreditů (jen klasifikované předměty s kredity); `nil` = zatím žádná známka.
     let weightedAverage: Double?
-    /// Kredity za absolvované předměty
+    /// Kredity za absolvované předměty.
     let earnedCredits: Int
-    /// Počet absolvovaných předmětů
+    /// Počet absolvovaných předmětů.
     let passedCount: Int
-    /// Počet předmětů celkem
+    /// Počet předmětů celkem.
     let totalCount: Int
 
+    /// Spočítá souhrn ze seznamu hodnocení.
+    /// - Parameter grades: Hodnocení předmětů, ze kterých se souhrn počítá.
     init(grades: [SubjectGrade]) {
         var weighted = 0.0
         var weights = 0
@@ -129,16 +155,20 @@ nonisolated struct GradeSummary: Hashable {
     }
 }
 
-/// Hodnocení jednoho semestru
+/// Hodnocení jednoho semestru pro seskupený přehled známek.
 nonisolated struct GradeSemester: Identifiable, Hashable {
+    /// Klíč semestru ve tvaru „rok-semestr“.
     let id: String
+    /// Zobrazovaný název, např. „ZS 2026/2027“.
     let title: String
+    /// Hodnocení předmětů seřazená podle kódu.
     let grades: [SubjectGrade]
+    /// Souhrn výsledků semestru.
     var summary: GradeSummary { GradeSummary(grades: grades) }
 }
 
 nonisolated extension Array where Element == SubjectGrade {
-    /// Seskupení po semestrech, nejnovější první; předměty podle kódu
+    /// Seskupení po semestrech, nejnovější první; předměty uvnitř podle kódu.
     var bySemester: [GradeSemester] {
         Dictionary(grouping: self) { "\($0.year)-\($0.semester)" }
             .map { key, grades in
@@ -152,6 +182,7 @@ nonisolated extension Array where Element == SubjectGrade {
 // MARK: - Ukázková data (náhledy)
 
 nonisolated extension SubjectGrade {
+    /// Šest ukázkových hodnocení pro náhledy a ukázkový režim (smyšlení zkoušející).
     static var samples: [SubjectGrade] {
         func part(_ result: String, _ day: Int, _ month: Int, _ year: Int, examiner: String = "Ing. Martin Horák") -> GradePart {
             GradePart(result: result, date: Calendar(identifier: .gregorian).date(from: DateComponents(year: year, month: month, day: day)),

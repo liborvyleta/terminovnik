@@ -1,20 +1,32 @@
 import SwiftUI
 import SwiftData
 
-/// Formulář pro přidání nebo úpravu předmětu (název, kód, kredity, barva z palety).
+/// Formulář pro přidání nebo úpravu předmětu.
+///
+/// Obsahuje živý náhled, název, kód, kredity a barvu z palety. Stav
+/// a ukládání drží `SubjectFormViewModel`. Otevírá se jako sheet
+/// ze seznamu a detailu předmětu nebo z formuláře úkolu.
 struct SubjectFormSheet: View {
+    /// Akce pro zavření sheetu.
     @Environment(\.dismiss) private var dismiss
+    /// SwiftData kontext, do kterého se předmět uloží.
     @Environment(\.modelContext) private var modelContext
 
+    /// ViewModel s hodnotami formuláře, validací a uložením.
     @State private var viewModel: SubjectFormViewModel
-    /// Volá se po uložení – formulář úkolu tak může nový předmět rovnou vybrat
+    /// Volá se po uložení – formulář úkolu tak může nový předmět rovnou vybrat.
     private let onSaved: ((Subject) -> Void)?
 
+    /// Vytvoří formulář.
+    /// - Parameters:
+    ///   - subject: Upravovaný předmět, nebo `nil` pro nový.
+    ///   - onSaved: Volitelná akce s uloženým předmětem.
     init(subject: Subject? = nil, onSaved: ((Subject) -> Void)? = nil) {
         _viewModel = State(initialValue: SubjectFormViewModel(subject: subject))
         self.onSaved = onSaved
     }
 
+    /// Formulář s náhledem, údaji a barvou; toolbar se Zrušit a Uložit.
     var body: some View {
         NavigationStack {
             Form {

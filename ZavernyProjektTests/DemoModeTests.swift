@@ -3,9 +3,17 @@ import SwiftData
 import Testing
 @testable import ZavernyProjekt
 
+/// Testy ukázkového režimu (`DemoMode`, `DemoData`).
+///
+/// Ověřují zapínání režimu příznakem a spouštěcím argumentem, izolovaný paměťový kontejner
+/// s ukázkovými daty a konzistenci ukázkových předmětů, úkolů, termínů a známek.
 @MainActor
 struct DemoModeTests {
-    /// Vlastní úložiště – testy se nedotknou UserDefaults.standard aplikace
+    /// Vytvoří prázdné vlastní úložiště `UserDefaults` s unikátním názvem.
+    ///
+    /// Testy se tak nedotknou `UserDefaults.standard` aplikace.
+    ///
+    /// - Returns: Nová prázdná instance `UserDefaults`.
     private func makeDefaults() -> UserDefaults {
         let name = "DemoModeTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
@@ -13,6 +21,7 @@ struct DemoModeTests {
         return defaults
     }
 
+    /// Příznak v úložišti zapíná a vypíná ukázkový režim; po vypnutí se klíč odstraní.
     @Test func flagTogglesDemoMode() {
         let defaults = makeDefaults()
         #expect(!DemoMode.isActive(defaults: defaults, arguments: []))
@@ -23,6 +32,7 @@ struct DemoModeTests {
         #expect(defaults.object(forKey: DemoMode.defaultsKey) == nil)
     }
 
+    /// Spouštěcí argument `-demo` zapne ukázkový režim jen v ladicím sestavení.
     @Test func launchArgumentOnlyInDebug() {
         let defaults = makeDefaults()
         #if DEBUG
@@ -32,6 +42,7 @@ struct DemoModeTests {
         #endif
     }
 
+    /// Ukázkový kontejner je jen v paměti a každý nový kontejner začíná prázdný.
     @Test func demoContainerIsInMemoryAndIsolated() throws {
         let demo = DemoData.makeContainer(schema: PersistenceController.schema)
         let inMemory = demo.configurations.allSatisfy { $0.isStoredInMemoryOnly }
@@ -44,6 +55,7 @@ struct DemoModeTests {
         #expect(try other.mainContext.fetchCount(FetchDescriptor<Subject>()) == 0)
     }
 
+    /// Ukázkové předměty mají unikátní kódy, každý úkol má předmět a termíny i rozvrh patří k ukázkovým předmětům.
     @Test func demoSubjectsAndTasksAreConsistent() throws {
         let container = DemoData.makeContainer(schema: PersistenceController.schema)
         DemoData.insertSubjects(into: container.mainContext)
@@ -61,6 +73,7 @@ struct DemoModeTests {
         #expect(TimetableSnapshot.sample.events.allSatisfy { codes.contains($0.subjectCode) })
     }
 
+    /// Jméno ukázkového studenta se neobjevuje mezi vyučujícími ani zkoušejícími.
     @Test func teachersDifferFromDemoStudent() {
         let student = DemoData.account.fullName
         #expect(ExamTerm.samples.allSatisfy { !($0.teacher ?? "").contains(student) })

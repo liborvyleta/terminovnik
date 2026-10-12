@@ -1,14 +1,22 @@
 import SwiftUI
 
-/// Úvodní obrazovka při prvním spuštění – představí aplikaci a nabídne import předmětů ze STAGu.
+/// Úvodní obrazovka při prvním spuštění.
+///
+/// Představí aplikaci logem a třemi výhodami a nabídne import předmětů
+/// ze STAGu, pokračování bez přihlášení nebo ukázkový režim. Akce předává
+/// nadřazenému view přes uzávěry.
 struct OnboardingView: View {
+    /// Barevné schéma pro volbu varianty loga.
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Akce tlačítka „Načíst předměty ze STAGu“.
     let onImportFromStag: () -> Void
+    /// Akce tlačítka „Pokračovat bez přihlášení“.
     let onSkip: () -> Void
-    /// Ukázkový režim se smyšlenými daty (bez školního účtu)
+    /// Akce pro ukázkový režim se smyšlenými daty (bez školního účtu).
     var onTryDemo: () -> Void = {}
 
+    /// Posuvné logo, název a výhody; tlačítka akcí ukotvená dole.
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -82,12 +90,17 @@ struct OnboardingView: View {
     }
 }
 
-/// Jeden řádek s výhodou aplikace
+/// Jeden řádek s výhodou aplikace.
+///
+/// Zobrazuje barevnou ikonu, nadpis a popis. Používá se v `OnboardingView`.
 private struct FeatureRow: View {
+    /// Název SF Symbolu.
     let symbol: String
+    /// Barva ikony.
     let color: Color
-    /// LocalizedStringKey – literály z volání se přeloží ze String Catalogu
+    /// Nadpis – `LocalizedStringKey`, literály z volání se přeloží ze String Catalogu.
     let title: LocalizedStringKey
+    /// Popis výhody.
     let text: LocalizedStringKey
 
     var body: some View {

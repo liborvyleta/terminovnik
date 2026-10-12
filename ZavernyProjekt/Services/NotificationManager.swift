@@ -3,9 +3,14 @@ import SwiftData
 import UserNotifications
 
 /// Správa lokálních notifikací.
-/// Ke každému nesplněnému deadlinu naplánuje připomínku přesně 1 den před termínem.
-/// Připomínka nese akci „Splněno“, kterou jde úkol odškrtnout přímo z oznámení.
+///
+/// Ke každému nesplněnému deadlinu (`ExamTask`) naplánuje připomínku přesně 1 den před termínem.
+/// Připomínka nese akci „Splněno“, kterou jde úkol odškrtnout přímo z oznámení (zápis
+/// do SwiftData přes uložený `ModelContainer`). Dále okamžitě oznamuje změny rozvrhu
+/// zjištěné ``TimetableChangeDetector``. Používají ho obrazovky úkolů, start aplikace
+/// a ``ForegroundNotificationDelegate``.
 final class NotificationManager {
+    /// Sdílená instance používaná celou aplikací.
     static let shared = NotificationManager()
 
     /// Kategorie připomínky deadlinu – určuje, jaká tlačítka oznámení nabídne.
@@ -18,20 +23,25 @@ final class NotificationManager {
     nonisolated static let timetableChangeCategoryID = "TIMETABLE_CHANGE"
     /// Klíč v `userInfo` se záložkou, která se po klepnutí otevře (hodnota pro `@AppStorage("selectedTab")`)
     nonisolated static let openTabKey = "openTab"
-    /// Otisk naposledy oznámených změn rozvrhu
+    /// Otisk naposledy oznámených změn rozvrhu (klíč v App Group).
     private static let lastTimetableChangesKey = "timetableChanges.lastFingerprint"
 
+    /// Systémové centrum notifikací.
     private let center = UNUserNotificationCenter.current()
+    /// Delegát držený silně – `UNUserNotificationCenter.delegate` je slabý odkaz.
     private let notificationDelegate = ForegroundNotificationDelegate()
 
     /// Kontejner SwiftData – potřebujeme ho, abychom akci z oznámení zapsali do databáze
     /// i ve chvíli, kdy systém aplikaci spustí jen na pozadí.
     private var modelContainer: ModelContainer?
 
+    /// Soukromý init – používá se jen ``shared``.
     private init() {}
 
     /// Volá se při startu aplikace: uloží kontejner, nastaví delegáta (banner i v popředí,
-    /// zpracování akcí z oznámení) a zaregistruje kategorii s tlačítkem „Splněno“.
+    /// zpracování akcí z oznámení) a zaregistruje kategorii s tlačítkem „Splněno“
+    /// a kategorii oznámení o změně rozvrhu.
+    /// - Parameter modelContainer: Kontejner SwiftData pro zápis akcí z oznámení.
     func configure(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
         center.delegate = notificationDelegate
@@ -59,9 +69,10 @@ final class NotificationManager {
         center.setNotificationCategories([category, timetableCategory])
     }
 
-    /// Požádá uživatele o povolení notifikací. Systémový dialog se ukáže jen poprvé,
+    /// Asynchronně požádá uživatele o povolení notifikací. Systémový dialog se ukáže jen poprvé,
     /// další volání rovnou vrátí uložený stav. Volá se v kontextu (při uložení deadlinu),
     /// ne hned po spuštění – uživatel tak ví, proč aplikace notifikace chce.
+    /// - Returns: `true`, pokud jsou notifikace povolené; `false` při zamítnutí nebo chybě.
     @discardableResult
     func requestAuthorization() async -> Bool {
         do {
@@ -72,7 +83,7 @@ final class NotificationManager {
         }
     }
 
-    /// Požádá o povolení, jen pokud o něm uživatel ještě nerozhodl (systémový dialog jinak nic neudělá).
+    /// Asynchronně požádá o povolení, jen pokud o něm uživatel ještě nerozhodl (systémový dialog jinak nic neudělá).
     /// Volá se po přihlášení do STAGu – připomínky zkoušek, hodin a nových termínů bez povolení nefungují.
     func requestAuthorizationIfNeeded() async {
         let settings = await center.notificationSettings()
@@ -81,12 +92,15 @@ final class NotificationManager {
     }
 
     /// Okamžik připomínky = termín mínus 1 kalendářní den (ve stejný čas).
+    /// - Parameter dueDate: Termín deadlinu.
+    /// - Returns: Datum připomínky, nebo nil, pokud ho kalendář nedokáže spočítat.
     static func reminderDate(for dueDate: Date) -> Date? {
         Calendar.current.date(byAdding: .day, value: -1, to: dueDate)
     }
 
     /// Naplánuje (nebo přeplánuje) připomínku pro úkol.
     /// Volá se po vytvoření, úpravě i odškrtnutí – vždy nejdřív zruší starou notifikaci.
+    /// - Parameter task: Úkol, jehož připomínka se má aktualizovat.
     func updateReminder(for task: ExamTask) {
         // Ukázkový režim: žádné skutečné připomínky se neplánují ani neruší
         guard !DemoMode.isActive else { return }
@@ -97,6 +111,7 @@ final class NotificationManager {
     /// Přeplánuje připomínky všech nesplněných úkolů (volá se při startu).
     /// Díky tomu dostanou tlačítko „Splněno“ i připomínky naplánované starší verzí aplikace.
     /// Čekající požadavky se nahradí; už doručená oznámení v Centru oznámení zůstanou.
+    /// - Parameter context: Kontext SwiftData, ze kterého se načtou nesplněné úkoly.
     func rescheduleAll(in context: ModelContext) {
         guard !DemoMode.isActive else { return }
         let descriptor = FetchDescriptor<ExamTask>(predicate: #Predicate { !$0.isCompleted })
@@ -109,6 +124,7 @@ final class NotificationManager {
     }
 
     /// Zruší čekající i již doručenou připomínku úkolu.
+    /// - Parameter task: Úkol, jehož připomínka se ruší.
     func cancelReminder(for task: ExamTask) {
         guard !DemoMode.isActive else { return }
         center.removePendingNotificationRequests(withIdentifiers: [task.notificationID])
@@ -117,6 +133,8 @@ final class NotificationManager {
 
     /// Označí úkol jako splněný na základě akce „Splněno“ z oznámení.
     /// Přijímá jen String (Sendable), samotný model se načte až tady na MainActoru.
+    /// Neexistující nebo již splněný úkol ignoruje.
+    /// - Parameter taskID: UUID úkolu jako text z `userInfo` oznámení.
     func markTaskDone(taskID: String) {
         guard let modelContainer, let uuid = UUID(uuidString: taskID) else { return }
 
@@ -131,8 +149,11 @@ final class NotificationManager {
         TaskService.save(context) // uloží a zároveň aktualizuje widget
     }
 
-    /// Okamžitě oznámí změny rozvrhu (zrušené / přesunuté / nové hodiny).
-    /// Víc změn → jedno souhrnné oznámení. Stejnou sadu změn neoznamuje dvakrát.
+    /// Asynchronně a okamžitě oznámí změny rozvrhu (zrušené / přesunuté / nové hodiny).
+    /// Víc změn → jedno souhrnné oznámení. Stejnou sadu změn neoznamuje dvakrát
+    /// (porovnává otisk z ``TimetableChangeDetector/fingerprint(of:)``). Respektuje přepínač
+    /// v Nastavení a ukázkový režim.
+    /// - Parameter changes: Změny zjištěné ``TimetableChangeDetector/diff(old:new:now:calendar:horizonDays:)``.
     func notifyTimetableChanges(_ changes: [TimetableChange]) async {
         guard !DemoMode.isActive else { return }
         let enabled = UserDefaults.standard.object(forKey: TimetableStore.changeAlertsEnabledKey) as? Bool ?? true
@@ -157,6 +178,7 @@ final class NotificationManager {
 
     /// Přidá požadavek na připomínku, pokud dává smysl (nesplněný úkol, čas v budoucnosti).
     /// Požadavek se stejným identifikátorem systém nahradí.
+    /// - Parameter task: Úkol, pro který se připomínka plánuje.
     private func scheduleRequest(for task: ExamTask) {
         guard !DemoMode.isActive else { return }
         // Splněné úkoly a termíny, kde by připomínka byla v minulosti, přeskočíme.
@@ -194,10 +216,19 @@ final class NotificationManager {
     }
 }
 
-/// Delegát notifikací:
-/// - banner se ukáže i když je aplikace v popředí,
-/// - akce „Splněno“ z oznámení odškrtne úkol (i když aplikace běží jen na pozadí).
+/// Delegát notifikací aplikace.
+///
+/// - Banner se ukáže, i když je aplikace v popředí.
+/// - Akce „Splněno“ z oznámení odškrtne úkol (i když aplikace běží jen na pozadí).
+/// - Klepnutí na oznámení s `openTab` přepne záložku.
+///
+/// Instanci vlastní a registruje ``NotificationManager/configure(modelContainer:)``.
 final class ForegroundNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    /// Určí, jak se oznámení zobrazí, když je aplikace v popředí.
+    /// - Parameters:
+    ///   - center: Centrum notifikací.
+    ///   - notification: Doručované oznámení.
+    /// - Returns: Banner, záznam v seznamu a zvuk.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
@@ -205,6 +236,13 @@ final class ForegroundNotificationDelegate: NSObject, UNUserNotificationCenterDe
         [.banner, .list, .sound]
     }
 
+    /// Asynchronně zpracuje reakci uživatele na oznámení.
+    ///
+    /// Klepnutí na oznámení s klíčem ``NotificationManager/openTabKey`` uloží záložku do `selectedTab`;
+    /// akce „Splněno“ odškrtne úkol přes ``NotificationManager/markTaskDone(taskID:)``.
+    /// - Parameters:
+    ///   - center: Centrum notifikací.
+    ///   - response: Odpověď uživatele s identifikátorem akce a `userInfo`.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse

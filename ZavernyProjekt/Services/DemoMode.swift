@@ -8,13 +8,14 @@ import Observation
 /// v DEBUG buildu také argumentem `-demo` (screenshoty, spolu s `-tab` a `-timetableMode`).
 ///
 /// V demu se nic nezapisuje do skutečné databáze, App Group, Klíčenky ani do plánovaných oznámení –
-/// každé takové místo se ptá na `DemoMode.isActive`.
+/// každé takové místo se ptá na `DemoMode.isActive`. Přepínání za běhu řídí ``DemoController``.
 nonisolated enum DemoMode {
     /// Klíč trvalého příznaku v `UserDefaults.standard`
     static let defaultsKey = "demoModeActive"
 
-    /// Běží aplikace v ukázkovém režimu?
     /// Režim pro pořizování snímků obrazovky (argument `-screenshots`, jen Debug): skryje banner ukázkového režimu.
+    ///
+    /// V Release buildu vždy `false`.
     static var hidesBanner: Bool {
         #if DEBUG
         ProcessInfo.processInfo.arguments.contains("-screenshots")
@@ -23,11 +24,18 @@ nonisolated enum DemoMode {
         #endif
     }
 
+    /// Běží aplikace v ukázkovém režimu?
+    ///
+    /// Čte příznak z `UserDefaults.standard` a argumenty procesu přes ``isActive(defaults:arguments:)``.
     static var isActive: Bool {
         isActive(defaults: .standard, arguments: ProcessInfo.processInfo.arguments)
     }
 
-    /// Čistá funkce pro testy: příznak v daném úložišti, nebo (jen DEBUG) argument `-demo`
+    /// Čistá funkce pro testy: příznak v daném úložišti, nebo (jen DEBUG) argument `-demo`.
+    /// - Parameters:
+    ///   - defaults: úložiště s trvalým příznakem ``defaultsKey``
+    ///   - arguments: argumenty procesu
+    /// - Returns: `true`, pokud je příznak nastaven nebo (v DEBUG) argumenty obsahují `-demo`.
     static func isActive(defaults: UserDefaults, arguments: [String]) -> Bool {
         if defaults.bool(forKey: defaultsKey) { return true }
         #if DEBUG
@@ -36,7 +44,10 @@ nonisolated enum DemoMode {
         return false
     }
 
-    /// Nastaví trvalý příznak (sám o sobě nic nepřepíná – použij `DemoController`)
+    /// Nastaví trvalý příznak (sám o sobě nic nepřepíná – použij `DemoController`).
+    /// - Parameters:
+    ///   - active: `true` příznak uloží, `false` ho z úložiště odstraní
+    ///   - defaults: cílové úložiště (výchozí `UserDefaults.standard`)
     static func setFlag(_ active: Bool, defaults: UserDefaults = .standard) {
         if active {
             defaults.set(true, forKey: defaultsKey)
@@ -46,7 +57,9 @@ nonisolated enum DemoMode {
     }
 
     #if DEBUG
-    /// Hodnota argumentu za daným přepínačem (např. `-tab terms` → „terms“)
+    /// Hodnota argumentu za daným přepínačem (např. `-tab terms` → „terms“).
+    /// - Parameter flag: přepínač v argumentech procesu, např. `-tab`
+    /// - Returns: Následující argument, nebo `nil`, pokud přepínač chybí nebo za ním nic není.
     static func argument(after flag: String) -> String? {
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: flag), args.indices.contains(index + 1) else { return nil }
@@ -58,9 +71,11 @@ nonisolated enum DemoMode {
 /// Přepínání mezi skutečnými daty a ukázkovým režimem za běhu (bez restartu aplikace).
 ///
 /// Kořenová scéna používá `container` a `generation` (`.modelContainer` + `.id`), takže se po přepnutí
-/// celý strom pohledů sestaví znovu nad správným úložištěm.
+/// celý strom pohledů sestaví znovu nad správným úložištěm. Úložiště bere z ``PersistenceController/shared``,
+/// demo data plní `DemoData` a po ukončení dema znovu načte skutečná data jednotlivých store.
 @Observable
 final class DemoController {
+    /// Sdílená instance používaná kořenovou scénou a Nastavením
     static let shared = DemoController()
 
     /// Aktuální úložiště SwiftData (skutečné, nebo demo v paměti)
@@ -68,19 +83,26 @@ final class DemoController {
     /// Zvýší se při každém přepnutí → `.id(generation)` znovu vytvoří celý strom
     private(set) var generation = 0
 
+    /// Je aktivní ukázkový režim (viz ``DemoMode/isActive``).
     var isActive: Bool { DemoMode.isActive }
 
+    /// Soukromý inicializátor – převezme aktuální kontejner z ``PersistenceController/shared``.
     private init() {
         container = PersistenceController.shared
     }
 
-    /// Při startu aplikace v demu naplní demo úložiště a STAG úložiště
+    /// Při startu aplikace v demu naplní demo úložiště a STAG úložiště.
+    ///
+    /// Mimo ukázkový režim nedělá nic.
     func prepareAtLaunch() {
         guard DemoMode.isActive else { return }
         DemoData.prepare(container: container)
     }
 
     /// Zapne ukázkový režim. Skutečná data, Klíčenka i naplánované připomínky zůstanou beze změny.
+    ///
+    /// Ukončí živé aktivity, nastaví příznak, vytvoří nové demo úložiště, naplní ho a zvýší ``generation``.
+    /// Pokud už demo běží, nedělá nic.
     func enter() {
         guard !DemoMode.isActive else { return }
         // Živou aktivitu skutečné hodiny ukončíme – v demu by neodpovídala; po ukončení dema se obnoví
@@ -93,6 +115,10 @@ final class DemoController {
     }
 
     /// Ukončí ukázkový režim: zahodí demo data a vrátí skutečný účet, cache a připomínky.
+    ///
+    /// Znovu načte stav store z Klíčenky a App Group, přeplánuje připomínky, dožene frontu widgetu
+    /// a obnoví widget i živou aktivitu.
+    /// - Note: Při spuštění s argumentem `-demo` (DEBUG) zůstane režim zapnutý a nic dalšího se nestane.
     func exit() {
         guard DemoMode.isActive else { return }
         DemoMode.setFlag(false)

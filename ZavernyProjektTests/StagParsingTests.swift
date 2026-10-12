@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Dekódování odpovědí webových služeb IS/STAG (bez sítě – JSON fixture v textu).
+/// Testy dekódování odpovědí webových služeb IS/STAG.
+///
+/// Pracují bez sítě – odpovědi jsou JSON fixture zapsané přímo v textu testů.
 @Suite("STAG – parsování odpovědí")
 struct StagParsingTests {
     let calendar = TestCalendar.prague

@@ -5,13 +5,32 @@ import Foundation
 // Vlevo hodiny, vodorovné čáry, bloky akcí umístěné podle času a červená čára „teď“.
 // Komponenta má pevnou výšku, rodič ji vkládá do ScrollView.
 
+/// Denní časová osa rozvrhu ve stylu aplikace Kalendář.
+///
+/// Zobrazuje sloupec hodin, vodorovné čáry celých a půlhodin, bloky akcí umístěné
+/// podle času (překrývající se akce vedle sebe ve sloupcích) a u dnešního dne
+/// červenou čáru „teď“. Data dostává od rodiče (výskyty z `TimetableViewModel`).
+/// Klepnutím na blok uživatel otevře detail akce přes `onSelect`. Komponenta má
+/// pevnou výšku a používá se v denním režimu záložky Rozvrh uvnitř `ScrollView`.
 struct TimetableDayTimelineView: View {
+    /// Výskyty akcí zobrazovaného dne.
     let occurrences: [TimetableOccurrence]
+    /// Aktuální čas pro čáru „teď“ a stav akcí.
     let now: Date
+    /// Zda zobrazovaný den je dnešní (jinak se nekreslí čára „teď“ ani stav akcí).
     let isToday: Bool
+    /// Vrací barvu předmětu pro danou akci.
     let color: (TimetableEvent) -> Color
+    /// Volá se po klepnutí na blok akce.
     let onSelect: (TimetableOccurrence) -> Void
 
+    /// Vytvoří časovou osu dne.
+    /// - Parameters:
+    ///   - occurrences: Výskyty akcí zobrazovaného dne.
+    ///   - now: Aktuální čas.
+    ///   - isToday: Zda jde o dnešní den.
+    ///   - color: Funkce vracející barvu předmětu akce.
+    ///   - onSelect: Akce po klepnutí na blok výskytu.
     init(occurrences: [TimetableOccurrence], now: Date, isToday: Bool,
          color: @escaping (TimetableEvent) -> Color,
          onSelect: @escaping (TimetableOccurrence) -> Void) {
@@ -22,40 +41,49 @@ struct TimetableDayTimelineView: View {
         self.onSelect = onSelect
     }
 
+    /// Měřítko displeje pro výpočet tloušťky vlasové čáry.
     @Environment(\.displayScale) private var displayScale
+    /// Základní výška hodiny škálovaná podle Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var scaledHourHeight: CGFloat = 64
 
-    /// Šířka sloupce s hodinami
+    /// Šířka sloupce s hodinami.
     private let labelWidth: CGFloat = 50
-    /// Odsazení nahoře a dole, aby se popisky krajních hodin neořízly
+    /// Odsazení nahoře a dole, aby se popisky krajních hodin neořízly.
     private let verticalInset: CGFloat = 10
+    /// Odsazení bloků od pravého okraje.
     private let trailingInset: CGFloat = 4
+    /// Mezera mezi sloupci překrývajících se akcí.
     private let columnGap: CGFloat = 3
 
+    /// Kalendář pro výpočty času.
     private var calendar: Calendar { .current }
 
-    /// Výška jedné hodiny (roste s Dynamic Type, ale jen do rozumné míry)
+    /// Výška jedné hodiny (roste s Dynamic Type, ale jen v rozmezí 56–110 bodů).
     private var hourHeight: CGFloat { min(max(scaledHourHeight, 56), 110) }
 
     // MARK: - Rozsah osy
 
+    /// První zobrazená hodina: nejpozději 8:00, dříve pokud nějaká akce začíná dřív.
     private var firstHour: Int {
         let earliest = occurrences.map { minutesOfDay($0.start) }.min() ?? 8 * 60
         return max(0, min(8, earliest / 60))
     }
 
+    /// Poslední zobrazená hodina: nejméně 16:00, později podle konce nejpozdější akce (max. 24).
     private var lastHour: Int {
         let latest = occurrences.map { endMinutes(of: $0) }.max() ?? 16 * 60
         let rounded = Int((Double(latest) / 60).rounded(.up))
         return min(24, max(16, rounded, firstHour + 1))
     }
 
+    /// Celková výška osy včetně horního a dolního odsazení.
     private var totalHeight: CGFloat {
         CGFloat(lastHour - firstHour) * hourHeight + verticalInset * 2
     }
 
     // MARK: - Tělo
 
+    /// Mřížka hodin, bloky akcí a čára „teď“ ve vrstvách `ZStack` uvnitř `GeometryReader`.
     var body: some View {
         GeometryReader { proxy in
             let gridWidth = max(proxy.size.width - labelWidth - trailingInset, 0)
@@ -77,6 +105,9 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Mřížka hodin
 
+    /// Mřížka s čarami celých a půlhodin a popisky hodin.
+    /// - Parameter width: Celková šířka osy.
+    /// - Returns: Vrstva mřížky hodin.
     private func hourGrid(width: CGFloat) -> some View {
         let hairline = 1 / max(displayScale, 1)
         let lineWidth = max(width - labelWidth, 0)
@@ -112,6 +143,11 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Blok akce
 
+    /// Klikatelný blok akce umístěný podle času a sloupce.
+    /// - Parameters:
+    ///   - placed: Výskyt s přiřazeným sloupcem a počtem sloupců.
+    ///   - gridWidth: Šířka oblasti pro bloky (bez sloupce hodin).
+    /// - Returns: Tlačítko s blokem akce, které volá `onSelect`.
     private func block(for placed: PlacedOccurrence, gridWidth: CGFloat) -> some View {
         let occurrence = placed.occurrence
         let columnWidth = (gridWidth - columnGap * CGFloat(placed.columnCount - 1)) / CGFloat(placed.columnCount)
@@ -141,6 +177,7 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Čára „teď“
 
+    /// Svislá pozice čáry „teď“, nebo `nil`, pokud den není dnešní či čas leží mimo osu.
     private var nowLineY: CGFloat? {
         guard isToday else { return nil }
         let minutes = minutesOfDay(now)
@@ -148,6 +185,11 @@ struct TimetableDayTimelineView: View {
         return yPosition(minutes: minutes)
     }
 
+    /// Červená čára „teď“ s bublinou aktuálního času.
+    /// - Parameters:
+    ///   - width: Celková šířka osy.
+    ///   - y: Svislá pozice čáry.
+    /// - Returns: Indikátor aktuálního času.
     private func nowIndicator(width: CGFloat, y: CGFloat) -> some View {
         HStack(spacing: 0) {
             Text(clockText(now))
@@ -176,6 +218,9 @@ struct TimetableDayTimelineView: View {
         .accessibilityLabel("Nyní \(clockText(now))")
     }
 
+    /// Zjistí, zda je pozice blízko čáry „teď“ (popisek hodiny by kolidoval s bublinou).
+    /// - Parameter y: Svislá pozice popisku hodiny.
+    /// - Returns: `true`, pokud je vzdálenost menší než 12 bodů.
     private func isNearNowLine(_ y: CGFloat) -> Bool {
         guard let nowY = nowLineY else { return false }
         return abs(nowY - y) < 12
@@ -183,6 +228,9 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Stav akce
 
+    /// Určí stav výskytu vůči aktuálnímu času.
+    /// - Parameter occurrence: Posuzovaný výskyt.
+    /// - Returns: `.past`, `.ongoing` nebo `.upcoming`; mimo dnešní den vždy `.upcoming`.
     private func state(of occurrence: TimetableOccurrence) -> TimelineBlockState {
         guard isToday else { return .upcoming }
         if occurrence.end <= now { return .past }
@@ -192,30 +240,47 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Výpočty
 
+    /// Převede čas na počet minut od půlnoci.
+    /// - Parameter date: Datum s časem.
+    /// - Returns: Minuty od začátku dne.
     private func minutesOfDay(_ date: Date) -> Int {
         let components = calendar.dateComponents([.hour, .minute], from: date)
         return (components.hour ?? 0) * 60 + (components.minute ?? 0)
     }
 
-    /// Konec v minutách; akce přes půlnoc končí ve 24:00
+    /// Konec výskytu v minutách; akce přes půlnoc končí ve 24:00.
+    /// - Parameter occurrence: Výskyt akce.
+    /// - Returns: Minuty od půlnoci, nejméně rovné začátku.
     private func endMinutes(of occurrence: TimetableOccurrence) -> Int {
         if !calendar.isDate(occurrence.end, inSameDayAs: occurrence.start) { return 24 * 60 }
         return max(minutesOfDay(occurrence.end), minutesOfDay(occurrence.start))
     }
 
+    /// Převede minuty dne na svislou pozici na ose.
+    /// - Parameter minutes: Minuty od půlnoci.
+    /// - Returns: Souřadnice y.
     private func yPosition(minutes: Int) -> CGFloat {
         verticalInset + CGFloat(minutes - firstHour * 60) / 60 * hourHeight
     }
 
+    /// Naformátuje čas jako „H:MM“.
+    /// - Parameter date: Datum s časem.
+    /// - Returns: Text času.
     private func clockText(_ date: Date) -> String {
         let minutes = minutesOfDay(date)
         return String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
+    /// Naformátuje časový rozsah výskytu „H:MM–H:MM“.
+    /// - Parameter occurrence: Výskyt akce.
+    /// - Returns: Text rozsahu.
     private func timeRange(_ occurrence: TimetableOccurrence) -> String {
         "\(clockText(occurrence.start))–\(clockText(occurrence.end))"
     }
 
+    /// Sestaví popisek bloku pro VoiceOver.
+    /// - Parameter occurrence: Výskyt akce.
+    /// - Returns: Název, kód, typ, čas, místnost, vyučující, parita a stav oddělené čárkami.
     private func accessibilityLabel(for occurrence: TimetableOccurrence) -> String {
         let event = occurrence.event
         var parts = [
@@ -237,14 +302,23 @@ struct TimetableDayTimelineView: View {
 
     // MARK: - Rozložení překrývajících se akcí
 
+    /// Výskyt akce s přiřazeným sloupcem v rámci skupiny překrývajících se akcí.
+    ///
+    /// Výsledek `layout(_:)`, podle kterého `block(for:gridWidth:)` počítá šířku a posun bloku.
     struct PlacedOccurrence: Identifiable {
+        /// Umístěný výskyt.
         let occurrence: TimetableOccurrence
+        /// Index sloupce (od 0).
         let column: Int
+        /// Počet sloupců ve skupině překryvů.
         let columnCount: Int
+        /// Identifikátor převzatý z výskytu.
         var id: String { occurrence.id }
     }
 
     /// Překrývající se akce rozdělí do sloupců vedle sebe (každá skupina překryvů má vlastní počet sloupců).
+    /// - Parameter items: Výskyty akcí dne.
+    /// - Returns: Výskyty seřazené podle začátku s přiřazeným sloupcem a počtem sloupců.
     static func layout(_ items: [TimetableOccurrence]) -> [PlacedOccurrence] {
         let sorted = items.sorted { ($0.start, $0.end) < ($1.start, $1.end) }
         var result: [PlacedOccurrence] = []
@@ -277,24 +351,41 @@ struct TimetableDayTimelineView: View {
 
 // MARK: - Stav bloku
 
+/// Stav bloku vůči aktuálnímu času.
+///
+/// Ovlivňuje vzhled bloku v `TimetableTimelineBlock` (proběhlé jsou vybledlé, probíhající zvýrazněné).
 private enum TimelineBlockState {
     case past, ongoing, upcoming
 }
 
 // MARK: - Vzhled bloku
 
+/// Vzhled jednoho bloku akce na časové ose.
+///
+/// Zobrazuje název, kód, typ, čas, místnost a u vysokých bloků vyučujícího; obsah
+/// se přizpůsobuje výšce bloku. Probíhající akce má obrys, stín a štítek „Probíhá“,
+/// proběhlá je vybledlá. Používá se jako popisek tlačítka v `TimetableDayTimelineView`.
 private struct TimetableTimelineBlock: View {
+    /// Zobrazovaný výskyt.
     let occurrence: TimetableOccurrence
+    /// Barva předmětu.
     let tint: Color
+    /// Výška bloku, podle které se volí rozvržení obsahu.
     let height: CGFloat
+    /// Předformátovaný časový rozsah.
     let timeText: String
+    /// Stav akce vůči aktuálnímu času.
     let state: TimelineBlockState
 
+    /// Světlý / tmavý režim pro sytost barevného podkladu.
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Akce rozvrhu, ke které výskyt patří.
     private var event: TimetableEvent { occurrence.event }
+    /// Tvar bloku se zaoblenými rohy.
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 10, style: .continuous) }
 
+    /// Obsah s barevným podkladem a proužkem, obrysem, štítkem „Probíhá“ a stínem podle stavu.
     var body: some View {
         content
             .padding(.leading, 11)
@@ -326,6 +417,7 @@ private struct TimetableTimelineBlock: View {
             .opacity(state == .past ? 0.55 : 1)
     }
 
+    /// Obsah bloku rozvržený podle výšky (jeden řádek až plný výpis).
     @ViewBuilder
     private var content: some View {
         if height < 34 {
@@ -377,6 +469,9 @@ private struct TimetableTimelineBlock: View {
         }
     }
 
+    /// Název předmětu; u probíhající akce s místem vpravo pro štítek.
+    /// - Parameter lines: Maximální počet řádků.
+    /// - Returns: Text názvu.
     private func title(lines: Int) -> some View {
         Text(event.subjectName)
             .font(.footnote.weight(.bold))
@@ -386,6 +481,7 @@ private struct TimetableTimelineBlock: View {
             .padding(.trailing, state == .ongoing ? 58 : 0)
     }
 
+    /// Řádek se štítkem kódu a typem akce.
     private var tagLine: some View {
         HStack(spacing: 5) {
             TimetableCodeTag(code: event.subjectCode, tint: tint)
@@ -396,6 +492,7 @@ private struct TimetableTimelineBlock: View {
         }
     }
 
+    /// Řádek s časem a místností.
     private var detailLine: some View {
         HStack(spacing: 6) {
             Text(timeText)
@@ -411,6 +508,7 @@ private struct TimetableTimelineBlock: View {
         .foregroundStyle(.secondary)
     }
 
+    /// Bílý štítek „Probíhá“ v pravém horním rohu bloku.
     private var ongoingBadge: some View {
         HStack(spacing: 3) {
             Circle()
@@ -427,8 +525,13 @@ private struct TimetableTimelineBlock: View {
     }
 }
 
-/// Ikona a text těsně u sebe
+/// Styl popisku s ikonou a textem těsně u sebe.
+///
+/// Používá se v blocích časové osy pro čas, místnost a vyučujícího.
 private struct TimelineCompactLabelStyle: LabelStyle {
+    /// Sestaví ikonu a text vedle sebe s malou mezerou.
+    /// - Parameter configuration: Konfigurace popisku.
+    /// - Returns: Vodorovně uspořádaný popisek.
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 3) {
             configuration.icon
@@ -438,8 +541,13 @@ private struct TimelineCompactLabelStyle: LabelStyle {
     }
 }
 
-/// Jemné zmenšení bloku při stisku
+/// Styl tlačítka s jemným zmenšením bloku při stisku.
+///
+/// Používá se pro bloky akcí v `TimetableDayTimelineView`.
 private struct TimelineBlockButtonStyle: ButtonStyle {
+    /// Zmenší popisek při stisku a nastaví tvar oblasti klepnutí.
+    /// - Parameter configuration: Konfigurace tlačítka.
+    /// - Returns: Upravený popisek tlačítka.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
@@ -450,10 +558,16 @@ private struct TimelineBlockButtonStyle: ButtonStyle {
 
 // MARK: - Náhled
 
+/// Pomocný pohled pro náhled časové osy s ukázkovými daty.
+///
+/// Používá ukázkový rozvrh `TimetableSnapshot.sample` doplněný o překrývající se akci.
 private struct TimetableDayTimelinePreview: View {
+    /// Nejbližší úterý, pro které se náhled zobrazuje.
     private let tuesday: Date
+    /// Výskyty akcí v daném dni.
     private let occurrences: [TimetableOccurrence]
 
+    /// Připraví ukázková data nejbližšího úterý včetně překrývající se akce.
     init() {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)

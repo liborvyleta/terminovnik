@@ -1,12 +1,22 @@
 import SwiftUI
 import SwiftData
 
-/// Seznam předmětů v kartách. Klepnutí otevře detail, dlouhý stisk nabídne úpravu a smazání.
+/// Seznam předmětů v kartách.
+///
+/// Předměty čte přes `@Query` seřazené podle názvu, nad nimi zobrazuje
+/// souhrnné statistiky a vstup do studijních výsledků. Klepnutí otevře
+/// detail, dlouhý stisk nabídne úpravu a smazání (s potvrzením). Z toolbaru
+/// lze předmět přidat ručně nebo importovat ze STAGu. Stav sheetů drží
+/// `SubjectsViewModel`. Jedna ze záložek hlavní navigace.
 struct SubjectsListView: View {
+    /// SwiftData kontext pro mazání předmětů.
     @Environment(\.modelContext) private var modelContext
+    /// Všechny předměty seřazené podle názvu.
     @Query(sort: \Subject.name) private var subjects: [Subject]
+    /// ViewModel se stavem sheetů, mazáním a statistikami.
     @State private var viewModel = SubjectsViewModel()
 
+    /// Prázdný stav nebo seznam karet, s navigací do detailu, sheety a dialogem smazání.
     var body: some View {
         NavigationStack {
             Group {
@@ -48,6 +58,7 @@ struct SubjectsListView: View {
 
     // MARK: - Obsah
 
+    /// Statistiky, vstup do výsledků a karty předmětů s kontextovým menu.
     private var subjectList: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -76,7 +87,7 @@ struct SubjectsListView: View {
         }
     }
 
-    /// Karta „Studijní výsledky“ – jen s připojeným účtem STAG nebo uloženými známkami
+    /// Karta „Studijní výsledky“ – jen s připojeným účtem STAG nebo uloženými známkami.
     @ViewBuilder
     private var gradesEntry: some View {
         let store = GradeStore.shared
@@ -90,6 +101,7 @@ struct SubjectsListView: View {
         }
     }
 
+    /// Prázdný stav s importem ze STAGu a ručním přidáním předmětu.
     private var emptyState: some View {
         EmptyStateView(
             symbol: "books.vertical",

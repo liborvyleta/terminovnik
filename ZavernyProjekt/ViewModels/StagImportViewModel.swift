@@ -6,40 +6,45 @@ import SwiftUI // WebAuthenticationSession je ve spojení SwiftUI + Authenticati
 
 /// ViewModel importu předmětů z IS/STAG.
 ///
-/// Uživatel se přihlásí školním účtem ve vestavěném prohlížeči a aplikace načte
-/// jen předměty, které má zapsané ve zvoleném semestru. Připojený účet si pamatuje
-/// `StagAccountStore` (ticket v Klíčence, platí až 90 dní), takže při dalším importu
-/// se obrazovka rovnou načte bez přihlašování.
+/// Uživatel si zvolí školu, přihlásí se školním účtem ve vestavěném prohlížeči (`WebAuthenticationSession`) a aplikace přes `StagService` načte jen předměty, které má zapsané ve zvoleném semestru. Vybrané předměty uloží do SwiftData a chybějící názvy či kredity doplní z veřejné služby. Připojený účet si pamatuje `StagAccountStore` (ticket v Klíčence, platí až 90 dní), takže při dalším importu se obrazovka rovnou načte bez přihlašování. Používá ho obrazovka importu ze STAGu.
 @Observable
 final class StagImportViewModel {
+    /// Stav obrazovky importu: nečinnost, načítání s popisem, nebo chyba s hláškou.
     enum Status: Equatable {
         case idle
         case loading(String)
         case failed(String)
     }
 
+    /// Aktuální stav načítání nebo chyby zobrazovaný v UI.
     var status: Status = .idle
-    /// Semestr, pro který se načítají zapsané předměty („ZS“ / „LS“)
+    /// Semestr, pro který se načítají zapsané předměty („ZS“ / „LS“).
     var semester = "ZS"
+    /// Identifikátory předmětů vybraných k importu.
     var selectedIDs: Set<String> = []
 
+    /// Předměty načtené ze STAGu bez duplicit, seřazené podle kódu.
     private(set) var results: [StagSubject] = []
+    /// Nadpis seznamu načtených předmětů.
     private(set) var resultsTitle = ""
+    /// Aktuální období STAGu (akademický rok a semestr).
     private(set) var period: StagPeriod?
 
-    /// Úložiště připojeného účtu (nil = jen v paměti, např. v náhledech – nesahá do Klíčenky)
+    /// Úložiště připojeného účtu (nil = jen v paměti, např. v náhledech – nesahá do Klíčenky).
     private let accountStore: StagAccountStore?
-    /// Účet bez trvalého úložiště (použije se, jen když `accountStore` je nil)
+    /// Účet bez trvalého úložiště (použije se, jen když `accountStore` je nil).
     private var localAccount: StagAccount?
-    /// Klient STAGu – po přihlášení / obnovení účtu nese ticket a stagUser
+    /// Klient STAGu – po přihlášení / obnovení účtu nese ticket a stagUser.
     private var service: StagService
-    /// Škola zvolená pro přihlášení (u připojeného účtu jeho škola)
+    /// Škola zvolená pro přihlášení (u připojeného účtu jeho škola).
     private(set) var school: StagSchool
-    /// Ověřování vlastní adresy školy
+    /// Ověřování vlastní adresy školy.
     private(set) var isValidatingSchool = false
-    /// Kódy předmětů, které už v aplikaci jsou (nebudeme je importovat dvakrát)
+    /// Kódy předmětů, které už v aplikaci jsou (nebudeme je importovat dvakrát).
     private var existingCodes: Set<String> = []
 
+    /// Vytvoří ViewModel; školu převezme z připojeného účtu, jinak z uložené volby.
+    /// - Parameter accountStore: Úložiště účtu; `nil` = účet jen v paměti (náhledy).
     init(accountStore: StagAccountStore? = .shared) {
         self.accountStore = accountStore
         let school = accountStore?.account?.resolvedSchool ?? StagSchoolPreference.selected
@@ -49,7 +54,10 @@ final class StagImportViewModel {
 
     // MARK: - Výběr školy
 
-    /// Změna školy před přihlášením (zapamatuje se)
+    /// Změna školy před přihlášením (zapamatuje se).
+    ///
+    /// Po přihlášení nebo při stejné škole nic nedělá; jinak vytvoří nového klienta, vynuluje období a znovu ho načte.
+    /// - Parameter newSchool: Nově zvolená škola.
     func selectSchool(_ newSchool: StagSchool) {
         guard !isLoggedIn, newSchool != school else { return }
         school = newSchool
@@ -61,7 +69,8 @@ final class StagImportViewModel {
     }
 
     /// Ověří vlastní adresu serveru IS/STAG (musí odpovědět veřejná služba s aktuálním obdobím).
-    /// - Returns: chybová hláška, nebo nil při úspěchu (škola se rovnou vybere)
+    /// - Parameter address: Adresa zadaná uživatelem.
+    /// - Returns: Chybová hláška, nebo `nil` při úspěchu (škola se rovnou vybere).
     func validateCustomSchool(address: String) async -> String? {
         guard let custom = StagSchool.custom(address: address) else {
             return String(localized: "Zadej adresu serveru, např. stag-ws.skola.cz (jen HTTPS).")
@@ -80,32 +89,40 @@ final class StagImportViewModel {
 
     // MARK: - Odvozený stav
 
-    /// Připojený účet STAG (z úložiště, v náhledech z paměti)
+    /// Připojený účet STAG (z úložiště, v náhledech z paměti).
     var account: StagAccount? {
         if let accountStore { return accountStore.account }
         return localAccount
     }
 
+    /// Celé jméno připojeného studenta.
     var studentName: String? { account?.fullName }
+    /// Osobní číslo připojeného studenta.
     var osCislo: String? { account?.osCislo }
+    /// Fakulta připojeného studenta.
     var faculty: String? { account?.faculty }
 
+    /// Příznak, zda je účet STAG připojený.
     var isLoggedIn: Bool { account != nil }
 
+    /// Příznak, zda právě probíhá načítání.
     var isLoading: Bool {
         if case .loading = status { return true }
         return false
     }
 
-    /// Předměty, které lze vybrat (ještě nejsou v aplikaci)
+    /// Předměty, které lze vybrat (ještě nejsou v aplikaci).
     var importableResults: [StagSubject] { results.filter { !isAlreadyImported($0) } }
 
+    /// Počet vybraných importovatelných předmětů.
     var selectedCount: Int { importableResults.filter { selectedIDs.contains($0.id) }.count }
 
+    /// Zda jsou vybrané všechny importovatelné předměty (a nějaké existují).
     var allSelected: Bool {
         !importableResults.isEmpty && importableResults.allSatisfy { selectedIDs.contains($0.id) }
     }
 
+    /// Popis aktuálního semestru, např. „Aktuálně zimní semestr …“; bez období `nil`.
     var periodTitle: String? {
         guard let period else { return nil }
         let year = period.academicYearTitle
@@ -116,14 +133,21 @@ final class StagImportViewModel {
 
     // MARK: - Výběr
 
+    /// Zapamatuje si kódy předmětů, které už v aplikaci jsou.
+    /// - Parameter existingSubjects: Předměty uložené v aplikaci.
     func configure(existingSubjects: [Subject]) {
         existingCodes = Set(existingSubjects.map { $0.code.uppercased() })
     }
 
+    /// Zjistí, zda předmět už v aplikaci je (podle kódu bez ohledu na velikost písmen).
+    /// - Parameter subject: Předmět ze STAGu.
+    /// - Returns: `true`, pokud je předmět už importovaný.
     func isAlreadyImported(_ subject: StagSubject) -> Bool {
         existingCodes.contains(subject.zkratka.uppercased())
     }
 
+    /// Přepne výběr předmětu; již importované předměty ignoruje.
+    /// - Parameter subject: Předmět ze STAGu.
     func toggleSelection(_ subject: StagSubject) {
         guard !isAlreadyImported(subject) else { return }
         if selectedIDs.contains(subject.id) {
@@ -133,14 +157,16 @@ final class StagImportViewModel {
         }
     }
 
+    /// Vybere všechny importovatelné předměty, nebo – jsou-li všechny vybrané – výběr zruší.
     func toggleSelectAll() {
         selectedIDs = allSelected ? [] : Set(importableResults.map(\.id))
     }
 
     // MARK: - Načítání ze STAGu
 
-    /// Volá se při otevření obrazovky. Je-li účet STAG připojený, rovnou načte
-    /// aktuální období a zapsané předměty – bez přihlašovací obrazovky.
+    /// Volá se při otevření obrazovky.
+    ///
+    /// Je-li účet STAG připojený (a předměty ještě nejsou načtené), rovnou načte aktuální období a zapsané předměty – bez přihlašovací obrazovky. Jinak načte jen období.
     func start() async {
         if let saved = accountStore?.makeService() {
             service = saved
@@ -155,7 +181,8 @@ final class StagImportViewModel {
     }
 
     /// Aktuální semestr – podle něj se předvybere ZS/LS.
-    /// Služba je veřejná, volá se proto bez ticketu (neovlivní ji ani vypršené přihlášení).
+    ///
+    /// Služba je veřejná, volá se proto bez ticketu (neovlivní ji ani vypršené přihlášení). Je-li období už načtené, nic nedělá; chyba se tiše ignoruje.
     func loadPeriod() async {
         guard period == nil else { return }
         if let current = try? await StagService(baseURL: (account?.resolvedSchool ?? school).baseURL).currentPeriod() {
@@ -164,10 +191,10 @@ final class StagImportViewModel {
         }
     }
 
-    /// Přihlášení přes webovou stránku STAGu. Systém otevře zabezpečený prohlížeč,
-    /// po přihlášení STAG přesměruje na `zkousky://stag-login?stagUserTicket=…`.
-    /// Relace prohlížeče je dočasná (`.ephemeral`) – SSO přihlášení školy nezůstane sdílené
-    /// se Safari a po odhlášení ze STAGu se další uživatel bez hesla nepřihlásí.
+    /// Přihlášení přes webovou stránku STAGu.
+    ///
+    /// Systém otevře zabezpečený prohlížeč, po přihlášení STAG přesměruje na `zkousky://stag-login?stagUserTicket=…`. Relace prohlížeče je dočasná (`.ephemeral`) – SSO přihlášení školy nezůstane sdílené se Safari a po odhlášení ze STAGu se další uživatel bez hesla nepřihlásí. Po přihlášení uloží účet, načte předměty a případně požádá o povolení oznámení. Zrušení přihlášení uživatelem se nebere jako chyba.
+    /// - Parameter session: Webová autentizační relace z prostředí SwiftUI.
     func login(using session: WebAuthenticationSession) async {
         status = .loading(String(localized: "Přihlašování do IS/STAG…"))
         do {
@@ -221,7 +248,7 @@ final class StagImportViewModel {
         }
     }
 
-    /// Předměty zapsané ve zvoleném semestru
+    /// Načte předměty zapsané ve zvoleném semestru a předvybere ty, které v aplikaci ještě nejsou.
     func loadMySubjects() async {
         guard let osCislo else { return }
         guard let year = period?.akademRok else {
@@ -246,7 +273,10 @@ final class StagImportViewModel {
     // MARK: - Import do SwiftData
 
     /// Vytvoří vybrané předměty. Chybějící kredity a názvy doplní z veřejné služby getPredmetInfo.
-    /// Vrací počet importovaných předmětů.
+    ///
+    /// Každý předmět dostane jinou barvu z palety; po uložení označí účet jako synchronizovaný a výběr vyprázdní.
+    /// - Parameter context: SwiftData kontext, do kterého se předměty vkládají.
+    /// - Returns: Počet importovaných předmětů.
     func importSelected(into context: ModelContext) async -> Int {
         let chosen = importableResults.filter { selectedIDs.contains($0.id) }
         guard !chosen.isEmpty else { return 0 }
@@ -289,12 +319,13 @@ final class StagImportViewModel {
 
     // MARK: - Pomocné
 
-    /// Odhlášení – smaže ticket z Klíčenky, uložený účet i načtená data
+    /// Odhlášení – smaže ticket z Klíčenky, uložený účet i načtená data.
     func logout() {
         forgetAccount()
         status = .idle
     }
 
+    /// Zapomene účet: odhlásí ho v úložišti, vytvoří klienta bez ticketu a vymaže výsledky i výběr.
     private func forgetAccount() {
         accountStore?.signOut()
         localAccount = nil
@@ -304,6 +335,11 @@ final class StagImportViewModel {
         selectedIDs = []
     }
 
+    /// Zobrazí načtené předměty bez duplicit, seřazené podle kódu, a předvybere importovatelné.
+    /// - Parameters:
+    ///   - subjects: Předměty ze STAGu.
+    ///   - title: Nadpis seznamu.
+    ///   - emptyMessage: Hláška zobrazená jako chyba, když je seznam prázdný.
     private func show(_ subjects: [StagSubject], title: String, emptyMessage: String) {
         // Odstraníme duplicity (stejný předmět může přijít víckrát) a seřadíme podle kódu
         var seen = Set<String>()
@@ -316,6 +352,8 @@ final class StagImportViewModel {
         status = results.isEmpty ? .failed(emptyMessage) : .idle
     }
 
+    /// Zpracuje chybu; při vypršeném ticketu účet odpojí a vyzve k novému přihlášení.
+    /// - Parameter error: Zachycená chyba.
     private func fail(_ error: Error) {
         if let stagError = error as? StagError, case .unauthorized = stagError {
             // Ticket vypršel – účet odpojíme a vrátíme se k tlačítku přihlášení
@@ -330,8 +368,9 @@ final class StagImportViewModel {
 #if DEBUG
 // MARK: - Náhled
 
+/// Náhledové instance ``StagImportViewModel`` pro #Preview.
 extension StagImportViewModel {
-    /// Stav po přihlášení s reálnými předměty UTB – pro #Preview, bez sítě, Klíčenky a přihlášení
+    /// Stav po přihlášení s reálnými předměty UTB – pro #Preview, bez sítě, Klíčenky a přihlášení.
     static var previewLoggedIn: StagImportViewModel {
         let viewModel = StagImportViewModel(accountStore: nil)
         viewModel.localAccount = StagAccount(

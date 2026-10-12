@@ -1,13 +1,18 @@
 import SwiftUI
 
 /// Řádek deadlinu: checkbox, název, odpočet, štítek předmětu, typ a termín.
-/// Používá se na Dashboardu i v detailu předmětu.
+///
+/// U splněného úkolu ukáže i hodnocení. Data dostává zvenku (`ExamTask`); klepnutím na checkbox
+/// uživatel přepne splnění (`onToggle`). Používá se na Dashboardu i v detailu předmětu.
 struct TaskRowView: View {
+    /// Zobrazený deadline.
     let task: ExamTask
-    /// V detailu předmětu štítek předmětu skryjeme (je zřejmý z kontextu)
+    /// V detailu předmětu štítek předmětu skryjeme (je zřejmý z kontextu).
     var showsSubject = true
+    /// Akce po klepnutí na checkbox.
     let onToggle: () -> Void
 
+    /// Checkbox vlevo a sloupec s názvem a odpočtem, štítky, termínem a případným hodnocením.
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             checkbox
@@ -49,7 +54,7 @@ struct TaskRowView: View {
         .padding(.vertical, 4)
     }
 
-    /// Kulatý checkbox – klepnutím se deadline označí jako splněný
+    /// Kulatý checkbox – klepnutím se deadline označí jako splněný (nebo znovu nesplněný).
     private var checkbox: some View {
         Button(action: onToggle) {
             Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")

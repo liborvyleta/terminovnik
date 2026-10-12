@@ -8,7 +8,7 @@ import WidgetKit
 import SwiftData
 #endif
 
-/// „Označit jako splněné“ – tlačítko u deadlinu ve widgetu.
+/// „Označit jako splněné“ – tlačítko u deadlinu v interaktivním widgetu na ploše.
 ///
 /// Díky `LiveActivityIntent` systém spustí `perform()` v procesu APLIKACE (v případě potřeby ji
 /// probudí na pozadí), takže intent může zapsat přímo do SwiftData – widget k databázi přístup nemá.
@@ -25,16 +25,26 @@ struct CompleteDeadlineIntent: AppIntent, LiveActivityIntent {
     @Parameter(title: "ID deadlinu")
     var taskID: String
 
+    /// Prázdný inicializátor vyžadovaný protokolem `AppIntent`.
     init() {}
 
+    /// Vytvoří akci pro deadline zadaný textovým ID.
+    /// - Parameter taskID: UUID úkolu jako text.
     init(taskID: String) {
         self.taskID = taskID
     }
 
+    /// Vytvoří akci pro deadline zadaný UUID.
+    /// - Parameter deadlineID: Identifikátor úkolu (`WidgetDeadline.id`).
     init(deadlineID: UUID) {
         self.taskID = deadlineID.uuidString
     }
 
+    /// Označí deadline jako splněný.
+    ///
+    /// V aplikaci zapíše změnu do SwiftData a obnoví widget; v ukázkovém režimu nebo v rozšíření
+    /// widgetu zařadí ID do záložní fronty a deadline jen skryje z uloženého přehledu.
+    /// - Returns: Prázdný výsledek.
     @MainActor
     func perform() async throws -> some IntentResult {
         #if WIDGET_EXTENSION
@@ -68,6 +78,9 @@ struct CompleteDeadlineIntent: AppIntent, LiveActivityIntent {
 #if !WIDGET_EXTENSION
 extension CompleteDeadlineIntent {
     /// Označí úkol jako splněný a zruší jeho připomínku. Neukládá – to udělá volající.
+    /// - Parameters:
+    ///   - taskID: UUID úkolu jako text.
+    ///   - context: Kontext, ve kterém se úkol hledá.
     /// - Returns: `true`, pokud se úkol našel a změnil (byl nesplněný).
     @MainActor
     static func markCompleted(taskID: String, in context: ModelContext) -> Bool {
@@ -87,16 +100,19 @@ extension CompleteDeadlineIntent {
 // MARK: - Záložní fronta v App Group
 
 /// ID deadlinů označených ve widgetu, které ještě aplikace nezapsala do databáze.
-/// Plní se jen tehdy, když intent běží v rozšíření widgetu; vyprazdňuje ji aplikace
+///
+/// Ukládá se v App Group (`AppGroup.defaults`), takže ji sdílí aplikace i widget. Plní se jen tehdy, když intent běží v rozšíření widgetu; vyprazdňuje ji aplikace
 /// (`WidgetActionQueue.processPending`).
 nonisolated enum PendingDeadlineCompletions {
     private static let storageKey = "widgetPendingCompletions.v1"
 
-    /// Čekající ID (bez duplicit, v pořadí přidání).
+    /// Čekající ID (bez duplicit, v pořadí přidání); prázdné, pokud App Group není dostupná.
     static var pending: [String] {
         AppGroup.defaults?.stringArray(forKey: storageKey) ?? []
     }
 
+    /// Přidá ID do fronty, pokud v ní ještě není.
+    /// - Parameter taskID: UUID úkolu jako text.
     static func enqueue(_ taskID: String) {
         var ids = pending
         guard !ids.contains(taskID) else { return }
@@ -105,6 +121,7 @@ nonisolated enum PendingDeadlineCompletions {
     }
 
     /// Vrátí čekající ID a frontu vyprázdní.
+    /// - Returns: ID v pořadí přidání.
     static func drain() -> [String] {
         let ids = pending
         if !ids.isEmpty {
@@ -116,6 +133,9 @@ nonisolated enum PendingDeadlineCompletions {
 
 nonisolated extension WidgetSnapshot {
     /// Odebere deadline z uloženého přehledu (okamžitá odezva widgetu bez přístupu k databázi).
+    ///
+    /// Přehled se uloží jen tehdy, když se deadline v něm opravdu našel.
+    /// - Parameter id: Identifikátor odebíraného deadlinu.
     static func removeDeadline(id: UUID) {
         guard var snapshot = load() else { return }
         let count = snapshot.deadlines.count

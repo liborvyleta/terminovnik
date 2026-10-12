@@ -5,13 +5,22 @@ import SwiftUI
 
 // MARK: - Karta s průměrem
 
-/// Výrazná karta v barvě průměru: vážený průměr, získané kredity a absolvované předměty
+/// Výrazná karta v barvě průměru se souhrnem studijních výsledků.
+///
+/// Zobrazuje vážený průměr se slovním hodnocením, získané kredity, počet absolvovaných
+/// předmětů a ukazatel podílu absolvovaných. Data dostává jako `GradeSummary`, barvu a texty
+/// bere ze statických pomocníků `GradesViewModel`. Používá se nahoře v `GradesView`.
 struct GradeSummaryCard: View {
+    /// Souhrn známek, ze kterého se karta skládá.
     let summary: GradeSummary
 
+    /// Vážený průměr, nebo `nil`, když zatím nejsou známky.
     private var average: Double? { summary.weightedAverage }
+    /// Barva karty podle úrovně průměru, bez průměru barva aplikace.
     private var tint: Color { average == nil ? .accentColor : GradesViewModel.averageLevel(average).color }
 
+    /// Nadpis, velký průměr se slovním hodnocením, dvě dlaždice statistik a ukazatel průběhu
+    /// na gradientu v barvě průměru s průhlednou ikonou.
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Label("Vážený průměr", systemImage: "chart.bar.fill")
@@ -68,6 +77,12 @@ struct GradeSummaryCard: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Dlaždice jedné statistiky s hodnotou, ikonou a popiskem.
+    /// - Parameters:
+    ///   - value: Zobrazená hodnota.
+    ///   - title: Popisek pod hodnotou.
+    ///   - symbol: Název SF Symbolu u hodnoty.
+    /// - Returns: Pohled dlaždice.
     private func stat(value: String, title: LocalizedStringKey, symbol: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Label {
@@ -95,12 +110,19 @@ struct GradeSummaryCard: View {
 
 // MARK: - Řádek předmětu
 
-/// Předmět v seznamu výsledků: kód, kredity, název, čipy zápočtu a zkoušky a vpravo známka
+/// Řádek předmětu v seznamu výsledků.
+///
+/// Zobrazuje kód, kredity, název, čipy zápočtu a zkoušky, štítek „Uznáno“ a vpravo
+/// odznak se známkou. Data dostává zvenku. Používá se v `GradesView`.
 struct GradeRow: View {
+    /// Hodnocení předmětu ze STAGu.
     let grade: SubjectGrade
+    /// Zobrazený název předmětu.
     let name: String
+    /// Barva předmětu pro štítek kódu.
     let tint: Color
 
+    /// Sloupec s kódem, názvem a čipy vlevo, odznak známky vpravo.
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
@@ -141,12 +163,18 @@ struct GradeRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Zda řádek zobrazí řádek čipů (zápočet, zkouška nebo uznání).
     private var hasChips: Bool { grade.creditTest != nil || grade.exam != nil || grade.isRecognized }
 }
 
-/// Malý čip části hodnocení: „Zápočet ✓“, „Zápočet ✗“, „Zkouška B“
+/// Malý čip části hodnocení: „Zápočet ✓“, „Zápočet ✗“, „Zkouška B“.
+///
+/// Barvu a případnou ikonu určuje `SubjectGrade.level` podle výsledku, jinak se
+/// zobrazí výsledek textem. Používá se v `GradeRow`.
 struct GradePartChip: View {
+    /// Název části hodnocení.
     let title: LocalizedStringKey
+    /// Část hodnocení s výsledkem.
     let part: GradePart
 
     var body: some View {
@@ -171,12 +199,18 @@ struct GradePartChip: View {
     }
 }
 
-/// Stavový štítek „Absolvováno“ / „Uznáno“
+/// Stavový štítek „Absolvováno“ / „Uznáno“.
+///
+/// Ikona s textem na kapsli v zadané barvě, ve dvou velikostech. Používá se
+/// v `GradeRow` a `SubjectGradeSummaryRow`.
 struct GradeStatusTag: View {
+    /// Text štítku.
     let title: LocalizedStringKey
+    /// Název SF Symbolu.
     let symbol: String
+    /// Barva textu a podkladu.
     let color: Color
-    /// Menší varianta do řádků seznamu
+    /// Menší varianta do řádků seznamu.
     var compact = false
 
     var body: some View {
@@ -193,8 +227,12 @@ struct GradeStatusTag: View {
 
 // MARK: - Hodnocení v detailu předmětu
 
-/// Hlavička hodnocení v detailu předmětu: velká známka, slovní hodnocení, semestr a stav
+/// Hlavička hodnocení v detailu předmětu.
+///
+/// Zobrazuje velkou známku, slovní hodnocení, semestr s kredity a štítky
+/// „Absolvováno“ a „Uznáno“. Používá se v `SubjectDetailView`.
 struct SubjectGradeSummaryRow: View {
+    /// Hodnocení předmětu ze STAGu.
     let grade: SubjectGrade
 
     var body: some View {
@@ -234,19 +272,26 @@ struct SubjectGradeSummaryRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// „LS 2025/2026 · 5 kreditů“
+    /// Podtitulek se semestrem a kredity, např. „LS 2025/2026 · 5 kreditů“.
     private var subtitle: String {
         guard let credits = grade.credits else { return grade.semesterTitle }
         return "\(grade.semesterTitle) · \(GradesViewModel.creditsText(credits))"
     }
 }
 
-/// Řádek zápočtu nebo zkoušky v detailu: výsledek, datum, pokus, body a zkoušející
+/// Řádek zápočtu nebo zkoušky v detailu předmětu.
+///
+/// Zobrazuje ikonu v barvě výsledku, název, datum, pokus, body, zkoušejícího a vpravo
+/// odznak se známkou a slovním hodnocením. Používá se v `SubjectDetailView`.
 struct GradePartDetailRow: View {
+    /// Název části hodnocení.
     let title: LocalizedStringKey
+    /// Název SF Symbolu vlevo.
     let symbol: String
+    /// Část hodnocení s výsledkem a podrobnostmi.
     let part: GradePart
 
+    /// Ikona vlevo, uprostřed název, podrobnosti a zkoušející, vpravo známka.
     var body: some View {
         let level = SubjectGrade.level(part.result)
         HStack(alignment: .center, spacing: 12) {
@@ -290,7 +335,7 @@ struct GradePartDetailRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// „15. 12. 2026 · 2. pokus · 45 b.“
+    /// Podrobnosti části hodnocení, např. „15. 12. 2026 · 2. pokus · 45 b.“ (chybějící se vynechají).
     private var details: [String] {
         [
             part.date.map(GradesViewModel.dateText),
@@ -302,11 +347,18 @@ struct GradePartDetailRow: View {
 
 // MARK: - Vstup v záložce Předměty
 
-/// Karta „Studijní výsledky“ nad seznamem předmětů: průměr a získané kredity
+/// Vstupní karta „Studijní výsledky“ nad seznamem předmětů.
+///
+/// Zobrazuje ikonu v barvě průměru, podtitulek s kredity a absolvovanými předměty
+/// a vpravo vážený průměr. Data dostává zvenku (z `GradeStore`). Používá se v `SubjectsListView`
+/// jako odkaz na `GradesView`.
 struct GradesEntryCard: View {
+    /// Souhrn známek pro průměr a kredity.
     let summary: GradeSummary
+    /// Zda jsou nějaké známky; bez nich se ukáže popis obrazovky.
     let hasGrades: Bool
 
+    /// Barva podle úrovně průměru, bez průměru barva aplikace.
     private var tint: Color {
         summary.weightedAverage == nil ? .accentColor : GradesViewModel.averageLevel(summary.weightedAverage).color
     }
@@ -360,7 +412,7 @@ struct GradesEntryCard: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// „17 kreditů · 4 z 6 předmětů“, bez známek popis obrazovky
+    /// Podtitulek „17 kreditů · 4 z 6 předmětů“, bez známek popis obrazovky.
     private var subtitle: String {
         guard hasGrades else { return String(localized: "Známky, kredity a vážený průměr") }
         return "\(GradesViewModel.creditsText(summary.earnedCredits)) · \(GradesViewModel.passedText(summary))"

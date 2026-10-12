@@ -4,13 +4,19 @@ import SwiftData
 
 /// Spouští, aktualizuje a ukončuje Live Activity (zamčená obrazovka + Dynamic Island).
 ///
-/// - Hodina z rozvrhu se spouští automaticky (`updateLessonActivity`), když právě probíhá
-///   nebo začíná do 60 minut, a také ručně z detailu hodiny (`startLesson`).
-/// - Zkouška / deadline se spouští ručně z kontextové nabídky na Přehledu (`startExam`).
+/// Používá ho aplikace po načtení rozvrhu a při návratu do popředí, detail hodiny a Přehled.
+/// Rozvrh čte z `TimetableSnapshot`, barvy předmětů ze SwiftData a evidenci ručně spuštěných aktivit
+/// ukládá do `UserDefaults.standard`.
+///
+/// - Hodina z rozvrhu se spouští automaticky (``LiveActivityManager/updateLessonActivity(now:)``), když právě probíhá
+///   nebo začíná do 60 minut, a také ručně z detailu hodiny (``LiveActivityManager/startLesson(_:)``).
+/// - Zkouška / deadline se spouští ručně z kontextové nabídky na Přehledu (``LiveActivityManager/startExam(_:)``).
 ///
 /// Vzhled aktivity kreslí widget (`StudyActivityAttributes` je sdílený typ).
+/// - Important: V ukázkovém režimu (``DemoMode``) se žádné aktivity nespouštějí.
 @MainActor
 final class LiveActivityManager {
+    /// Sdílená instance používaná celou aplikací.
     static let shared = LiveActivityManager()
 
     /// Klíč přepínače v Nastavení – automatické sledování hodin (výchozí zapnuto)
@@ -31,6 +37,7 @@ final class LiveActivityManager {
     /// Naplánované obnovení po skončení hodiny (funguje, dokud aplikace běží)
     private var refreshTask: Task<Void, Never>?
 
+    /// Soukromý inicializátor – používá se jen ``LiveActivityManager/shared``.
     private init() {}
 
     // MARK: - Stav
@@ -45,17 +52,30 @@ final class LiveActivityManager {
         ActivityAuthorizationInfo().areActivitiesEnabled
     }
 
-    /// Lze hodinu ručně sledovat? Ještě neskončila a začíná nejpozději za 8 hodin.
+    /// Zjistí, zda lze hodinu ručně sledovat – ještě neskončila a začíná nejpozději za 8 hodin.
+    ///
+    /// - Parameters:
+    ///   - occurrence: Konkrétní výskyt hodiny z rozvrhu.
+    ///   - now: Aktuální čas (pro testy).
+    /// - Returns: `true`, pokud lze aktivitu spustit.
     func canStartLesson(_ occurrence: TimetableOccurrence, now: Date = .now) -> Bool {
         occurrence.end > now && occurrence.start <= now.addingTimeInterval(manualStartLead)
     }
 
-    /// Lze ke zkoušce / deadlinu spustit odpočet? Nesplněný termín v budoucnu a nejpozději za 8 hodin.
+    /// Zjistí, zda lze ke zkoušce / deadlinu spustit odpočet – nesplněný termín v budoucnu a nejpozději za 8 hodin.
+    ///
+    /// - Parameters:
+    ///   - task: Zkouška nebo úkol.
+    ///   - now: Aktuální čas (pro testy).
+    /// - Returns: `true`, pokud lze odpočet spustit.
     func canStartExam(_ task: ExamTask, now: Date = .now) -> Bool {
         !task.isCompleted && task.dueDate > now && task.dueDate <= now.addingTimeInterval(manualStartLead)
     }
 
-    /// Sleduje se tato hodina už na zamčené obrazovce?
+    /// Zjistí, zda se tato hodina už sleduje na zamčené obrazovce.
+    ///
+    /// - Parameter occurrence: Výskyt hodiny (porovnává se kód předmětu a začátek).
+    /// - Returns: `true`, pokud pro hodinu běží aktivita.
     func isTracking(_ occurrence: TimetableOccurrence) -> Bool {
         let code = occurrence.event.subjectCode
         return runningActivities.contains {
@@ -68,7 +88,12 @@ final class LiveActivityManager {
     // MARK: - Automatika pro hodiny
 
     /// Spustí / aktualizuje aktivitu pro hodinu, která probíhá nebo začíná do 60 minut.
-    /// Volá se po načtení rozvrhu a při návratu aplikace do popředí.
+    ///
+    /// Volá se po načtení rozvrhu a při návratu aplikace do popředí. Vždy uklidí skončené hodiny;
+    /// je-li automatika vypnutá, ukončí jen automaticky spuštěné aktivity. Jinak ukončí automatické aktivity,
+    /// které neodpovídají aktuální hodině, spustí nebo aktualizuje tu správnou a naplánuje obnovení po jejím konci.
+    ///
+    /// - Parameter now: Aktuální čas (pro testy).
     func updateLessonActivity(now: Date = .now) {
         // Ukázkový režim: žádné živé aktivity z demo rozvrhu
         guard !DemoMode.isActive else { return }
@@ -107,7 +132,12 @@ final class LiveActivityManager {
 
     // MARK: - Ruční spuštění
 
-    /// Ruční spuštění z detailu hodiny. Vrací `true`, pokud aktivita běží.
+    /// Ručně spustí sledování hodiny z detailu hodiny.
+    ///
+    /// Aktivitu označí jako ruční, takže ji automatika neukončí dřív, než hodina skončí.
+    ///
+    /// - Parameter occurrence: Výskyt hodiny z rozvrhu.
+    /// - Returns: `true`, pokud aktivita běží.
     @discardableResult
     func startLesson(_ occurrence: TimetableOccurrence) -> Bool {
         guard canStartLesson(occurrence) else { return false }
@@ -116,7 +146,12 @@ final class LiveActivityManager {
         return true
     }
 
-    /// Odpočet ke zkoušce / deadlinu. Vrací `true`, pokud aktivita běží.
+    /// Spustí odpočet ke zkoušce / deadlinu.
+    ///
+    /// U zkoušky počítá s délkou 2 hodiny, u ostatních typů končí aktivita v okamžiku termínu.
+    ///
+    /// - Parameter task: Zkouška nebo úkol z Přehledu.
+    /// - Returns: `true`, pokud aktivita běží.
     @discardableResult
     func startExam(_ task: ExamTask) -> Bool {
         guard canStartExam(task) else { return false }
@@ -133,7 +168,7 @@ final class LiveActivityManager {
         return startOrUpdate(ActivityRequest(attributes: attributes, state: state)) != nil
     }
 
-    /// Ukončí všechny aktivity aplikace (hodiny i zkoušky)
+    /// Okamžitě ukončí všechny aktivity aplikace (hodiny i zkoušky) a smaže evidenci ručně spuštěných.
     func endAll() {
         refreshTask?.cancel()
         refreshTask = nil
@@ -147,7 +182,8 @@ final class LiveActivityManager {
 
     #if DEBUG
     /// Spustí ukázkovou hodinu (první z `TimetableSnapshot.sample`), která začíná za 12 minut.
-    /// Hodí se pro snímky obrazovky bez reálného rozvrhu.
+    ///
+    /// Hodí se pro snímky obrazovky bez reálného rozvrhu. Dostupné jen v buildu DEBUG.
     func startDemoLesson() {
         guard let event = TimetableSnapshot.sample.events.first else { return }
         let duration = TimeInterval(((event.endMinutes ?? 60) - (event.startMinutes ?? 0)) * 60)
@@ -159,21 +195,30 @@ final class LiveActivityManager {
 
     // MARK: - Spouštění a ukončování
 
-    /// Data pro spuštění aktivity
+    /// Data pro spuštění aktivity.
+    ///
+    /// Spojuje statické atributy a proměnný stav, aby se dala porovnat s běžícími aktivitami.
     private struct ActivityRequest {
         let attributes: StudyActivityAttributes
         let state: StudyActivityAttributes.ContentState
     }
 
+    /// Barva aktivity, když předmět žádnou nemá.
     private static let fallbackHex = "#3E63DD"
 
-    /// Aktivity, které ještě nejsou ukončené
+    /// Aktivity aplikace, které ještě nejsou ukončené (aktivní nebo zastaralé).
     private var runningActivities: [Activity<StudyActivityAttributes>] {
         Activity<StudyActivityAttributes>.activities.filter {
             $0.activityState == .active || $0.activityState == .stale
         }
     }
 
+    /// Sestaví požadavek na aktivitu pro hodinu z rozvrhu.
+    ///
+    /// Barvu bere z rozvrhu, pak z předmětu v aplikaci, jinak použije výchozí.
+    ///
+    /// - Parameter occurrence: Výskyt hodiny.
+    /// - Returns: Atributy a stav aktivity typu hodina.
     private func lessonRequest(for occurrence: TimetableOccurrence) -> ActivityRequest {
         let event = occurrence.event
         let attributes = StudyActivityAttributes(
@@ -191,7 +236,13 @@ final class LiveActivityManager {
         return ActivityRequest(attributes: attributes, state: state)
     }
 
-    /// Spustí novou aktivitu, nebo aktualizuje už běžící stejnou (žádné duplicity)
+    /// Spustí novou aktivitu, nebo aktualizuje už běžící stejnou (žádné duplicity).
+    ///
+    /// Aktualizace běžící aktivity proběhne asynchronně na pozadí jen při změně stavu.
+    ///
+    /// - Parameter request: Atributy a stav aktivity.
+    /// - Returns: Běžící nebo nově spuštěnou aktivitu; `nil` v ukázkovém režimu, při vypnutých
+    ///   Živých aktivitách nebo při selhání spuštění.
     @discardableResult
     private func startOrUpdate(_ request: ActivityRequest) -> Activity<StudyActivityAttributes>? {
         guard !DemoMode.isActive else { return nil }
@@ -217,6 +268,13 @@ final class LiveActivityManager {
     }
 
     /// Ukončí aktivitu. Po skončení hodiny ji ještě pár minut nechá na zamčené obrazovce.
+    ///
+    /// Samotné ukončení proběhne asynchronně; aktivita se zároveň odebere z evidence ručních.
+    ///
+    /// - Parameters:
+    ///   - activity: Ukončovaná aktivita.
+    ///   - now: Aktuální čas pro výpočet, zda už prodleva uplynula.
+    ///   - immediately: `true` = odstranit ze zamčené obrazovky hned.
     private func end(_ activity: Activity<StudyActivityAttributes>, now: Date, immediately: Bool = false) {
         let state = activity.content.state
         let dismissAt = state.end.addingTimeInterval(dismissalDelay)
@@ -226,7 +284,11 @@ final class LiveActivityManager {
         Task { await activity.end(content, dismissalPolicy: policy) }
     }
 
-    /// Po skončení hodiny (pokud aplikace pořád běží) se přepne na další
+    /// Naplánuje přepnutí na další hodinu po skončení té aktuální (jen pokud aplikace pořád běží).
+    ///
+    /// Vytvoří asynchronní úlohu, která po uplynutí doby zavolá ``LiveActivityManager/updateLessonActivity(now:)``.
+    ///
+    /// - Parameter date: Okamžik obnovení; v minulosti se nic neplánuje.
     private func scheduleRefresh(at date: Date) {
         let delay = date.timeIntervalSinceNow
         guard delay > 0 else { return }
@@ -239,12 +301,24 @@ final class LiveActivityManager {
 
     // MARK: - Porovnání
 
+    /// Zjistí, zda běžící aktivita odpovídá požadavku (stejný druh, předmět a začátek).
+    ///
+    /// - Parameters:
+    ///   - activity: Běžící aktivita.
+    ///   - request: Požadavek na aktivitu.
+    /// - Returns: `true`, pokud jde o tutéž aktivitu.
     private func matches(_ activity: Activity<StudyActivityAttributes>, _ request: ActivityRequest) -> Bool {
         activity.attributes.kind == request.attributes.kind
             && activity.attributes.subjectCode == request.attributes.subjectCode
             && activity.content.state.start == request.state.start
     }
 
+    /// Zjistí, zda běžící aktivita patří k danému výskytu hodiny.
+    ///
+    /// - Parameters:
+    ///   - activity: Běžící aktivita.
+    ///   - occurrence: Výskyt hodiny z rozvrhu.
+    /// - Returns: `true`, pokud jde o hodinu stejného předmětu se stejným začátkem.
     private func matches(_ activity: Activity<StudyActivityAttributes>, _ occurrence: TimetableOccurrence) -> Bool {
         activity.attributes.kind == .lesson
             && activity.attributes.subjectCode == occurrence.event.subjectCode
@@ -253,21 +327,32 @@ final class LiveActivityManager {
 
     // MARK: - Ručně spuštěné aktivity
 
+    /// ID ručně spuštěných aktivit uložená v `UserDefaults.standard`.
     private var manualIDs: Set<String> {
         get { Set(UserDefaults.standard.stringArray(forKey: manualIDsKey) ?? []) }
         set { UserDefaults.standard.set(Array(newValue), forKey: manualIDsKey) }
     }
 
+    /// Zjistí, zda byla aktivita spuštěna ručně.
+    ///
+    /// - Parameter activity: Kontrolovaná aktivita.
+    /// - Returns: `true`, pokud je v evidenci ručních aktivit.
     private func isManual(_ activity: Activity<StudyActivityAttributes>) -> Bool {
         manualIDs.contains(activity.id)
     }
 
+    /// Zapíše aktivitu do evidence ručních a zároveň z ní odstraní ID už neexistujících aktivit.
+    ///
+    /// - Parameter activity: Ručně spuštěná aktivita.
     private func markManual(_ activity: Activity<StudyActivityAttributes>) {
         // Uklidíme ID aktivit, které už v systému nejsou
         let alive = Set(Activity<StudyActivityAttributes>.activities.map(\.id))
         manualIDs = manualIDs.intersection(alive).union([activity.id])
     }
 
+    /// Odebere aktivitu z evidence ručních (zapisuje jen při skutečné změně).
+    ///
+    /// - Parameter activity: Ukončovaná aktivita.
     private func unmarkManual(_ activity: Activity<StudyActivityAttributes>) {
         guard manualIDs.contains(activity.id) else { return }
         manualIDs.remove(activity.id)
@@ -275,14 +360,20 @@ final class LiveActivityManager {
 
     // MARK: - Pomocné
 
-    /// Barva předmětu z aplikace podle kódu
+    /// Najde barvu předmětu v aplikaci podle kódu.
+    ///
+    /// - Parameter code: Kód předmětu (přesná shoda).
+    /// - Returns: Hex barva předmětu, nebo `nil`, pokud předmět neexistuje nebo dotaz selže.
     private func subjectHex(for code: String) -> String? {
         var descriptor = FetchDescriptor<Subject>(predicate: #Predicate { $0.code == code })
         descriptor.fetchLimit = 1
         return (try? PersistenceController.shared.mainContext.fetch(descriptor))?.first?.hexColor
     }
 
-    /// První řádek poznámky (místnost, pomůcky…), nejvýše 40 znaků
+    /// Vrátí první řádek poznámky (místnost, pomůcky…), nejvýše 40 znaků.
+    ///
+    /// - Parameter note: Poznámka úkolu.
+    /// - Returns: Oříznutý první řádek (delší zkrácený se „…“), nebo `nil`, pokud je prázdný.
     private static func shortNote(_ note: String) -> String? {
         guard let line = note.split(whereSeparator: \.isNewline).first?
             .trimmingCharacters(in: .whitespaces), !line.isEmpty else { return nil }

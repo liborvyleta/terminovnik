@@ -3,30 +3,40 @@ import SwiftData
 
 /// Záložka Rozvrh – výuka po dnech z IS/STAG.
 ///
-/// Nahoře výběr dne v týdnu, pod ním karta „Teď probíhá / Další hodina“, seznam akcí
-/// zvoleného dne a akce bez pevného termínu. Barvy akcí se berou živě z předmětů v aplikaci.
+/// Nahoře výběr dne v týdnu, pod ním karta „Teď probíhá / Další hodina“, časová osa
+/// zvoleného dne a akce bez pevného termínu; alternativně týdenní mřížka. Data čte
+/// z `TimetableViewModel` (nad `TimetableStore.shared`), barvy akcí bere živě
+/// z předmětů přes `@Query`. Uživatel přepíná den / týden, vrací se na dnešek,
+/// obnovuje rozvrh (tlačítko i tažení dolů), přihlašuje se do STAGu a klepnutím
+/// na akci otevírá její detail. Používá se jako jedna ze záložek hlavního `TabView`.
 struct TimetableView: View {
+    /// Kontext SwiftData předávaný view modelu při obnovení rozvrhu.
     @Environment(\.modelContext) private var modelContext
-    /// Předměty – kvůli barvám akcí (změna barvy předmětu se hned projeví i v rozvrhu)
+    /// Předměty – kvůli barvám akcí (změna barvy předmětu se hned projeví i v rozvrhu).
     @Query private var subjects: [Subject]
 
+    /// View model rozvrhu (stav obrazovky, vybraný den, výskyty akcí).
     @State private var viewModel: TimetableViewModel
+    /// Vybraná akce, jejíž detail se zobrazuje v sheetu.
     @State private var selection: TimetableSelection?
+    /// Zda je zobrazen sheet s přihlášením do IS/STAG.
     @State private var isShowingLogin = false
 
-    /// Ostrý režim – data z `TimetableStore.shared`
+    /// Ostrý režim – data z `TimetableStore.shared`.
     init() {
         _viewModel = State(initialValue: TimetableViewModel())
     }
 
-    /// Vstříknutý ViewModel – pro náhledy a snímky obrazovky (`TimetableViewModel(previewSnapshot:)`)
+    /// Vstříknutý ViewModel – pro náhledy a snímky obrazovky (`TimetableViewModel(previewSnapshot:)`).
+    /// - Parameter viewModel: Připravený view model rozvrhu.
     init(viewModel: TimetableViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
-    /// Zvolený pohled – aplikace si ho pamatuje
+    /// Zvolený pohled (den / týden) – aplikace si ho pamatuje.
     @AppStorage("timetableDisplayMode") private var displayMode: TimetableDisplayMode = .day
 
+    /// Obsah podle stavu v `NavigationStack` se sheety detailu a přihlášení a automatickým načtením.
     var body: some View {
         NavigationStack {
             content
@@ -49,6 +59,7 @@ struct TimetableView: View {
 
     // MARK: - Stavy
 
+    /// Obsah podle stavu obrazovky: nepřihlášeno, načítání, chyba, prázdný rozvrh nebo rozvrh.
     @ViewBuilder
     private var content: some View {
         switch viewModel.screenState {
@@ -106,7 +117,9 @@ struct TimetableView: View {
         }
     }
 
-    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení)
+    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení).
+    /// - Parameter content: Obsah, který se vystředí.
+    /// - Returns: `ScrollView` s obnovením tažením dolů.
     private func centered(@ViewBuilder _ content: () -> some View) -> some View {
         ScrollView {
             content()
@@ -117,6 +130,7 @@ struct TimetableView: View {
 
     // MARK: - Rozvrh
 
+    /// Denní nebo týdenní rozvrh podle zvoleného režimu.
     @ViewBuilder
     private var timetable: some View {
         switch displayMode {
@@ -127,7 +141,9 @@ struct TimetableView: View {
 
     // MARK: - Týden
 
-    /// Klasická týdenní mřížka – sloupce dnů, bloky podle času
+    /// Klasická týdenní mřížka – sloupce dnů, bloky podle času.
+    ///
+    /// Překresluje se každou minutu; nahoře je pás týdne bez dlaždic dnů.
     private var weekTimetable: some View {
         let colors = subjectColors
 
@@ -175,6 +191,9 @@ struct TimetableView: View {
 
     // MARK: - Den
 
+    /// Denní rozvrh: karta nejbližší hodiny, časová osa nebo volný den a akce bez termínu.
+    ///
+    /// Překresluje se každou minutu; nahoře je připnutý výběr dne.
     private var dayTimetable: some View {
         let colors = subjectColors
 
@@ -267,7 +286,9 @@ struct TimetableView: View {
         }
     }
 
-    /// Chyba při obnovení – starší rozvrh zůstává zobrazený
+    /// Chyba při obnovení – starší rozvrh zůstává zobrazený.
+    /// - Parameter message: Text chyby.
+    /// - Returns: Pruh s varováním a tlačítkem „Zkusit znovu“.
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -288,6 +309,9 @@ struct TimetableView: View {
         }
     }
 
+    /// Popisek zápatí s informací o poslední aktualizaci.
+    /// - Parameter text: Text zápatí.
+    /// - Returns: Vystředěný popisek s ikonou.
     private func footerLabel(_ text: String) -> some View {
         Label(text, systemImage: "arrow.triangle.2.circlepath")
             .labelStyle(.compact)
@@ -299,6 +323,7 @@ struct TimetableView: View {
 
     // MARK: - Toolbar
 
+    /// Položky toolbaru: přepínač den / týden a tlačítko Dnes (u načteného rozvrhu) a obnovení (po přihlášení).
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         if viewModel.screenState == .ready {
@@ -331,27 +356,37 @@ struct TimetableView: View {
 
     // MARK: - Pomocné
 
+    /// Spustí obnovení rozvrhu ze STAGu na pozadí.
     private func refresh() {
         Task { await viewModel.refresh(context: modelContext) }
     }
 
-    /// Barvy předmětů podle kódu
+    /// Barvy předmětů podle kódu (velkými písmeny) jako hex řetězce.
     private var subjectColors: [String: String] {
         Dictionary(subjects.map { ($0.code.uppercased(), $0.hexColor) }, uniquingKeysWith: { first, _ in first })
     }
 
+    /// Vrátí barvu akce podle předmětu.
+    /// - Parameters:
+    ///   - event: Akce rozvrhu.
+    ///   - colors: Předem spočtené barvy předmětů; `nil` znamená spočítat je znovu.
+    /// - Returns: Barva akce.
     private func tint(for event: TimetableEvent, colors: [String: String]? = nil) -> Color {
         Color(hex: TimetableViewModel.hexColor(for: event, subjectColors: colors ?? subjectColors))
     }
 }
 
-/// Denní časová osa nebo týdenní mřížka
+/// Režim zobrazení rozvrhu: denní časová osa nebo týdenní mřížka.
+///
+/// Ukládá se do `@AppStorage` a vybírá se segmentovým přepínačem v toolbaru `TimetableView`.
 enum TimetableDisplayMode: String, CaseIterable, Identifiable {
     case day
     case week
 
+    /// Identifikátor pro `ForEach`.
     var id: Self { self }
 
+    /// Lokalizovaný název režimu pro přepínač.
     var title: String {
         switch self {
         case .day: String(localized: "Den", comment: "Přepínač zobrazení rozvrhu")

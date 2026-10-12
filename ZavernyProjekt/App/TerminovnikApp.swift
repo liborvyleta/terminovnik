@@ -2,17 +2,23 @@ import SwiftUI
 import SwiftData
 
 /// Termínovník – chytrý plánovač zkoušek a deadlinů. Vstupní bod aplikace.
+///
+/// Při startu připraví účet STAG, notifikace, ukázkový režim, spojení s Apple Watch a widget,
+/// vloží úložiště SwiftData do prostředí a při každém návratu do popředí obnoví data ze STAGu.
 @main
 struct TerminovnikApp: App {
 
-    /// Aktuální úložiště SwiftData (skutečné, nebo ukázkové v paměti) – lze přepnout za běhu.
+    /// Řadič aktuálního úložiště SwiftData (skutečné, nebo ukázkové v paměti) – lze přepnout za běhu.
+    ///
     /// Schéma obsahuje oba modely; vazbu Subject ↔ ExamTask SwiftData odvodí z @Relationship.
     @State private var dataController = DemoController.shared
+    /// Kontejner, který právě poskytuje `dataController`.
     private var modelContainer: ModelContainer { dataController.container }
 
     /// Fáze scény – při návratu do popředí obnovíme data widgetu.
     @Environment(\.scenePhase) private var scenePhase
 
+    /// Inicializuje služby aplikace ještě před zobrazením první scény.
     init() {
         // Účet STAG načteme hned při startu (včetně přesunu starších údajů do Klíčenky),
         // ne až při prvním otevření obrazovky, která ho potřebuje.
@@ -74,7 +80,10 @@ struct TerminovnikApp: App {
         }
     }
 
-    /// Spuštění aplikace nebo návrat do popředí: obnova widgetu, rozvrhu, termínů a připomínek
+    /// Obslouží spuštění aplikace nebo návrat do popředí.
+    ///
+    /// Zpracuje frontu akcí z widgetu, obnoví widget, asynchronně obnoví rozvrh, termíny a známky
+    /// ze STAGu, naplánuje kontrolu na pozadí, přeplánuje připomínky hodin a aktualizuje Live Activity.
     private func appBecameActive() {
         let context = modelContainer.mainContext
         WidgetActionQueue.processPending(in: context)

@@ -6,27 +6,38 @@ import SwiftData
 /// Nahoře přepínač Zapsané / Vypsané. Zapsané termíny ukazují odpočet a do kdy se lze odhlásit,
 /// vypsané jsou seskupené po předmětech s obsazeností a oknem přihlašování. Nově vypsané termíny
 /// mají štítek „Nový“, který zmizí po opuštění záložky.
+///
+/// Data bere z `ExamTermsViewModel` (ostře z `ExamTermStore.shared`), názvy a barvy předmětů
+/// z `@Query` nad `Subject`. Uživatel může termíny obnovit, otevřít detail, zapsat se nebo
+/// odhlásit z kontextové nabídky a přihlásit se do STAGu. Používá se jako záložka v `ContentView`.
 struct ExamTermsView: View {
+    /// Kontext SwiftData pro obnovení termínů a změny zápisu.
     @Environment(\.modelContext) private var modelContext
-    /// Předměty – kvůli názvům a barvám (změna barvy předmětu se hned projeví)
+    /// Předměty – kvůli názvům a barvám (změna barvy předmětu se hned projeví).
     @Query private var subjects: [Subject]
 
+    /// ViewModel se stavem obrazovky, termíny a přepínačem segmentu.
     @State private var viewModel: ExamTermsViewModel
+    /// Termín otevřený v detailu (sheet).
     @State private var selectedTerm: ExamTerm?
+    /// Zda je otevřený sheet přihlášení do STAGu.
     @State private var isShowingLogin = false
-    /// Zápis/odhlášení z kontextové nabídky – čeká na potvrzení v dialogu
+    /// Zápis/odhlášení z kontextové nabídky – čeká na potvrzení v dialogu.
     @State private var registrationRequest: ExamTermRegistrationRequest?
 
-    /// Ostrý režim – data z `ExamTermStore.shared`
+    /// Vytvoří záložku v ostrém režimu s daty z `ExamTermStore.shared`.
     init() {
         _viewModel = State(initialValue: ExamTermsViewModel())
     }
 
-    /// Vstříknutý ViewModel – pro náhledy a snímky obrazovky (`ExamTermsViewModel(previewTerms:)`)
+    /// Vytvoří záložku se vstříknutým ViewModelem – pro náhledy a snímky obrazovky.
+    /// - Parameter viewModel: ViewModel, např. `ExamTermsViewModel(previewTerms:)`.
     init(viewModel: ExamTermsViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
+    /// Obsah podle stavu v `NavigationStack` s detailem termínu, tokem zápisu,
+    /// přihlášením do STAGu a obnovením při otevření nebo po přihlášení.
     var body: some View {
         NavigationStack {
             content
@@ -57,6 +68,7 @@ struct ExamTermsView: View {
 
     // MARK: - Stavy
 
+    /// Obsah podle stavu obrazovky: nepřihlášeno, načítání, chyba, prázdno nebo seznam termínů.
     @ViewBuilder
     private var content: some View {
         switch viewModel.screenState {
@@ -106,7 +118,9 @@ struct ExamTermsView: View {
         }
     }
 
-    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení)
+    /// Prázdný stav vystředěný ve scrollovatelné ploše (funguje i tažení dolů pro obnovení).
+    /// - Parameter content: Obsah zobrazený uprostřed.
+    /// - Returns: Scrollovatelný pohled s obsahem na výšku plochy.
     private func centered(@ViewBuilder _ content: () -> some View) -> some View {
         ScrollView {
             content()
@@ -115,7 +129,9 @@ struct ExamTermsView: View {
         .refreshable { await viewModel.refresh(context: modelContext) }
     }
 
-    /// „Zatím žádné vypsané termíny“
+    /// Prázdný stav „Zatím žádné vypsané termíny“.
+    /// - Parameter actionTitle: Titulek tlačítka pro obnovení; `nil` tlačítko skryje.
+    /// - Returns: Pohled prázdného stavu.
     private func noTermsState(actionTitle: String?) -> some View {
         EmptyStateView(
             symbol: "calendar.badge.clock",
@@ -130,6 +146,7 @@ struct ExamTermsView: View {
 
     // MARK: - Seznam
 
+    /// Seznam termínů obnovovaný každou minutu s připnutým přepínačem a tažením pro obnovení.
     private var termsList: some View {
         // Překreslení každou minutu: odpočty, okna přihlašování, „aktualizováno před…“
         TimelineView(.everyMinute) { context in
@@ -144,6 +161,8 @@ struct ExamTermsView: View {
         }
     }
 
+    /// Obsah seznamu: chybový banner, sekce zvoleného segmentu a patička s časem aktualizace.
+    /// - Parameter now: Aktuální čas pro odpočty a texty.
     @ViewBuilder
     private func listContent(now: Date) -> some View {
         if let errorMessage = viewModel.errorMessage {
@@ -165,7 +184,7 @@ struct ExamTermsView: View {
         }
     }
 
-    /// Připnutý přepínač Zapsané / Vypsané
+    /// Připnutý přepínač Zapsané / Vypsané.
     private var segmentBar: some View {
         @Bindable var viewModel = viewModel
         return Picker("Termíny", selection: $viewModel.segment.animation(.snappy)) {
@@ -181,7 +200,9 @@ struct ExamTermsView: View {
         .overlay(alignment: .bottom) { Divider().opacity(0.6) }
     }
 
-    /// „Zapsané (2)“, „Vypsané (5)“
+    /// Titulek segmentu s počtem termínů, např. „Zapsané (2)“, „Vypsané (5)“.
+    /// - Parameter segment: Segment, pro který se titulek skládá.
+    /// - Returns: Název segmentu, s počtem v závorce, je-li nenulový.
     private func segmentTitle(_ segment: ExamTermsSegment) -> String {
         let count = segment == .registered ? viewModel.registeredTerms.count : viewModel.availableTerms.count
         return count > 0 ? "\(segment.title) (\(count))" : segment.title
@@ -189,6 +210,9 @@ struct ExamTermsView: View {
 
     // MARK: - Zapsané
 
+    /// Sekce zapsaných termínů: karta nejbližšího, seznam dalších a vysvětlující patička,
+    /// případně prázdný stav s odkazem na vypsané termíny.
+    /// - Parameter now: Aktuální čas pro odpočty.
     @ViewBuilder
     private func registeredSections(now: Date) -> some View {
         let registered = viewModel.registeredTerms
@@ -256,6 +280,8 @@ struct ExamTermsView: View {
 
     // MARK: - Vypsané
 
+    /// Sekce vypsaných termínů seskupené po předmětech, případně prázdný stav.
+    /// - Parameter now: Aktuální čas pro okna přihlašování.
     @ViewBuilder
     private func availableSections(now: Date) -> some View {
         let groups = viewModel.availableGroups
@@ -288,7 +314,11 @@ struct ExamTermsView: View {
         }
     }
 
-    /// Hlavička předmětu: štítek kódu, název a počet termínů
+    /// Hlavička předmětu: štítek kódu, název a počet termínů.
+    /// - Parameters:
+    ///   - group: Skupina termínů jednoho předmětu.
+    ///   - tint: Barva předmětu.
+    /// - Returns: Pohled hlavičky sekce.
     private func subjectHeader(_ group: ExamTermGroup, tint: Color) -> some View {
         HStack(spacing: 8) {
             TimetableCodeTag(code: group.subjectCode, tint: tint)
@@ -309,7 +339,9 @@ struct ExamTermsView: View {
 
     // MARK: - Pomocné pohledy
 
-    /// Chyba při obnovení – starší termíny zůstávají zobrazené
+    /// Chyba při obnovení – starší termíny zůstávají zobrazené.
+    /// - Parameter message: Text chyby.
+    /// - Returns: Banner s tlačítkem pro opakování.
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -330,6 +362,9 @@ struct ExamTermsView: View {
         }
     }
 
+    /// Patička seznamu s ikonou obnovení (např. kdy byla data aktualizována).
+    /// - Parameter text: Zobrazený text.
+    /// - Returns: Vystředěný popisek.
     private func footerLabel(_ text: String) -> some View {
         Label(text, systemImage: "arrow.triangle.2.circlepath")
             .labelStyle(.compact)
@@ -340,6 +375,7 @@ struct ExamTermsView: View {
 
     // MARK: - Toolbar
 
+    /// Tlačítko obnovení v toolbaru (jen po přihlášení); během načítání nebo zápisu indikátor průběhu.
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         if viewModel.isConnected {
@@ -353,7 +389,9 @@ struct ExamTermsView: View {
         }
     }
 
-    /// Kontextová nabídka řádku: zápis / odhlášení / fronta (provede se až po potvrzení)
+    /// Kontextová nabídka řádku: zápis / odhlášení / fronta (provede se až po potvrzení).
+    /// - Parameter term: Termín, ke kterému nabídka patří.
+    /// - Returns: Položka nabídky `ExamTermRegistrationMenuItem`.
     private func registrationMenu(for term: ExamTerm) -> some View {
         ExamTermRegistrationMenuItem(
             term: term,
@@ -363,6 +401,7 @@ struct ExamTermsView: View {
         )
     }
 
+    /// Asynchronně obnoví termíny ze STAGu.
     private func refresh() {
         Task { await viewModel.refresh(context: modelContext) }
     }

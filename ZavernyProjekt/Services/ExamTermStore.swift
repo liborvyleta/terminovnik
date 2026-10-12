@@ -3,22 +3,31 @@ import Observation
 import SwiftData
 import UserNotifications
 
-/// Termíny zkoušek ze STAGu načtené přes uložený účet.
+/// Úložiště termínů zkoušek ze STAGu načtených přes uložený účet.
 ///
-/// - Termíny se ukládají do App Group (fungují offline).
+/// Používají ho obrazovky termínů a detail předmětu (přes ``ExamTermStore/shared``) i kontrola na pozadí.
+/// Data stahuje z IS/STAG službou z ``StagAccountStore`` a ukládá do sdílených `UserDefaults` App Group,
+/// takže termíny fungují i offline.
+///
 /// - Zapsané termíny se automaticky převádí na zkoušky (`ExamTask` se `stagTermID`) s připomínkou den předem;
 ///   po odhlášení z termínu ve STAGu se zkouška z aplikace odstraní.
 /// - Nově vypsané termíny vyvolají okamžité lokální oznámení (při otevření aplikace i při kontrole na pozadí).
+/// - Important: V ukázkovém režimu (``DemoMode``) se nic nestahuje, nezapisuje do STAGu ani neukládá do App Group.
 @Observable
 final class ExamTermStore {
+    /// Sdílená instance používaná celou aplikací.
     static let shared = ExamTermStore()
 
     /// Klíč přepínače v Nastavení – upozornění na nové termíny (výchozí zapnuto)
     nonisolated static let alertsEnabledKey = "examTermAlertsEnabled"
 
+    /// Všechny termíny z posledního úspěšného načtení (nebo z cache).
     private(set) var terms: [ExamTerm] = []
+    /// Čas posledního úspěšného načtení ze STAGu; `nil`, pokud termíny ještě nebyly načteny.
     private(set) var fetchedAt: Date?
+    /// Probíhá právě načítání ze STAGu.
     private(set) var isLoading = false
+    /// Lokalizovaná chyba posledního načtení pro zobrazení v UI; `nil` při úspěchu.
     private(set) var errorMessage: String?
     /// Termíny objevené při posledních kontrolách, které si uživatel ještě neprohlédl (štítek „Nový“)
     private(set) var newTermIDs: Set<String> = []
@@ -28,15 +37,21 @@ final class ExamTermStore {
     /// Právě probíhající zápis/odhlášení (pro ProgressView a zablokování dalších akcí)
     private(set) var pendingRegistration: PendingRegistration?
 
-    /// Probíhající změna zápisu na termín
+    /// Probíhající změna zápisu na termín.
+    ///
+    /// Drží ji ``ExamTermStore/pendingRegistration`` po dobu volání STAGu, aby UI mohlo
+    /// u daného termínu zobrazit průběh a zablokovat další akce.
     struct PendingRegistration: Equatable {
+        /// Identifikátor termínu ve STAGu.
         let termID: String
+        /// Prováděná akce (zápis, odhlášení, fronta).
         let action: StagTermRegistrationAction
     }
 
     /// Jak starý seznam se při otevření aplikace obnoví
     private let maxAge: TimeInterval = 15 * 60
 
+    /// Klíče ve sdílených `UserDefaults` App Group.
     private enum Keys {
         static let snapshot = "examTerms.v1"
         static let seen = "examTerms.seenIDs"
@@ -44,16 +59,21 @@ final class ExamTermStore {
         static let queued = "examTerms.queuedIDs"
     }
 
+    /// Uložená podoba seznamu termínů v App Group.
     private struct Snapshot: Codable {
         var terms: [ExamTerm]
         var fetchedAt: Date
     }
 
+    /// Vytvoří úložiště a obnoví termíny z cache v App Group.
     private init() {
         restoreFromCache()
     }
 
-    /// Načte uložené termíny z App Group
+    /// Načte uložené termíny z App Group.
+    ///
+    /// Obnoví seznam termínů, čas načtení, nové termíny i evidenci front; chybějící nebo nečitelná data
+    /// znamenají prázdný seznam.
     private func restoreFromCache() {
         terms = []
         fetchedAt = nil
@@ -69,18 +89,23 @@ final class ExamTermStore {
 
     // MARK: - Odvozené seznamy
 
-    /// Zapsané termíny (nadcházející), od nejbližšího
+    /// Zapsané termíny (nadcházející), od nejbližšího.
     var registeredTerms: [ExamTerm] {
         terms.filter { $0.isRegistered && $0.isUpcoming() }.sorted { $0.start < $1.start }
     }
 
-    /// Termíny, na které se lze zapsat nebo jsou vypsané (nadcházející, platné, nezapsané)
+    /// Termíny, na které se lze zapsat nebo jsou vypsané (nadcházející, platné, nezapsané), od nejbližšího.
     var availableTerms: [ExamTerm] {
         terms.filter { !$0.isRegistered && !$0.isCancelled && $0.isUpcoming() }.sorted { $0.start < $1.start }
     }
 
+    /// Existují termíny se štítkem „Nový“, které si uživatel ještě neprohlédl.
     var hasNewTerms: Bool { !newTermIDs.isEmpty }
 
+    /// Vrátí nadcházející termíny jednoho předmětu.
+    ///
+    /// - Parameter code: Kód předmětu (porovnává se bez ohledu na velikost písmen).
+    /// - Returns: Nadcházející termíny předmětu seřazené od nejbližšího.
     func terms(forSubject code: String) -> [ExamTerm] {
         terms.filter { $0.subjectCode.caseInsensitiveCompare(code) == .orderedSame && $0.isUpcoming() }
             .sorted { $0.start < $1.start }
@@ -89,7 +114,14 @@ final class ExamTermStore {
     // MARK: - Načítání
 
     /// Načte termíny ze STAGu, sladí zkoušky v aplikaci a upozorní na nové termíny.
-    /// - Returns: počet nově objevených termínů
+    ///
+    /// Asynchronně stáhne termíny studenta, uloží je do App Group, pročistí evidenci front,
+    /// promítne zapsané termíny do zkoušek (``ExamTermStore/syncRegisteredTasks(in:)``) a případně
+    /// odešle oznámení o nových termínech. Chyby se nevyhazují, ale zapisují do ``ExamTermStore/errorMessage``;
+    /// při vypršeném přihlášení se uživatel odhlásí ze STAGu.
+    ///
+    /// - Parameter context: SwiftData kontext, do kterého se zapisují zkoušky ze zapsaných termínů.
+    /// - Returns: Počet nově objevených termínů (0 v ukázkovém režimu, bez přihlášení, při běžícím načítání nebo chybě).
     @discardableResult
     func refresh(context: ModelContext) async -> Int {
         if DemoMode.isActive { return 0 }
@@ -122,14 +154,20 @@ final class ExamTermStore {
         return 0
     }
 
-    /// Obnoví termíny, pokud je uživatel přihlášený a seznam je starší než pár minut.
+    /// Obnoví termíny, pokud je uživatel přihlášený a seznam je starší než 15 minut.
+    ///
+    /// Asynchronní operace; jinak deleguje na ``ExamTermStore/refresh(context:)``.
+    ///
+    /// - Parameter context: SwiftData kontext pro sladění zkoušek ze zapsaných termínů.
     func refreshIfNeeded(context: ModelContext) async {
         guard StagAccountStore.shared.isConnected else { return }
         if let fetchedAt, Date.now.timeIntervalSince(fetchedAt) < maxAge { return }
         await refresh(context: context)
     }
 
-    /// Uživatel si nové termíny prohlédl – zmizí štítek „Nový“
+    /// Označí všechny nové termíny jako prohlédnuté – zmizí štítek „Nový“.
+    ///
+    /// V ukázkovém režimu se změní jen stav v paměti, App Group zůstane beze změny.
     func markAllSeen() {
         guard !newTermIDs.isEmpty else { return }
         newTermIDs = []
@@ -138,6 +176,8 @@ final class ExamTermStore {
     }
 
     /// Smaže uložené termíny (po odhlášení ze STAGu). Zkoušky v aplikaci zůstávají.
+    ///
+    /// Vyprázdní stav v paměti a mimo ukázkový režim odstraní i všechna data termínů z App Group.
     func clear() {
         terms = []
         fetchedAt = nil
@@ -156,29 +196,77 @@ final class ExamTermStore {
     // MARK: - Zápis na termíny (ostré operace ve STAGu)
     // Volat výhradně po výslovném potvrzení uživatelem v dialogu.
 
-    /// Zapíše studenta na termín
+    /// Zapíše studenta na termín.
+    ///
+    /// Asynchronní operace; deleguje na ``ExamTermStore/changeRegistration(_:for:context:)``.
+    ///
+    /// - Parameters:
+    ///   - term: Termín, na který se student zapisuje.
+    ///   - context: SwiftData kontext pro sladění zkoušek po obnovení termínů.
+    /// - Returns: Výsledek operace ve STAGu.
+    /// - Important: Ostrá změna ve STAGu – volat jen po výslovném potvrzení uživatelem.
     func register(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
         await changeRegistration(.register, for: term, context: context)
     }
 
-    /// Odhlásí studenta z termínu
+    /// Odhlásí studenta z termínu.
+    ///
+    /// Asynchronní operace; deleguje na ``ExamTermStore/changeRegistration(_:for:context:)``.
+    ///
+    /// - Parameters:
+    ///   - term: Termín, ze kterého se student odhlašuje.
+    ///   - context: SwiftData kontext pro sladění zkoušek po obnovení termínů.
+    /// - Returns: Výsledek operace ve STAGu.
+    /// - Important: Ostrá změna ve STAGu – volat jen po výslovném potvrzení uživatelem.
     func unregister(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
         await changeRegistration(.unregister, for: term, context: context)
     }
 
-    /// Zapíše studenta do fronty čekatelů na plný termín
+    /// Zapíše studenta do fronty čekatelů na plný termín.
+    ///
+    /// Asynchronní operace; deleguje na ``ExamTermStore/changeRegistration(_:for:context:)``.
+    ///
+    /// - Parameters:
+    ///   - term: Plný termín, do jehož fronty se student zapisuje.
+    ///   - context: SwiftData kontext pro sladění zkoušek po obnovení termínů.
+    /// - Returns: Výsledek operace ve STAGu.
+    /// - Important: Ostrá změna ve STAGu – volat jen po výslovném potvrzení uživatelem.
     func joinQueue(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
         await changeRegistration(.joinQueue, for: term, context: context)
     }
 
-    /// Odhlásí studenta z fronty čekatelů
+    /// Odhlásí studenta z fronty čekatelů.
+    ///
+    /// Asynchronní operace; deleguje na ``ExamTermStore/changeRegistration(_:for:context:)``.
+    ///
+    /// - Parameters:
+    ///   - term: Termín, z jehož fronty se student odhlašuje.
+    ///   - context: SwiftData kontext pro sladění zkoušek po obnovení termínů.
+    /// - Returns: Výsledek operace ve STAGu.
+    /// - Important: Ostrá změna ve STAGu – volat jen po výslovném potvrzení uživatelem.
     func leaveQueue(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {
         await changeRegistration(.leaveQueue, for: term, context: context)
     }
 
+    /// Zjistí, zda je student (podle lokální evidence) ve frontě čekatelů na termín.
+    ///
+    /// - Parameter term: Kontrolovaný termín.
+    /// - Returns: `true`, pokud se uživatel do fronty zapsal z aplikace a fronta je stále platná.
     func isQueued(_ term: ExamTerm) -> Bool { queuedTermIDs.contains(term.id) }
 
     /// Provede změnu zápisu ve STAGu; po úspěchu obnoví termíny (zapsané se samy převedou na zkoušky s připomínkou).
+    ///
+    /// Asynchronní operace. Najednou může běžet jen jedna změna (``ExamTermStore/pendingRegistration``).
+    /// Po úspěchu aktualizuje lokální evidenci front; termíny se obnoví po úspěchu i neúspěchu.
+    /// Chyby se nevyhazují, ale vrací jako `.failure` se zprávou; při vypršeném přihlášení se uživatel odhlásí.
+    ///
+    /// - Parameters:
+    ///   - action: Požadovaná akce (zápis, odhlášení, vstup do fronty, odchod z fronty).
+    ///   - term: Termín, kterého se změna týká.
+    ///   - context: SwiftData kontext pro sladění zkoušek po obnovení termínů.
+    /// - Returns: Výsledek operace ve STAGu nebo `.failure` s lokalizovaným popisem chyby.
+    /// - Important: Ostrá změna ve STAGu – volat jen po výslovném potvrzení uživatelem.
+    ///   V ukázkovém režimu se nic nezapisuje a vrací se `.failure`.
     func changeRegistration(_ action: StagTermRegistrationAction, for term: ExamTerm,
                             context: ModelContext) async -> StagTermRegistrationResult {
         if DemoMode.isActive { return .failure("V demo režimu se na termíny nezapisuje.") }
@@ -216,7 +304,9 @@ final class ExamTermStore {
         return result
     }
 
-    /// Fronta u termínů, které zmizely, proběhly nebo na které už je student zapsaný, nedává smysl
+    /// Odebere z evidence front termíny, které zmizely, proběhly nebo na které už je student zapsaný.
+    ///
+    /// Fronta u takových termínů nedává smysl; změna se uloží jen tehdy, když se evidence opravdu změnila.
     private func pruneQueuedTerms() {
         let valid = Set(terms.filter { !$0.isRegistered && $0.isUpcoming() }.map(\.id))
         let pruned = queuedTermIDs.intersection(valid)
@@ -225,6 +315,7 @@ final class ExamTermStore {
         persistQueued()
     }
 
+    /// Uloží evidenci front do App Group (v ukázkovém režimu nic neukládá).
     private func persistQueued() {
         guard !DemoMode.isActive else { return }
         AppGroup.defaults?.set(Array(queuedTermIDs), forKey: Keys.queued)
@@ -233,6 +324,12 @@ final class ExamTermStore {
     // MARK: - Nové termíny
 
     /// Vrátí nově objevené vypsané termíny. Při úplně prvním načtení nic nehlásí (jinak by zasypal uživatele).
+    ///
+    /// Všechny načtené termíny přidá do množiny již viděných v App Group a nové zapíše
+    /// do ``ExamTermStore/newTermIDs``.
+    ///
+    /// - Parameter fresh: Právě stažené termíny ze STAGu.
+    /// - Returns: Nadcházející, nezrušené a nezapsané termíny, které dosud nebyly viděny.
     private func detectNewTerms(in fresh: [ExamTerm]) -> [ExamTerm] {
         let defaults = AppGroup.defaults
         let isFirstSync = defaults?.object(forKey: Keys.seen) == nil
@@ -248,7 +345,14 @@ final class ExamTermStore {
         return discovered
     }
 
-    /// Okamžité lokální oznámení o nových termínech (víc termínů = jedno souhrnné oznámení)
+    /// Odešle okamžité lokální oznámení o nových termínech (víc termínů = jedno souhrnné oznámení).
+    ///
+    /// Asynchronně přidá požadavek do `UNUserNotificationCenter`; nic nedělá, pokud uživatel
+    /// upozornění vypnul v Nastavení (``ExamTermStore/alertsEnabledKey``). Chyba přidání se ignoruje.
+    ///
+    /// - Parameters:
+    ///   - discovered: Nově objevené termíny (alespoň jeden).
+    ///   - context: SwiftData kontext pro dohledání názvů předmětů.
     private func notifyAboutNewTerms(_ discovered: [ExamTerm], context: ModelContext) async {
         let enabled = UserDefaults.standard.object(forKey: Self.alertsEnabledKey) as? Bool ?? true
         guard enabled else { return }
@@ -274,6 +378,12 @@ final class ExamTermStore {
     // MARK: - Zapsané termíny → zkoušky v aplikaci
 
     /// Zapsané nadcházející termíny promítne do zkoušek v aplikaci (vytvoří / aktualizuje / odstraní).
+    ///
+    /// Nové zkoušky přiřadí k předmětu podle kódu, u existujících udržuje aktuální datum a poznámku
+    /// a přeplánuje připomínky přes `NotificationManager`. Zkoušky termínů, ze kterých se student odhlásil,
+    /// smaže jen pokud jsou budoucí a nesplněné. Změny uloží přes `TaskService.save(_:)`.
+    ///
+    /// - Parameter context: SwiftData kontext se zkouškami a předměty.
     private func syncRegisteredTasks(in context: ModelContext) {
         let registered = terms.filter { $0.isRegistered && !$0.isCancelled && $0.isUpcoming() }
         let registeredIDs = Set(registered.map(\.id))
@@ -321,11 +431,16 @@ final class ExamTermStore {
 
     // MARK: - Pomocné
 
+    /// Vrátí názvy předmětů z aplikace indexované kódem.
+    ///
+    /// - Parameter context: SwiftData kontext s předměty.
+    /// - Returns: Slovník kód předmětu (velkými písmeny) → název; při chybě načtení prázdný.
     private func subjectNames(in context: ModelContext) -> [String: String] {
         let subjects = (try? context.fetch(FetchDescriptor<Subject>())) ?? []
         return Dictionary(subjects.map { ($0.code.uppercased(), $0.name) }, uniquingKeysWith: { first, _ in first })
     }
 
+    /// Uloží aktuální termíny a čas načtení do App Group (v ukázkovém režimu nic neukládá).
     private func persist() {
         guard !DemoMode.isActive else { return }
         guard let fetchedAt, let data = try? JSONEncoder().encode(Snapshot(terms: terms, fetchedAt: fetchedAt)) else { return }
@@ -335,6 +450,12 @@ final class ExamTermStore {
 
 // Ukázkový režim – data jen v paměti, nic se neukládá
 extension ExamTermStore {
+    /// Nahradí termíny ukázkovými daty pro ukázkový režim.
+    ///
+    /// - Parameters:
+    ///   - terms: Ukázkové termíny.
+    ///   - newIDs: Identifikátory termínů, které se mají zobrazit se štítkem „Nový“.
+    /// - Important: Data zůstávají jen v paměti, do App Group se nic neukládá.
     func loadDemo(_ terms: [ExamTerm], newIDs: Set<String>) {
         self.terms = terms
         fetchedAt = .now
@@ -343,7 +464,7 @@ extension ExamTermStore {
         errorMessage = nil
     }
 
-    /// Po ukončení dema vrátí skutečné termíny z App Group
+    /// Po ukončení dema vrátí skutečné termíny z App Group.
     func reloadAfterDemo() {
         errorMessage = nil
         restoreFromCache()

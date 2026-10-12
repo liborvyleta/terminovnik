@@ -3,14 +3,19 @@ import SwiftData
 import os
 
 /// Jediný sdílený ModelContainer aplikace.
+///
 /// Používá ho aplikace i akce pro Siri a Zkratky (App Intents), které běží bez otevřeného UI.
+/// Podle ``DemoMode/isActive`` vrací buď skutečnou databázi SwiftData (SQLite v kontejneru aplikace,
+/// volitelně s iCloud synchronizací), nebo demo úložiště v paměti. Přepínání za běhu řídí ``DemoController``.
 enum PersistenceController {
     /// `true` = trvalé úložiště se nepodařilo otevřít a aplikace běží z úložiště v paměti
     /// (změny se po ukončení ztratí). UI podle toho zobrazí upozornění.
     static private(set) var isUsingFallbackStore = false
 
+    /// Logger chyb úložiště (jen doména a kód, žádná data)
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Terminovnik", category: "persistence")
 
+    /// Schéma SwiftData: předměty a úkoly
     static let schema = Schema([Subject.self, ExamTask.self])
 
     /// Aktuální úložiště: v ukázkovém režimu demo kontejner v paměti, jinak skutečná databáze.
@@ -22,6 +27,8 @@ enum PersistenceController {
 
     /// Demo úložiště v paměti – vzniká při prvním použití v demu, při vstupu/odchodu se zahodí
     private static var demoStorage: ModelContainer?
+
+    /// Demo kontejner; při prvním přístupu ho vytvoří `DemoData.makeContainer(schema:)` a uloží do ``demoStorage``.
     private static var demo: ModelContainer {
         if let demoStorage { return demoStorage }
         let container = DemoData.makeContainer(schema: schema)
@@ -36,6 +43,8 @@ enum PersistenceController {
 
     /// Skutečné trvalé úložiště. V demu se nepoužívá (jen NotificationManager pro akci „Splněno“
     /// u skutečné připomínky, kterou uživatel výslovně potvrdí).
+    ///
+    /// Otevření se zkusí dvakrát; při neúspěchu vznikne úložiště v paměti a nastaví se ``isUsingFallbackStore``.
     static let persistent: ModelContainer = {
         // isStoredInMemoryOnly: false → data se ukládají trvale do SQLite v kontejneru aplikace.
         // Synchronizace přes iCloud je aktivní jen s compilation flagem ICLOUD_SYNC. Zapnutí dále vyžaduje

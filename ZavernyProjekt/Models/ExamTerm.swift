@@ -1,56 +1,77 @@
 import Foundation
 
-/// Termín zkoušky/zápočtu ze STAGu převedený do podoby pro aplikaci.
-/// Není to SwiftData model – termíny se ukládají jako JSON (App Group) a při každém načtení přepíšou.
+/// Termín zkoušky nebo zápočtu ze STAGu převedený do podoby pro aplikaci.
+///
+/// Není to SwiftData model – termíny se ukládají jako JSON (App Group) a při každém načtení
+/// přepíšou. Ze zapsaného termínu může vzniknout `ExamTask` (propojení přes `ExamTask.stagTermID`).
 nonisolated struct ExamTerm: Codable, Identifiable, Hashable {
-    /// termIdno ze STAGu
+    /// Identifikátor termínu ve STAGu (pole `termIdno`).
     let id: String
+    /// Kód předmětu, např. „AP9PT“.
     let subjectCode: String
+    /// Zkratka katedry, např. „AUIUI“.
     let department: String
-    /// Typ termínu ze STAGu („Zkouška“, „Zápočet“…)
+    /// Typ termínu tak, jak ho uvádí STAG („Zkouška“, „Zápočet“…).
     let typeName: String
+    /// Začátek termínu.
     let start: Date
+    /// Konec termínu, pokud ho STAG uvádí.
     let end: Date?
-    /// „52/202“
+    /// Budova a místnost, např. „52/202“.
     let room: String?
+    /// Zkoušející.
     let teacher: String?
-    /// Obsazená místa / kapacita
+    /// Počet obsazených míst.
     let occupied: Int?
+    /// Kapacita termínu.
     let capacity: Int?
-    /// Student je na termín zapsaný
+    /// Příznak, že je student na termín zapsaný.
     let isRegistered: Bool
-    /// Student se teď může zapsat / odhlásit
+    /// Příznak, že se student teď může zapsat nebo odhlásit.
     let canChangeRegistration: Bool
-    /// Proč se zapsat/odhlásit nelze (text ze STAGu)
+    /// Důvod, proč se zapsat ani odhlásit nelze (text ze STAGu).
     let blockReason: String?
+    /// Okamžik, od kdy je možné se na termín zapsat.
     let registrationOpens: Date?
+    /// Poslední okamžik pro zápis na termín.
     let registrationDeadline: Date?
+    /// Poslední okamžik pro odhlášení z termínu.
     let unregisterDeadline: Date?
-    /// Opravný termín
+    /// Příznak opravného termínu.
     let isRetake: Bool
+    /// Poznámka k termínu ze STAGu.
     let note: String?
-    /// Zrušený termín (student na něm ale může být zapsaný)
+    /// Příznak zrušeného termínu (student na něm ale může být zapsaný).
     let isCancelled: Bool
 }
 
 nonisolated extension ExamTerm {
-    /// Volná místa (nil = kapacita neznámá)
+    /// Počet volných míst (nejméně 0); `nil`, pokud chybí kapacita nebo obsazenost.
     var freeSpots: Int? {
         guard let capacity, let occupied else { return nil }
         return max(0, capacity - occupied)
     }
 
+    /// Příznak plně obsazeného termínu; při neznámé kapacitě je `false`.
     var isFull: Bool { freeSpots == 0 }
 
-    /// Termín ještě nezačal
+    /// Zjistí, zda termín ještě nezačal.
+    /// - Parameter now: Referenční okamžik, výchozí je aktuální čas.
+    /// - Returns: `true`, pokud je začátek termínu později než `now`.
     func isUpcoming(now: Date = .now) -> Bool { start > now }
 
-    /// Odpovídající typ úkolu v aplikaci
+    /// Odpovídající typ úkolu v aplikaci.
+    ///
+    /// Typ obsahující „zápoč“ nebo „zapoc“ (bez ohledu na velikost písmen) je zápočet, vše ostatní zkouška.
     var taskType: TaskType {
         typeName.lowercased().contains("zápoč") || typeName.lowercased().contains("zapoc") ? .zapocet : .zkouska
     }
 
-    /// Název úkolu, který z termínu vznikne
+    /// Sestaví název úkolu, který z termínu vznikne, např. „Zkouška – Datamining“.
+    ///
+    /// U opravného termínu se připojí lokalizovaný doplněk „(opravný)“.
+    /// - Parameter subjectName: Název předmětu; při `nil` se použije kód předmětu.
+    /// - Returns: Název úkolu.
     func taskTitle(subjectName: String?) -> String {
         let name = subjectName ?? subjectCode
         return isRetake
@@ -58,7 +79,9 @@ nonisolated extension ExamTerm {
             : "\(typeName) – \(name)"
     }
 
-    /// Ukázkové termíny pro náhledy (smyšlený zkoušející – žádné skutečné osoby)
+    /// Pět ukázkových termínů relativně k dnešku pro náhledy a ukázkový režim.
+    ///
+    /// Zkoušející je smyšlený – žádné skutečné osoby.
     static var samples: [ExamTerm] {
         let calendar = Calendar.current
         func day(_ offset: Int, _ hour: Int) -> Date {

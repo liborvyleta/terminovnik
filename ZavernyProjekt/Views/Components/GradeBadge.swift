@@ -2,6 +2,7 @@ import SwiftUI
 
 // MARK: - Barvy a texty úrovní známek
 
+/// Barvy a symboly úrovní známek pro štítky.
 extension GradeLevel {
     /// Barva štítku. Odstíny z palety předmětů – mají kontrast s bílým textem
     /// a čitelné jsou i jako barevný text na světlém i tmavém pozadí.
@@ -16,7 +17,7 @@ extension GradeLevel {
         }
     }
 
-    /// Symbol místo textu – zápočet splněn / nesplněn
+    /// Symbol místo textu – zápočet splněn / nesplněn (`nil` = zobrazí se text).
     var symbol: String? {
         switch self {
         case .passed: "checkmark"
@@ -25,7 +26,9 @@ extension GradeLevel {
         }
     }
 
-    /// Úroveň podle číselné hodnoty (známka nebo průměr): 1 výborně … 4 nevyhověl
+    /// Úroveň podle číselné hodnoty (známka nebo průměr): 1 výborně … 4 nevyhověl.
+    /// - Parameter value: číselná známka nebo průměr.
+    /// - Returns: odpovídající úroveň známky.
     nonisolated static func forNumericValue(_ value: Double) -> GradeLevel {
         switch value {
         case ..<1.25: .excellent
@@ -37,8 +40,11 @@ extension GradeLevel {
     }
 }
 
+/// Slovní hodnocení známek pro VoiceOver a texty.
 extension SubjectGrade {
-    /// Slovní hodnocení známky: „Výborně“, „Velmi dobře“, „Započteno“… (nil = neznámá známka)
+    /// Slovní hodnocení známky: „Výborně“, „Velmi dobře“, „Započteno“…
+    /// - Parameter grade: známka ze STAGu (písmeno, číslo nebo zápočet).
+    /// - Returns: slovní hodnocení, nebo `nil` u neznámé známky.
     static func verbalText(_ grade: String) -> String? {
         if let value = numericValue(grade) { return verbalText(value: value) }
         switch level(grade) {
@@ -48,7 +54,9 @@ extension SubjectGrade {
         }
     }
 
-    /// Slovní hodnocení číselné hodnoty (známky i průměru): 1 „Výborně“ … 4 „Nedostatečně“
+    /// Slovní hodnocení číselné hodnoty (známky i průměru): 1 „Výborně“ … 4 „Nedostatečně“.
+    /// - Parameter value: číselná známka nebo průměr.
+    /// - Returns: slovní hodnocení.
     static func verbalText(value: Double) -> String {
         switch value {
         case ..<1.25: String(localized: "Výborně", comment: "Slovní hodnocení známky A / 1")
@@ -65,37 +73,55 @@ extension SubjectGrade {
 
 /// Barevný štítek známky („A“, „1“, zelená fajfka u „Z“).
 ///
-/// - `.small`: jemně podbarvený štítek do karet a řádků
-/// - `.large`: výrazný plný čtverec do detailu předmětu
+/// Zobrazuje text známky (nebo symbol u zápočtu) v barvě podle `GradeLevel`; data dostává zvenku
+/// (`SubjectGrade`, `GradePart` nebo přímo text a úroveň). Nemá akce. Velikost `.small` je jemně
+/// podbarvený štítek do karet a řádků (karta předmětu, komponenty známek), `.large` výrazný plný
+/// čtverec do detailu předmětu.
 struct GradeBadge: View {
+    /// Velikost štítku.
     enum Size {
         case small
         case large
     }
 
-    /// Zobrazená známka; nil = zatím bez hodnocení (šedá pomlčka)
+    /// Zobrazená známka; `nil` = zatím bez hodnocení (šedá pomlčka).
     let text: String?
+    /// Úroveň známky určující barvu a případný symbol.
     let level: GradeLevel
+    /// Velikost štítku (výchozí malý).
     var size: Size = .small
 
+    /// Vytvoří štítek z textu a úrovně.
+    /// - Parameters:
+    ///   - text: zobrazená známka, `nil` = bez hodnocení
+    ///   - level: úroveň známky
+    ///   - size: velikost štítku
     init(text: String?, level: GradeLevel, size: Size = .small) {
         self.text = text
         self.level = level
         self.size = size
     }
 
-    /// Hlavní známka předmětu (výsledná, jinak ze zkoušky, jinak ze zápočtu)
+    /// Hlavní známka předmětu (výsledná, jinak ze zkoušky, jinak ze zápočtu).
+    /// - Parameters:
+    ///   - grade: hodnocení předmětu
+    ///   - size: velikost štítku
     init(grade: SubjectGrade, size: Size = .small) {
         self.init(text: grade.displayGrade, level: grade.level, size: size)
     }
 
-    /// Výsledek jedné části hodnocení (zápočet / zkouška)
+    /// Výsledek jedné části hodnocení (zápočet / zkouška).
+    /// - Parameters:
+    ///   - part: část hodnocení s výsledkem
+    ///   - size: velikost štítku
     init(part: GradePart, size: Size = .small) {
         self.init(text: part.result, level: SubjectGrade.level(part.result), size: size)
     }
 
+    /// Barva podle úrovně známky.
     private var color: Color { level.color }
 
+    /// Malý nebo velký štítek sloučený pro VoiceOver do jednoho prvku se slovním popisem.
     var body: some View {
         Group {
             switch size {
@@ -109,6 +135,7 @@ struct GradeBadge: View {
 
     // MARK: - Malý
 
+    /// Jemně podbarvený štítek s barevným textem a obrysem.
     private var smallBadge: some View {
         content(fontSize: 15, symbolSize: 13)
             .foregroundStyle(color)
@@ -124,6 +151,7 @@ struct GradeBadge: View {
 
     // MARK: - Velký
 
+    /// Plný čtverec s přechodem, bílým textem a stínem.
     private var largeBadge: some View {
         content(fontSize: 34, symbolSize: 30)
             .foregroundStyle(.white)
@@ -134,6 +162,11 @@ struct GradeBadge: View {
             .fixedSize()
     }
 
+    /// Obsah štítku: symbol (u zápočtu), jinak zaoblený text známky.
+    /// - Parameters:
+    ///   - fontSize: velikost písma textu
+    ///   - symbolSize: velikost symbolu
+    /// - Returns: symbol nebo text známky.
     @ViewBuilder
     private func content(fontSize: CGFloat, symbolSize: CGFloat) -> some View {
         if let symbol = level.symbol {
@@ -147,7 +180,7 @@ struct GradeBadge: View {
         }
     }
 
-    /// Slovní výsledky („výborně“) ukážeme číslem („1“), ostatní dlouhé zkrátíme – štítek má zůstat malý
+    /// Slovní výsledky („výborně“) ukážeme číslem („1“), ostatní dlouhé zkrátíme – štítek má zůstat malý.
     private var displayText: String {
         guard let text = text?.trimmingCharacters(in: .whitespaces), !text.isEmpty else { return "–" }
         guard text.count > 3 else { return text }
@@ -157,6 +190,7 @@ struct GradeBadge: View {
         return String(text.prefix(3))
     }
 
+    /// Popis pro VoiceOver: známka a její slovní hodnocení, případně „Zatím bez hodnocení“.
     private var accessibilityText: String {
         guard let text, !text.isEmpty else { return String(localized: "Zatím bez hodnocení") }
         if let verbal = SubjectGrade.verbalText(text) {

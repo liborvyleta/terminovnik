@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Přihlášení do IS/STAG: přihlašovací adresa, zpracování návratové adresy a Base64 s rolemi.
+/// Testy přihlášení do IS/STAG.
+///
+/// Ověřují sestavení přihlašovací adresy, zpracování návratové adresy a dekódování Base64 s rolemi.
 /// Nic se neposílá po síti a nic se neukládá do Klíčenky.
 @Suite("STAG – přihlášení")
 struct StagLoginTests {
@@ -16,10 +18,18 @@ struct StagLoginTests {
 
     private var standardBase64: String { Data(userInfoJSON.utf8).base64EncodedString() }
 
+    /// Sestaví návratovou adresu přihlášení s daným dotazem.
+    ///
+    /// - Parameter query: Část adresy za otazníkem.
+    /// - Returns: Adresa `zkousky://stag-login?…`.
     private func callback(_ query: String) -> URL {
         URL(string: "zkousky://stag-login?\(query)")!
     }
 
+    /// Zakóduje text procentovým kódováním; ponechá jen písmena, číslice a znaky `-._~`.
+    ///
+    /// - Parameter value: Text ke kódování.
+    /// - Returns: Zakódovaný text.
     private func percentEncoded(_ value: String) -> String {
         var allowed = CharacterSet.alphanumerics
         allowed.insert(charactersIn: "-._~")
@@ -158,6 +168,10 @@ struct StagLoginTests {
         #expect(components.path == "/ws/login")
 
         let items = components.queryItems ?? []
+        /// Najde hodnotu parametru dotazu podle názvu.
+        ///
+        /// - Parameter name: Název parametru.
+        /// - Returns: Hodnota prvního parametru s tímto názvem, nebo `nil`.
         func value(_ name: String) -> String? { items.first { $0.name == name }?.value }
         #expect(value("originalURL") == "\(StagService.callbackScheme)://stag-login")
         #expect(value("onlyMainLoginMethod") == "1")

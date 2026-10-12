@@ -2,31 +2,49 @@ import SwiftUI
 import SwiftData
 import AuthenticationServices
 
-/// Import předmětů z IS/STAG zvolené školy. Po přihlášení školním účtem načte jen předměty,
-/// které má student zapsané, a nechá ho vybrat, které si přidá do aplikace.
-/// Připojený účet si aplikace pamatuje, takže příště se předměty načtou rovnou.
+/// Import předmětů z IS/STAG zvolené školy.
+///
+/// Nepřihlášený stav: výběr školy (včetně vlastní adresy serveru s ověřením),
+/// přihlášení školním účtem přes `ASWebAuthenticationSession` a odkaz na zásady
+/// ochrany osobních údajů. Přihlášený stav: údaje o účtu, volba semestru
+/// a seznam zapsaných předmětů, ze kterých si student vybere, které přidá.
+/// Stav a síťovou logiku drží `StagImportViewModel`; existující předměty čte
+/// přes `@Query`, aby označil už importované. Připojený účet si aplikace
+/// pamatuje, takže příště se předměty načtou rovnou. Otevírá se z úvodní
+/// obrazovky, seznamu předmětů a z `StagAccountSection`.
 struct StagImportView: View {
+    /// Akce pro zavření sheetu.
     @Environment(\.dismiss) private var dismiss
+    /// SwiftData kontext, do kterého se předměty importují.
     @Environment(\.modelContext) private var modelContext
-    /// Systémová služba pro přihlášení přes web (ASWebAuthenticationSession)
+    /// Systémová služba pro přihlášení přes web (`ASWebAuthenticationSession`).
     @Environment(\.webAuthenticationSession) private var webAuthenticationSession
+    /// Předměty už uložené v aplikaci (pro označení importovaných).
     @Query private var subjects: [Subject]
 
+    /// ViewModel s přihlášením, načítáním a výběrem předmětů.
     @State private var viewModel: StagImportViewModel
-    /// Zadání vlastní adresy školy
+    /// Zda je zobrazen alert pro zadání vlastní adresy školy.
     @State private var isEnteringCustomSchool = false
+    /// Text zadávané adresy vlastního serveru IS/STAG.
     @State private var customSchoolAddress = ""
+    /// Chyba ověření vlastního serveru; `nil`, pokud žádná není.
     @State private var customSchoolError: String?
-    /// Zásady ochrany osobních údajů (odkaz pod přihlášením)
+    /// Zda jsou zobrazeny zásady ochrany osobních údajů (odkaz pod přihlášením).
     @State private var isShowingPrivacyPolicy = false
-    /// Volá se po úspěšném importu (např. úvodní obrazovka se pak zavře)
+    /// Volá se po úspěšném importu s počtem přidaných předmětů (např. úvodní obrazovka se pak zavře).
     private let onImported: ((Int) -> Void)?
 
+    /// Vytvoří obrazovku importu.
+    /// - Parameters:
+    ///   - viewModel: ViewModel importu (pro náhledy lze předat připravený stav).
+    ///   - onImported: Volitelná akce po úspěšném importu s počtem přidaných předmětů.
     init(viewModel: StagImportViewModel = StagImportViewModel(), onImported: ((Int) -> Void)? = nil) {
         _viewModel = State(initialValue: viewModel)
         self.onImported = onImported
     }
 
+    /// Seznam sekcí podle stavu přihlášení, toolbar se Zrušit a Přidat a start načítání.
     var body: some View {
         NavigationStack {
             List {
@@ -86,7 +104,9 @@ struct StagImportView: View {
 
     // MARK: - Nepřihlášený stav
 
-    /// Výběr školy – aplikace funguje se všemi školami, které používají IS/STAG
+    /// Výběr školy – aplikace funguje se všemi školami, které používají IS/STAG.
+    ///
+    /// Nabízí i zadání vlastní adresy serveru, kterou ViewModel před použitím ověří.
     private var schoolSection: some View {
         Section {
             Picker(selection: Binding(
@@ -155,6 +175,7 @@ struct StagImportView: View {
         }
     }
 
+    /// Karta s přihlášením do IS/STAG a patička s informací o bezpečnosti a zásadami.
     private var loginSection: some View {
         Section {
             VStack(spacing: 16) {
@@ -226,11 +247,12 @@ struct StagImportView: View {
         }
     }
 
-    /// Celá adresa serveru zvolené školy (host a případně port), např. „stag-ws.skola.cz“
+    /// Celá adresa serveru zvolené školy (host a případně port), např. „stag-ws.skola.cz“.
     private var serverHost: String { viewModel.school.displayHost }
 
     // MARK: - Přihlášený stav
 
+    /// Údaje o přihlášeném studentovi, odhlášení, škola a volba semestru.
     private var accountSection: some View {
         Section {
             HStack(spacing: 12) {
@@ -276,7 +298,7 @@ struct StagImportView: View {
         }
     }
 
-    /// „Osobní číslo A23456 · FAI“
+    /// Řádek s osobním číslem a fakultou, např. „Osobní číslo A23456 · FAI“.
     private var accountDetail: String {
         let number = viewModel.osCislo ?? ""
         return [String(localized: "Osobní číslo \(number)"), viewModel.faculty]
@@ -284,6 +306,7 @@ struct StagImportView: View {
             .joined(separator: " · ")
     }
 
+    /// Stav načítání (průběh nebo chyba); v klidu nic nezobrazuje.
     @ViewBuilder
     private var statusSection: some View {
         switch viewModel.status {
@@ -305,6 +328,7 @@ struct StagImportView: View {
         }
     }
 
+    /// Seznam načtených předmětů s tlačítkem Vybrat vše / Zrušit výběr.
     @ViewBuilder
     private var resultsSection: some View {
         if !viewModel.results.isEmpty {
@@ -330,6 +354,11 @@ struct StagImportView: View {
         }
     }
 
+    /// Řádek předmětu, klepnutím se přepíná jeho výběr.
+    ///
+    /// Už importované předměty jsou zašedlé a nedají se vybrat.
+    /// - Parameter subject: Předmět načtený ze STAGu.
+    /// - Returns: Tlačítko s řádkem předmětu.
     private func resultRow(for subject: StagSubject) -> some View {
         let imported = viewModel.isAlreadyImported(subject)
         let selected = viewModel.selectedIDs.contains(subject.id)
@@ -359,6 +388,11 @@ struct StagImportView: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
+    /// Popisný text řádku: zkratka, kredity a případně informace o importu.
+    /// - Parameters:
+    ///   - subject: Předmět načtený ze STAGu.
+    ///   - imported: Zda už je předmět v aplikaci.
+    /// - Returns: Části spojené oddělovačem „ · “.
     private func detailText(for subject: StagSubject, imported: Bool) -> String {
         var parts = [subject.zkratka]
         if let credits = subject.kreditu {

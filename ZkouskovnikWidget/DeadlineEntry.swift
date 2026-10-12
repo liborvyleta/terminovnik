@@ -2,13 +2,19 @@ import Foundation
 import SwiftUI
 import WidgetKit
 
-/// Jeden záznam časové osy widgetu – deadliny a okamžik, vůči kterému se počítá odpočet.
+/// Jeden záznam časové osy widgetu „Nejbližší deadliny“.
+///
+/// Nese seznam nesplněných deadlinů načtených ze sdíleného přehledu v App Group
+/// a okamžik, vůči kterému se počítá odpočet. Záznamy vytváří `DeadlineProvider`.
 nonisolated struct DeadlineEntry: TimelineEntry {
     /// Okamžik, kdy systém záznam zobrazí. Odpočet („Zítra“, „Za 3 dny“…) se počítá vůči němu.
     let date: Date
     /// Nesplněné deadliny seřazené od nejbližšího (včetně těch po termínu).
     let deadlines: [WidgetDeadline]
 
+    /// Nejbližší deadline, tedy první prvek seznamu `deadlines`.
+    ///
+    /// - Returns: Nejbližší deadline, nebo `nil`, pokud je seznam prázdný.
     var nearest: WidgetDeadline? { deadlines.first }
 }
 
@@ -16,22 +22,42 @@ nonisolated struct DeadlineEntry: TimelineEntry {
 
 nonisolated extension DeadlineEntry {
     /// Realistická ukázka s předměty FAI UTB – termíny jsou relativní vůči `now`.
+    ///
+    /// Používá se pro placeholder, galerii widgetů a náhledy.
+    ///
+    /// - Parameter now: Referenční okamžik, vůči kterému se počítají relativní termíny; výchozí je aktuální čas.
+    /// - Returns: Záznam s ukázkovými deadliny z `WidgetDeadline.samples(now:)`.
     static func sample(now: Date = .now) -> DeadlineEntry {
         DeadlineEntry(date: now, deadlines: WidgetDeadline.samples(now: now))
     }
 
     /// Prázdný stav – vše hotovo.
+    ///
+    /// - Parameter now: Referenční okamžik, vůči kterému se počítají relativní termíny; výchozí je aktuální čas.
+    /// - Returns: Záznam bez deadlinů.
     static func empty(now: Date = .now) -> DeadlineEntry {
         DeadlineEntry(date: now, deadlines: [])
     }
 }
 
 nonisolated extension WidgetDeadline {
+    /// Sedm ukázkových deadlinů rozložených do příštích 20 dnů.
+    ///
     /// Názvy termínů a typů jsou lokalizované (galerie widgetů v angličtině), kódy a názvy předmětů ne.
+    ///
+    /// - Parameter now: Okamžik, od jehož dne se termíny odvozují; výchozí je aktuální čas.
+    /// - Returns: Ukázkové deadliny seřazené od nejbližšího.
     static func samples(now: Date = .now) -> [WidgetDeadline] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
 
+        /// Vrátí okamžik v daný čas dne posunutého o zadaný počet dní od dneška.
+        ///
+        /// - Parameters:
+        ///   - days: Počet dní od začátku dnešního dne.
+        ///   - hour: Hodina termínu.
+        ///   - minute: Minuta termínu; výchozí je 0.
+        /// - Returns: Výsledné datum; při selhání kalendářního výpočtu záložní hodnota (den, případně dnešek).
         func at(days: Int, hour: Int, minute: Int = 0) -> Date {
             let day = calendar.date(byAdding: .day, value: days, to: today) ?? today
             return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day

@@ -2,7 +2,9 @@ import Foundation
 import Testing
 @testable import ZavernyProjekt
 
-/// Seznam škol s IS/STAG a zadání vlastní adresy serveru.
+/// Testy seznamu škol s IS/STAG.
+///
+/// Ověřují seznam škol a zadání vlastní adresy serveru.
 /// (Uloženou volbu školy – `StagSchoolPreference` – netestujeme, zapisuje do UserDefaults uživatele.)
 @Suite("STAG – školy")
 struct StagSchoolTests {

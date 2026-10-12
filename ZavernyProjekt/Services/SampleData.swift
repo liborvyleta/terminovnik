@@ -2,14 +2,24 @@ import Foundation
 import SwiftData
 
 /// Ukázková data pro rychlé vyzkoušení aplikace a pro SwiftUI Previews.
+///
+/// Vytváří čtyři předměty s úkoly různých typů a stavů relativně k dnešku. Data vkládá do předaného
+/// `ModelContext` a ukládá přes ``TaskService/save(_:)``; pro náhledy poskytuje ``previewContainer``.
 enum SampleData {
     /// Vloží ukázková data jen do prázdné databáze (nevznikají duplicity).
+    /// - Parameters:
+    ///   - context: cílový kontext SwiftData
+    ///   - scheduleNotifications: zda pro nové úkoly naplánovat připomínky
     static func insertIfEmpty(into context: ModelContext, scheduleNotifications: Bool = true) {
         let count = (try? context.fetchCount(FetchDescriptor<Subject>())) ?? 0
         guard count == 0 else { return }
         insert(into: context, scheduleNotifications: scheduleNotifications)
     }
 
+    /// Vloží ukázkové předměty a úkoly bez ohledu na obsah databáze a uloží je.
+    /// - Parameters:
+    ///   - context: cílový kontext SwiftData
+    ///   - scheduleNotifications: zda přes `NotificationManager` naplánovat připomínky úkolů
     static func insert(into context: ModelContext, scheduleNotifications: Bool = true) {
         let mobile = Subject(name: "Pokročilé mobilní technologie", code: "AP9PT", hexColor: SubjectPalette.hex(7), credits: 4)
         let databases = Subject(name: "Databázové systémy", code: "AP7DS", hexColor: SubjectPalette.hex(4), credits: 6)
@@ -54,7 +64,12 @@ enum SampleData {
         TaskService.save(context)
     }
 
-    /// Datum za X dní v zadanou hodinu
+    /// Datum za X dní v zadanou hodinu.
+    /// - Parameters:
+    ///   - days: posun od dnešního dne (záporný = v minulosti)
+    ///   - hour: hodina
+    ///   - minute: minuta (výchozí 0)
+    /// - Returns: Datum v aktuálním kalendáři; při selhání výpočtu začátek dne nebo `now`.
     static func date(daysFromNow days: Int, hour: Int, minute: Int = 0) -> Date {
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now)) ?? .now
@@ -63,7 +78,7 @@ enum SampleData {
 
     // MARK: - Previews
 
-    /// In-memory kontejner s ukázkovými daty pro #Preview
+    /// In-memory kontejner s ukázkovými daty pro #Preview (bez plánování připomínek)
     static let previewContainer: ModelContainer = {
         do {
             let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -75,7 +90,9 @@ enum SampleData {
         }
     }()
 
-    /// První předmět z preview kontejneru (pro náhled detailu)
+    /// První předmět z preview kontejneru (pro náhled detailu), řazeno podle názvu.
+    ///
+    /// - Important: Pokud kontejner neobsahuje žádný předmět, aplikace skončí `fatalError`.
     static var previewSubject: Subject {
         let descriptor = FetchDescriptor<Subject>(sortBy: [SortDescriptor(\.name)])
         guard let subject = try? previewContainer.mainContext.fetch(descriptor).first else {
