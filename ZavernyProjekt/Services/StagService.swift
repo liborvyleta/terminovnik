@@ -573,7 +573,7 @@ nonisolated struct StagService {
         self.stagUser = stagUser
     }
 
-    // MARK: Přihlášení
+    // MARK: - Přihlášení
 
     /// Adresa přihlašovací stránky. `onlyMainLoginMethod=1` nabídne rovnou školní přihlášení,
     /// `longTicket=1` vydá dlouhodobý ticket (platí až 90 dní), takže se není nutné přihlašovat při každém importu.
@@ -607,7 +607,7 @@ nonisolated struct StagService {
         return (ticket, info)
     }
 
-    // MARK: Služby
+    // MARK: - Služby
 
     /// Aktuální semestr a akademický rok (veřejné)
     func currentPeriod() async throws -> StagPeriod {
@@ -655,7 +655,7 @@ nonisolated struct StagService {
         try await list("mistnost/getBudovy", [:])
     }
 
-    // MARK: Zápis na termíny (OSTRÉ operace – mění data studenta ve STAGu)
+    // MARK: - Zápis na termíny (ostré operace, mění data studenta ve STAGu)
 
     /// Zapíše / odhlásí studenta z termínu nebo z fronty čekatelů (vyžaduje přihlášení).
     ///
@@ -697,7 +697,7 @@ nonisolated struct StagService {
         try JSONDecoder().decode(StagUserInfo.self, from: await request("help/getStagUserListForLoginTicket", ["ticket": ticket]))
     }
 
-    // MARK: Síťová vrstva
+    // MARK: - Síťová vrstva
 
     private func request(_ path: String, _ parameters: [String: String] = [:]) async throws -> Data {
         // Demo režim nikdy nekomunikuje se STAGem

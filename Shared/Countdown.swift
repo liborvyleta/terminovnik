@@ -4,11 +4,12 @@ import SwiftUI
 
 /// Míra naléhavosti deadlinu – určuje barvu a ikonu odpočtu.
 enum DeadlineUrgency {
-    case done       // splněno
-    case overdue    // po termínu
-    case today      // dnes
-    case soon       // do 3 dnů
-    case upcoming   // později
+    case done
+    case overdue
+    case today
+    /// Termín do 3 dnů.
+    case soon
+    case upcoming
 
     init(dueDate: Date, isCompleted: Bool = false, now: Date = .now) {
         if isCompleted {

@@ -187,7 +187,7 @@ struct ExamTermsView: View {
         return count > 0 ? "\(segment.title) (\(count))" : segment.title
     }
 
-    // MARK: Zapsané
+    // MARK: - Zapsané
 
     @ViewBuilder
     private func registeredSections(now: Date) -> some View {
@@ -254,7 +254,7 @@ struct ExamTermsView: View {
         }
     }
 
-    // MARK: Vypsané
+    // MARK: - Vypsané
 
     @ViewBuilder
     private func availableSections(now: Date) -> some View {

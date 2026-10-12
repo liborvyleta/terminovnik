@@ -211,6 +211,7 @@ enum IntentStore {
 
 // MARK: - Texty odpovědí (MainActor)
 
+/// Lokalizované texty odpovědí pro intenty.
 enum IntentText {
     static var timetableNotLoaded: String {
         String(localized: "Rozvrh zatím není načtený – otevři Termínovník a přihlas se do STAGu.")

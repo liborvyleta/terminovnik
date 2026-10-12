@@ -153,8 +153,8 @@ final class ExamTermStore {
         defaults?.removeObject(forKey: Keys.queued)
     }
 
-    // MARK: - Zápis na termíny (OSTRÉ operace ve STAGu)
-    // Volat VÝHRADNĚ po výslovném potvrzení uživatelem v dialogu.
+    // MARK: - Zápis na termíny (ostré operace ve STAGu)
+    // Volat výhradně po výslovném potvrzení uživatelem v dialogu.
 
     /// Zapíše studenta na termín
     func register(_ term: ExamTerm, context: ModelContext) async -> StagTermRegistrationResult {

@@ -28,7 +28,7 @@ nonisolated enum KeychainStore {
         ]
     }
 
-    // MARK: Čtení
+    // MARK: - Čtení
 
     /// Data položky; `nil` = položka neexistuje, jiná chyba se vyhodí (`KeychainError`).
     static func data(for key: String) throws -> Data? {
@@ -79,7 +79,7 @@ nonisolated enum KeychainStore {
         }
     }
 
-    // MARK: Zápis
+    // MARK: - Zápis
 
     /// Uloží (nebo přepíše) data. Přepis přes `SecItemUpdate`, nová položka přes `SecItemAdd`,
     /// takže stará hodnota nezmizí dřív, než je zapsaná nová.

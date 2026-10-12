@@ -125,7 +125,7 @@ struct TimetableView: View {
         }
     }
 
-    // MARK: Týden
+    // MARK: - Týden
 
     /// Klasická týdenní mřížka – sloupce dnů, bloky podle času
     private var weekTimetable: some View {
@@ -173,7 +173,7 @@ struct TimetableView: View {
         }
     }
 
-    // MARK: Den
+    // MARK: - Den
 
     private var dayTimetable: some View {
         let colors = subjectColors

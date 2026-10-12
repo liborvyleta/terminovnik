@@ -38,7 +38,7 @@ struct CalendarEventEditor: UIViewControllerRepresentable {
         self.onFinish = onFinish
     }
 
-    /// Předvyplnění z jednotlivých hodnot (např. z rozpracovaného formuláře)
+    /// Předvyplnění z jednotlivých hodnot (např. z neuloženého formuláře)
     init(
         taskType: TaskType,
         subject: Subject?,

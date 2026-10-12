@@ -2,8 +2,7 @@ import SwiftUI
 
 /// Zásady ochrany osobních údajů přímo v aplikaci (App Store Review Guidelines 5.1.1(i)).
 ///
-/// Stejný obsah je v `docs/ZASADY_OCHRANY_UDAJU.md` ke zveřejnění na webu –
-/// při změně je potřeba upravit obojí (a datum účinnosti).
+/// Při změně obsahu je nutné aktualizovat také datum účinnosti.
 struct PrivacyPolicyView: View {
     var body: some View {
         List {

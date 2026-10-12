@@ -41,7 +41,7 @@ struct ContentView: View {
                 .tag("settings")
         }
         // Ukázkový režim: nenápadný pruh viditelný na všech záložkách
-        .demoBanner(isActive: DemoMode.isActive)
+        .demoBanner(isActive: DemoMode.isActive && !DemoMode.hidesBanner)
         .fullScreenCover(isPresented: isShowingOnboarding) {
             OnboardingView(
                 onImportFromStag: { isShowingStagImport = true },

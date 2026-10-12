@@ -7,7 +7,7 @@ import Foundation
 /// (`supportURL` a/nebo `supportEmail`, stejná Support URL jako v App Store Connect).
 /// Dokud jsou `nil`, příslušné řádky se v aplikaci nezobrazí.
 nonisolated enum AppInfo {
-    /// Veřejná adresa zásad ochrany osobních údajů (obsah odpovídá `docs/ZASADY_OCHRANY_UDAJU.md`)
+    /// Veřejná adresa zásad ochrany osobních údajů
     static let privacyPolicyURL: URL? = nil
     /// Stránka podpory (Support URL v App Store Connect)
     static let supportURL: URL? = nil

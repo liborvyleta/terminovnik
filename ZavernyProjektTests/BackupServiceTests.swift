@@ -3,6 +3,7 @@ import SwiftData
 import Testing
 @testable import ZavernyProjekt
 
+/// Testy zálohy do souboru: kódování, slučování, nahrazení a odolnost vůči poškozeným datům.
 @MainActor
 struct BackupServiceTests {
     private let old = makeDate(2026, 1, 1)

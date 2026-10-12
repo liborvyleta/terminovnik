@@ -158,7 +158,7 @@ enum BackupService {
         var tasksUpdated = 0
     }
 
-    // MARK: Export
+    // MARK: - Export
 
     static func makeBackup(from context: ModelContext, now: Date = .now) throws -> BackupFile {
         let subjects = try context.fetch(FetchDescriptor<Subject>(sortBy: [SortDescriptor(\.code)]))
@@ -208,7 +208,7 @@ enum BackupService {
         return "Termínovník-záloha-\(stamp)"
     }
 
-    // MARK: Obnova
+    // MARK: - Obnova
 
     @discardableResult
     static func restore(_ backup: BackupFile, into context: ModelContext, mode: RestoreMode) throws -> RestoreSummary {
@@ -289,7 +289,7 @@ enum BackupService {
         task.updatedAt = record.updatedAt
     }
 
-    // MARK: Duplicity (synchronizace přes iCloud)
+    // MARK: - Duplicity (synchronizace přes iCloud)
 
     /// Odstraní duplicity, které vzniknou, když STAG import proběhne na dvou zařízeních se synchronizací:
     /// předměty se shodným kódem (bez ohledu na velikost písmen) a úkoly se shodným `stagTermID`.
@@ -328,6 +328,7 @@ enum BackupService {
 
 // MARK: - Dokument pro fileExporter
 
+/// Obal zálohy pro `fileExporter`; obsahuje již serializovaná data.
 struct BackupDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.terminovnikBackup, .json] }
 

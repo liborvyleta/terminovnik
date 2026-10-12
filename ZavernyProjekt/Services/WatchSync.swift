@@ -73,7 +73,7 @@ final class WatchSync: NSObject {
             try session.updateApplicationContext(payload.context)
             lastSignature = payload.signature
         } catch {
-            // Selhání nevadí – podpis se neuložil, takže další push pošle aktuální stav
+            // Selhání se neošetřuje – podpis se neuložil, takže další push pošle aktuální stav
         }
     }
 

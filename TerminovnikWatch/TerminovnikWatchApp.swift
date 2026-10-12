@@ -19,6 +19,20 @@ struct TerminovnikWatchApp: App {
 /// Kořenová obrazovka: svislé stránky (watchOS 10), nebo výzva k otevření aplikace na iPhonu.
 struct WatchRootView: View {
     let store: WatchStore
+    @State private var page = Self.initialPage
+
+    /// Výchozí stránka; v Debug ji lze zvolit argumentem `-page next|today|deadlines`
+    private static var initialPage: Int {
+        #if DEBUG
+        switch DemoLaunch.page {
+        case "today": return 1
+        case "deadlines": return 2
+        default: return 0
+        }
+        #else
+        return 0
+        #endif
+    }
 
     var body: some View {
         NavigationStack {
@@ -29,13 +43,16 @@ struct WatchRootView: View {
                     Text("Otevři Termínovník na iPhonu a přihlas se do STAGu.")
                 }
             } else {
-                TabView {
+                TabView(selection: $page) {
                     NextLessonView(store: store)
                         .navigationTitle(Text("Další hodina"))
+                        .tag(0)
                     TodayScheduleView(store: store)
                         .navigationTitle(Text("Dnes"))
+                        .tag(1)
                     DeadlinesView(store: store)
                         .navigationTitle(Text("Deadliny"))
+                        .tag(2)
                 }
                 .tabViewStyle(.verticalPage)
             }

@@ -14,6 +14,15 @@ nonisolated enum DemoMode {
     static let defaultsKey = "demoModeActive"
 
     /// Běží aplikace v ukázkovém režimu?
+    /// Režim pro pořizování snímků obrazovky (argument `-screenshots`, jen Debug): skryje banner ukázkového režimu.
+    static var hidesBanner: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-screenshots")
+        #else
+        false
+        #endif
+    }
+
     static var isActive: Bool {
         isActive(defaults: .standard, arguments: ProcessInfo.processInfo.arguments)
     }

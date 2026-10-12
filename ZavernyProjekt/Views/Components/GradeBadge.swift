@@ -107,7 +107,7 @@ struct GradeBadge: View {
         .accessibilityLabel(accessibilityText)
     }
 
-    // MARK: Malý
+    // MARK: - Malý
 
     private var smallBadge: some View {
         content(fontSize: 15, symbolSize: 13)
@@ -122,7 +122,7 @@ struct GradeBadge: View {
             .fixedSize()
     }
 
-    // MARK: Velký
+    // MARK: - Velký
 
     private var largeBadge: some View {
         content(fontSize: 34, symbolSize: 30)

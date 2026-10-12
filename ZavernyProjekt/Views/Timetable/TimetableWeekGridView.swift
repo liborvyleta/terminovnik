@@ -2,8 +2,8 @@ import Foundation
 import SwiftUI
 import UIKit
 
-// Týdenní mřížka rozvrhu – klasický rozvrh jako ve STAGu (dny ve sloupcích, hodiny v řádcích),
-// jen v moderním kabátě. Komponenta má pevnou výšku, rodič ji vkládá do `ScrollView`.
+// Týdenní mřížka rozvrhu – klasický rozvrh jako ve STAGu (dny ve sloupcích, hodiny v řádcích)
+// v současném vizuálním stylu. Komponenta má pevnou výšku, rodič ji vkládá do `ScrollView`.
 
 struct TimetableWeekGridView: View {
     private let days: [Date]
@@ -28,7 +28,7 @@ struct TimetableWeekGridView: View {
 
     private let calendar = Calendar.current
 
-    // MARK: Rozměry
+    // MARK: - Rozměry
 
     /// Výška jedné hodiny
     private let hourHeight: CGFloat = 52
@@ -46,7 +46,7 @@ struct TimetableWeekGridView: View {
     private var isDark: Bool { colorScheme == .dark }
     private var gridTop: CGFloat { headerHeight + gridTopInset }
 
-    // MARK: Tělo
+    // MARK: - Tělo
 
     var body: some View {
         let columns = days.map { day in
@@ -93,7 +93,7 @@ struct TimetableWeekGridView: View {
                     in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    // MARK: Hlavička dne
+    // MARK: - Hlavička dne
 
     private func dayHeader(_ date: Date, isToday: Bool) -> some View {
         VStack(spacing: 3) {
@@ -127,7 +127,7 @@ struct TimetableWeekGridView: View {
             .accessibilityHidden(true)
     }
 
-    // MARK: Mřížka
+    // MARK: - Mřížka
 
     private func gridLines(hours: ClosedRange<Int>, columnCount: Int, columnWidth: CGFloat,
                            width: CGFloat, height: CGFloat) -> some View {
@@ -183,7 +183,7 @@ struct TimetableWeekGridView: View {
         }
     }
 
-    // MARK: Bloky akcí
+    // MARK: - Bloky akcí
 
     @ViewBuilder
     private func block(_ placed: GridPlacedOccurrence, columnIndex: Int, columnWidth: CGFloat,
@@ -233,7 +233,7 @@ struct TimetableWeekGridView: View {
         return parts.joined(separator: ", ")
     }
 
-    // MARK: Čára „teď“
+    // MARK: - Čára „teď“
 
     private func nowIndicator(x: CGFloat, y: CGFloat, columnWidth: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
@@ -261,7 +261,7 @@ struct TimetableWeekGridView: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: Výpočty
+    // MARK: - Výpočty
 
     /// Rozsah zobrazených hodin – podle nejdřívější a nejpozdější akce v týdnu, minimálně 8–16
     private func hourRange(for columns: [GridDayColumn]) -> ClosedRange<Int> {

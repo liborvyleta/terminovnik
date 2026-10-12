@@ -34,6 +34,17 @@ final class WatchStore: NSObject {
 
     /// Aplikace: načte uložená data a připojí se k iPhonu
     private override init() {
+        #if DEBUG
+        if DemoLaunch.isEnabled {
+            // Ukázkový režim pro snímky obrazovky: pevná data, bez ukládání a bez WatchConnectivity
+            defaults = nil
+            super.init()
+            timetable = DemoLaunch.timetable()
+            deadlines = WidgetDeadline.watchSamples.filter { $0.dueDate > .now }
+            updatedAt = .now
+            return
+        }
+        #endif
         defaults = .standard
         super.init()
         if let stored = defaults?.dictionary(forKey: Self.storageKey) {
@@ -119,3 +130,58 @@ extension WatchStore {
         timetable?.occurrences(on: now) ?? []
     }
 }
+
+#if DEBUG
+// MARK: - Ukázkový režim (pouze Debug)
+
+/// Spuštění s argumentem `-demo` naplní hodinky ukázkovými daty pro snímky obrazovky.
+/// Argument `-page next|today|deadlines` určuje výchozí stránku.
+enum DemoLaunch {
+    static var isEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("-demo")
+    }
+
+    /// Hodnota argumentu `-page` (UserDefaults čte argumenty spuštění ve tvaru `-klíč hodnota`)
+    static var page: String? {
+        UserDefaults.standard.string(forKey: "page")
+    }
+
+    /// Ukázkový rozvrh, ve kterém se tři akce konají dnes: jedna už proběhla, další začíná
+    /// za 20–35 minut a třetí po krátké přestávce. Časy jsou zaokrouhlené na čtvrthodiny,
+    /// aby obrazovky „Další hodina“ i „Dnes“ vypadaly jako skutečný rozvrh v kteroukoli denní dobu.
+    static func timetable(now: Date = .now) -> TimetableSnapshot {
+        let sample = TimetableSnapshot.sample
+        let calendar = Calendar.current
+        // Calendar.weekday: 1 = neděle; TimetableEvent.weekday: 1 = pondělí
+        let today = (calendar.component(.weekday, from: now) + 5) % 7 + 1
+        let minutesNow = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+        // Další hodina začíná na nejbližší čtvrthodinu alespoň 20 minut od teď;
+        // celý blok (90 + 15 + 90 minut) musí skončit před půlnocí
+        let next = min((minutesNow + 20 + 14) / 15 * 15, 24 * 60 - 1 - 195)
+        let plan: [String: (from: Int, to: Int)] = [
+            "s2": (-150, -60),   // proběhlá hodina
+            "s1": (0, 90),       // další hodina
+            "s4": (105, 195)     // následující hodina po přestávce
+        ]
+        let start = next
+
+        func time(_ minutes: Int) -> String {
+            String(format: "%02d:%02d", minutes / 60, minutes % 60)
+        }
+
+        let events = sample.events.map { event -> TimetableEvent in
+            guard let offset = plan[event.id] else { return event }
+            return TimetableEvent(
+                id: event.id, subjectCode: event.subjectCode, department: event.department,
+                subjectName: event.subjectName, typeName: event.typeName, typeShort: event.typeShort,
+                weekday: today, startTime: time(max(0, start + offset.from)), endTime: time(max(0, start + offset.to)),
+                building: event.building, room: event.room, teacher: event.teacher,
+                weekParity: event.weekParity, dateFrom: nil, dateTo: nil, singleDate: nil,
+                hexColor: event.hexColor
+            )
+        }
+        return TimetableSnapshot(events: events, semester: sample.semester,
+                                 academicYear: sample.academicYear, fetchedAt: now)
+    }
+}
+#endif

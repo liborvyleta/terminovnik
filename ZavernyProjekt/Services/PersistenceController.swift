@@ -38,7 +38,9 @@ enum PersistenceController {
     /// u skutečné připomínky, kterou uživatel výslovně potvrdí).
     static let persistent: ModelContainer = {
         // isStoredInMemoryOnly: false → data se ukládají trvale do SQLite v kontejneru aplikace.
-        // Synchronizace přes iCloud jen s build flagem ICLOUD_SYNC (vyžaduje placený účet, viz docs/ICLOUD_SYNC.md).
+        // Synchronizace přes iCloud je aktivní jen s compilation flagem ICLOUD_SYNC. Zapnutí dále vyžaduje
+        // capability iCloud s CloudKit kontejnerem a Background Modes → Remote notifications
+        // (obojí je dostupné jen s placeným vývojářským účtem).
         // Umístění úložiště zůstává výchozí v obou případech.
         #if ICLOUD_SYNC
         let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .automatic
