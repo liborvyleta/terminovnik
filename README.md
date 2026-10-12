@@ -10,6 +10,14 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/liborvyleta/terminovnik/actions/workflows/ci.yml"><img src="https://github.com/liborvyleta/terminovnik/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/iOS-17%2B-0A84FF?logo=apple" alt="iOS 17+">
+  <img src="https://img.shields.io/badge/watchOS-10%2B-0A84FF?logo=apple" alt="watchOS 10+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/testy-195-34C759" alt="195 testů">
+</p>
+
+<p align="center">
   Závěrečný projekt předmětu AP9PT – Univerzita Tomáše Bati ve Zlíně, Fakulta aplikované informatiky<br>
   Autor: Libor Výleta
 </p>
@@ -212,7 +220,7 @@ Tools/                       generátor ikony aplikace
 | Síť | URLSession, async/await, ASWebAuthenticationSession |
 | Systém | WidgetKit, ActivityKit, App Intents, UserNotifications, BackgroundTasks, EventKitUI, MapKit |
 | Hodinky | watchOS, WatchConnectivity |
-| Kvalita | Swift Testing (195 testů), String Catalog (cs, en), Privacy Manifest |
+| Kvalita | Swift Testing (195 testů), GitHub Actions (build a testy při každém pushi), String Catalog (cs, en), Privacy Manifest |
 
 ## Spuštění
 

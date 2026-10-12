@@ -1,0 +1,68 @@
+# Průběžná integrace: při každém pushi a pull requestu sestaví aplikaci (iPhone, widget, Apple Watch)
+# a spustí unit testy na simulátoru iPhonu.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Nový push zruší ještě běžící kontrolu stejné větve
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build a testy
+    runs-on: macos-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Stažení kódu
+        uses: actions/checkout@v4
+
+      - name: Výběr nejnovějšího Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+
+      - name: Výběr simulátoru iPhonu
+        id: simulator
+        run: |
+          # Nejnovější dostupný iPhone simulátor na runneru
+          UDID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          runtimes = sorted((r for r in devices if "iOS" in r), reverse=True)
+          for runtime in runtimes:
+              for device in devices[runtime]:
+                  if device["name"].startswith("iPhone"):
+                      print(device["udid"]); sys.exit()
+          ')
+          echo "Simulátor: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Sestavení a testy
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ZavernyProjekt.xcodeproj \
+            -scheme ZavernyProjekt \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -testLanguage cs -testRegion CZ \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee xcodebuild.log | grep -E "error:|✔ Test run|✘|\*\* (TEST|BUILD)"
+
+      - name: Uložení výsledků testů
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vysledky-testu
+          path: |
+            TestResults.xcresult
+            xcodebuild.log
+          retention-days: 7
