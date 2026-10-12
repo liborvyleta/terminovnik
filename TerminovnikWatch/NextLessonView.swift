@@ -120,7 +120,7 @@ extension TimetableOccurrence {
     TabView {
         NextLessonView(store: WatchStore(timetable: .sample, deadlines: WidgetDeadline.watchSamples))
     }
-    .tabViewStyle(.verticalPage)
+    .tabViewStyle(.page)
 }
 
 #Preview("Bez rozvrhu") {

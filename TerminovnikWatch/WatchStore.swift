@@ -157,7 +157,7 @@ enum DemoLaunch {
         let minutesNow = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
         // Další hodina začíná na nejbližší čtvrthodinu alespoň 20 minut od teď;
         // celý blok (90 + 15 + 90 minut) musí skončit před půlnocí
-        let next = min((minutesNow + 20 + 14) / 15 * 15, 24 * 60 - 1 - 195)
+        let next = min((minutesNow + 20 + 14) / 15 * 15, (24 * 60 - 1 - 195) / 15 * 15)
         let plan: [String: (from: Int, to: Int)] = [
             "s2": (-150, -60),   // proběhlá hodina
             "s1": (0, 90),       // další hodina

@@ -54,7 +54,8 @@ struct WatchRootView: View {
                         .navigationTitle(Text("Deadliny"))
                         .tag(2)
                 }
-                .tabViewStyle(.verticalPage)
+                // Stránky se přepínají swipem doleva a doprava; korunka posouvá obsah stránky
+                .tabViewStyle(.page)
             }
         }
     }
